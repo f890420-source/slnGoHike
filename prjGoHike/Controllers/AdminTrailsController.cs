@@ -3,31 +3,33 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.Models;
 
-public class TrailController : Controller
+public class AdminTrailsController : Controller
 {
     private readonly GoHikeDataContext _context;
 
-    public TrailController(GoHikeDataContext context)
+    public AdminTrailsController(GoHikeDataContext context)
     {
         _context = context;
     }
 
-    // GET: TRAILS
-    public async Task<IActionResult> Index()    
+    // GET: AdminTrails
+    public async Task<IActionResult> Index()
     {
-        return View(await _context.Trails.ToListAsync());
+        var trails = await _context.Trails.ToListAsync();
+        var twList = trails.Select(t => new CTrailWrap(t)).ToList();
+        return View(twList);
     }
 
-    // GET: TRAILS/Details/5
-    public async Task<IActionResult> Details(long? trailid)
+    // GET: AdminTrails/Details/5
+    public async Task<IActionResult> Details(int? id)
     {
-        if (trailid == null)
+        if (id == null)
         {
             return NotFound();
         }
 
         var trail = await _context.Trails
-            .FirstOrDefaultAsync(m => m.TrailId == trailid);
+            .FirstOrDefaultAsync(m => m.TrailId == id);
         if (trail == null)
         {
             return NotFound();
@@ -36,18 +38,18 @@ public class TrailController : Controller
         return View(trail);
     }
 
-    // GET: TRAILS/Create
+    // GET: AdminTrails/Create
     public IActionResult Create()
     {
         return View();
     }
 
-    // POST: TRAILS/Create
+    // POST: AdminTrails/Create
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("TrailId,TrailName,Region,DifficultyLevel,DistanceKm,EstimatedHours,PermitRequired,GuideRequired,RegulationNote,TrailPath,IsPublished,AlertsTrails,HikeRecordDetails,TrailFeatures,TrailRiskIndicators,TrailSubscriptions,TripReports")] Trail trail)
+    public async Task<IActionResult> Create([Bind("TrailId,TrailName,Region,DifficultyLevel,DistanceKm,PermitRequired,GuideRequired,RegulationNote,TrailPath,IsPublished")] Trail trail)
     {
         if (ModelState.IsValid)
         {
@@ -58,30 +60,34 @@ public class TrailController : Controller
         return View(trail);
     }
 
-    // GET: TRAILS/Edit/5
-    public async Task<IActionResult> Edit(long? trailid)
+    // GET: AdminTrails/Edit/5
+    public async Task<IActionResult> Edit(long? id)
     {
-        if (trailid == null)
+        if (id == null)
         {
             return NotFound();
         }
 
-        var trail = await _context.Trails.FindAsync(trailid);
-        if (trail == null)
+        var traildb = await _context.Trails.FindAsync(id);
+        if (traildb == null)
         {
             return NotFound();
         }
-        return View(trail);
+        CTrailWrap tw = new CTrailWrap()
+        {
+            trail = traildb
+        };
+        return View(tw);
     }
 
-    // POST: TRAILS/Edit/5
+    // POST: AdminTrails/Edit/5
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(long? trailid, [Bind("TrailId,TrailName,Region,DifficultyLevel,DistanceKm,EstimatedHours,PermitRequired,GuideRequired,RegulationNote,TrailPath,IsPublished,AlertsTrails,HikeRecordDetails,TrailFeatures,TrailRiskIndicators,TrailSubscriptions,TripReports")] Trail trail)
+    public async Task<IActionResult> Edit(int? id, [Bind("TrailId,TrailName,Region,DifficultyLevel,DistanceKm,EstimatedHours,PermitRequired,GuideRequired,RegulationNote,TrailPath,IsPublished,AlertsTrails,HikeRecordDetails,TrailFeatures,TrailRiskIndicators,TrailSubscriptions,TripReports")] Trail trail)
     {
-        if (trailid != trail.TrailId)
+        if (id != trail.TrailId)
         {
             return NotFound();
         }
@@ -109,30 +115,33 @@ public class TrailController : Controller
         return View(trail);
     }
 
-    // GET: TRAILS/Delete/5
-    public async Task<IActionResult> Delete(long? trailid)
+    // GET: AdminTrails/Delete/5
+    public async Task<IActionResult> Delete(long? id)
     {
-        if (trailid == null)
+        if (id == null)
         {
             return NotFound();
         }
 
-        var trail = await _context.Trails
-            .FirstOrDefaultAsync(m => m.TrailId == trailid);
-        if (trail == null)
+        var traildb = await _context.Trails
+            .FirstOrDefaultAsync(m => m.TrailId == id);
+        if (traildb == null)
         {
             return NotFound();
         }
-
-        return View(trail);
+        CTrailWrap tw = new CTrailWrap()
+        {
+            trail = traildb
+        };
+        return View(tw);
     }
 
-    // POST: TRAILS/Delete/5
+    // POST: AdminTrails/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(long? trailid)
+    public async Task<IActionResult> DeleteConfirmed(long? id)
     {
-        var trail = await _context.Trails.FindAsync(trailid);
+        var trail = await _context.Trails.FindAsync(id);
         if (trail != null)
         {
             _context.Trails.Remove(trail);
