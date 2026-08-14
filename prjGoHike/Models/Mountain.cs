@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace prjGoHike.Models;
 
 public partial class Mountain
 {
+    
     public long MountainId { get; set; }
 
     public string MountainName { get; set; } = null!;
