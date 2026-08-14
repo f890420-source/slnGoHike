@@ -14,13 +14,13 @@
     <link rel="icon" type="image/png" href="assets/images/favicon.ico">
 
     <!-- Local Third-Party Libraries (100% Offline Compatible) -->
-    <link rel="stylesheet" href="assets/libs/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="assets/libs/bootstrap-icons/bootstrap-icons.css">
-    <link rel="stylesheet" href="assets/libs/apexcharts/apexcharts.css">
-    <link rel="stylesheet" href="assets/libs/flatpickr/flatpickr.min.css">
+    <link rel="stylesheet" href="~/assets/libs/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="~/assets/libs/bootstrap-icons/bootstrap-icons.css">
+    <link rel="stylesheet" href="~/assets/libs/apexcharts/apexcharts.css">
+    <link rel="stylesheet" href="~/assets/libs/flatpickr/flatpickr.min.css">
 
     <!-- Main Design System & Custom Stylesheet -->
-    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="~/assets/css/main.css">
 </head>
 
 <body>
@@ -143,9 +143,11 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-quick-action" aria-labelledby="quick-actions-dropdown">
                         <li class="dropdown-header">Quick Action Shortcuts</li>
-                        <li><input type="submit" class="dropdown-item" href="#"><i class="bi bi-file-earmark-plus"></i> New Invoice</li>
-                            <li><input type="submit" class="dropdown-item" href="~/Mountain/CreatMountainData"><i class="bi bi-person-plus"></i>建立新的山岳資料</li>
-                            <li><input type="submit" class="dropdown-item" href="~/Mountain/MangeEventData"><i class="bi bi-box-seam"></i> 管理活動</li>
+                            @Html.ActionLink("建立新的山岳", "CreatMountainData","Mountain", new { @class = "bi bi-person-plus" }, new { @class = "dropdown-item" })
+                            @Html.ActionLink("管理活動", "MangeEventData", "Mountain", new { @class = "bi bi-box-seam" }, new { @class = "dropdown-item" })
+                        @* <li><input type="submit" class="dropdown-item" href="#"><i class="bi bi-file-earmark-plus"></i> New Invoice</li> *@
+                            @* <li><input type="submit" class="dropdown-item" href="~/Mountain/CreatMountainData"><i class="bi bi-person-plus"></i>建立新的山岳資料</li>
+                            <li><input type="submit" class="dropdown-item" href="~/Mountain/MangeEventData"><i class="bi bi-box-seam"></i> 管理活動</li> *@
 
                         
                         <li>

@@ -5,10 +5,10 @@ namespace prjGoHike.Controllers
 {
     public class MountainController : Controller
     {
-        public IActionResult Home()
+        public IActionResult CreatMountainData()
         {
-            List<Mountain> mountain = new List<Mountain>();
-            return View(mountain);
+            List<CMountainWarp> mountains = new List<CMountainWarp>();
+            return View(mountains);
         }
     }
 }
