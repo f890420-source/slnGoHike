@@ -1,95 +1,217 @@
 @model IEnumerable<prjGoHike.Models.Report>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "檢舉管理";
+
+    // 目前頁數
+    int currentPage = ViewBag.CurrentPage ?? 1;
+
+    // 總頁數
+    int totalPages = ViewBag.TotalPages ?? 1;
+
+    // 目前選擇的狀態
+    string currentStatus = ViewBag.Status?.ToString() ?? "";
 }
 
-<h1>Index</h1>
+<div class="container-fluid">
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.UserId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ArticleId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Reason)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Reply)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.AdminId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ReviewDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Status)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreatedDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Admin)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Article)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.User)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(model => item.UserId)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.ArticleId)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Reason)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Reply)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.AdminId)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.ReviewDate)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Status)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.CreatedDate)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Admin)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Article)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.User)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.ReportId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.ReportId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.ReportId">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+    <!-- 標題 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>檢舉管理</h1>
+    </div>
+
+    <!-- 狀態篩選 -->
+    <div class="card mb-4">
+        <div class="card-body">
+
+            <form asp-action="Index" method="get">
+
+                <div class="row align-items-end">
+
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+                            檢舉狀態
+                        </label>
+
+                        <select name="status"
+                                class="form-select">
+
+                            <option value=""
+                                    selected="@(currentStatus == "")">
+                                全部
+                            </option>
+
+                            <option value="0"
+                                    selected="@(currentStatus == "0")">
+                                未處理
+                            </option>
+
+                            <option value="1"
+                                    selected="@(currentStatus == "1")">
+                                處理中
+                            </option>
+
+                            <option value="2"
+                                    selected="@(currentStatus == "2")">
+                                已處理
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit"
+                                class="btn btn-primary">
+                            篩選
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- 檢舉資料 -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>
+                                文章標題
+                            </th>
+
+                            <th>
+                                檢舉原因
+                            </th>
+
+                            <th>
+                                狀態
+                            </th>
+
+                            <th>
+                                檢舉時間
+                            </th>
+
+                            <th>
+                                操作
+                            </th>
+
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+
+                                <td>
+                                    @item.Article?.Title
+                                </td>
+
+                                <td>
+                                    @item.Reason
+                                </td>
+
+                                <td>
+
+                                    @switch (item.Status)
+                                    {
+                                        case 0:
+                                            <span class="badge bg-danger">
+                                                未處理
+                                            </span>
+                                            break;
+
+                                        case 1:
+                                            <span class="badge bg-warning text-dark">
+                                                處理中
+                                            </span>
+                                            break;
+
+                                        case 2:
+                                            <span class="badge bg-success">
+                                                已處理
+                                            </span>
+                                            break;
+
+                                        default:
+                                            <span class="badge bg-secondary">
+                                                未知
+                                            </span>
+                                            break;
+                                    }
+                                </td>
+                                <td>
+                                    @item.CreatedDate
+                                </td>
+                                <td>
+                                    <a asp-action="Details"
+                                       asp-route-id="@item.ReportId"
+                                       class="btn btn-primary btn-sm">
+                                        詳細資訊
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <!-- 沒有資料 -->
+            @if (!Model.Any())
+            {
+                <div class="text-center py-4">
+                    <p class="text-muted mb-0">
+                        目前沒有符合條件的檢舉資料
+                    </p>
+                </div>
+            }
+
+
+            <!-- 分頁 -->
+            @if (totalPages > 1)
+            {
+                <nav aria-label="檢舉資料分頁">
+                    <ul class="pagination justify-content-center mt-4">
+                        <!-- 上一頁 -->
+                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-page="@(currentPage - 1)"
+                               asp-route-status="@currentStatus">
+                                上一頁
+                            </a>
+                        </li>
+
+                        <!-- 頁碼 -->
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            <li class="page-item @(i == currentPage ? "active" : "")">
+                                <a class="page-link"
+                                   asp-action="Index"
+                                   asp-route-page="@i"
+                                   asp-route-status="@currentStatus">
+                                    @i
+                                </a>
+
+                            </li>
+                        }
+                        <!-- 下一頁 -->
+                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-page="@(currentPage + 1)"
+                               asp-route-status="@currentStatus">
+
+                                下一頁
+
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
+    </div>
+</div>
