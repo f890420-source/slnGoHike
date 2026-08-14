@@ -7,8 +7,8 @@ namespace prjGoHike.Controllers
     {
         public IActionResult Home()
         {
-            
-            return View();
+            List<Mountain> mountain = new List<Mountain>();
+            return View(mountain);
         }
     }
 }
