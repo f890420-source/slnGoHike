@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using NetTopologySuite.Geometries;
 
 namespace prjGoHike.Models;
 
@@ -16,6 +17,8 @@ public partial class HikeRecordDetail
     public DateOnly EndDate { get; set; }
 
     public string Status { get; set; } = null!;
+
+    public Geometry? UploadedTrack { get; set; }
 
     public decimal? CalculatedRiskScore { get; set; }
 

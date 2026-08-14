@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using NetTopologySuite.Geometries;
 
 namespace prjGoHike.Models;
 
@@ -12,6 +13,8 @@ public partial class TrailFeature
     public string FeatureType { get; set; } = null!;
 
     public string FeatureName { get; set; } = null!;
+
+    public Geometry Location { get; set; } = null!;
 
     public string? FeatureDescription { get; set; }
 
