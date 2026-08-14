@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -11,16 +11,16 @@
     <meta name="author" content="Spark Admin Team">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="assets/images/favicon.ico">
+    <link rel="icon" type="image/png" href="~/assets/images/favicon.ico">
 
     <!-- Local Third-Party Libraries (100% Offline Compatible) -->
-    <link rel="stylesheet" href="assets/libs/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="assets/libs/bootstrap-icons/bootstrap-icons.css">
-    <link rel="stylesheet" href="assets/libs/apexcharts/apexcharts.css">
-    <link rel="stylesheet" href="assets/libs/flatpickr/flatpickr.min.css">
+    <link rel="stylesheet" href="~/assets/libs/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="~/assets/libs/bootstrap-icons/bootstrap-icons.css">
+    <link rel="stylesheet" href="~/assets/libs/apexcharts/apexcharts.css">
+    <link rel="stylesheet" href="~/assets/libs/flatpickr/flatpickr.min.css">
 
     <!-- Main Design System & Custom Stylesheet -->
-    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="~/assets/css/main.css">
 </head>
 
 <body>
@@ -31,7 +31,7 @@
          ========================================== -->
     <div class="sidebar-wrapper" id="sidebar">
         <!-- Brand Logo / Identity -->
-        <a href="index.html" class="sidebar-brand">
+        <a asp-controller="Home" asp-action="Index" class="sidebar-brand">
             <i class="bi bi-asterisk"></i>
             <span>Spark Admin</span>
         </a>
@@ -43,7 +43,7 @@
                 <div class="sidebar-menu-title">Menu</div>
                 <ul class="sidebar-menu-list">
                     <li class="sidebar-menu-item">
-                        <a href="index.html" class="sidebar-menu-link active" id="menu-overview" title="Overview">
+                        <a asp-controller="Home" asp-action="Index" class="sidebar-menu-link active" id="menu-overview" title="Overview">
                             <i class="bi bi-grid-fill"></i>
                             <span>Dashboard</span>
                         </a>
@@ -56,19 +56,19 @@
                 <div class="sidebar-menu-title">Components</div>
                 <ul class="sidebar-menu-list">
                     <li class="sidebar-menu-item">
-                        <a href="tables-basic.html" class="sidebar-menu-link" id="menu-basictables" title="Basic Tables">
+                        <a href="#" class="sidebar-menu-link" id="menu-basictables" title="Basic Tables">
                             <i class="bi bi-table"></i>
                             <span>Basic Tables</span>
                         </a>
                     </li>
                     <li class="sidebar-menu-item">
-                        <a href="ui-forms.html" class="sidebar-menu-link" id="menu-uiforms" title="Forms and Input">
+                        <a href="#" class="sidebar-menu-link" id="menu-uiforms" title="Forms and Input">
                             <i class="bi bi-input-cursor-text"></i>
                             <span>Forms & Input</span>
                         </a>
                     </li>
                     <li class="sidebar-menu-item">
-                        <a href="ui-buttons.html" class="sidebar-menu-link" id="menu-uibuttons" title="Buttons">
+                        <a href="#" class="sidebar-menu-link" id="menu-uibuttons" title="Buttons">
                             <i class="bi bi-menu-button-wide-fill"></i>
                             <span>Buttons & Alerts</span>
                         </a>
@@ -81,19 +81,19 @@
                 <div class="sidebar-menu-title">Pages</div>
                 <ul class="sidebar-menu-list">
                     <li class="sidebar-menu-item">
-                        <a href="page-blank.html" class="sidebar-menu-link" id="menu-blankpage" title="Blank Page">
+                        <a href="#" class="sidebar-menu-link" id="menu-blankpage" title="Blank Page">
                             <i class="bi bi-file-earmark"></i>
                             <span>Blank Page</span>
                         </a>
                     </li>
                     <li class="sidebar-menu-item">
-                        <a href="page-login.html" class="sidebar-menu-link" id="menu-loginpage" title="Login Page">
+                        <a href="#" class="sidebar-menu-link" id="menu-loginpage" title="Login Page">
                             <i class="bi bi-box-arrow-in-right"></i>
                             <span>Login Screen</span>
                         </a>
                     </li>
                     <li class="sidebar-menu-item">
-                        <a href="page-404.html" class="sidebar-menu-link" id="menu-404" title="404 Page">
+                        <a href="#" class="sidebar-menu-link" id="menu-404" title="404 Page">
                             <i class="bi bi-slash-circle"></i>
                             <span>Error 404</span>
                         </a>
@@ -104,7 +104,7 @@
 
         <!-- Sidebar Profile Card (Dynamic Footer) -->
         <div class="sidebar-profile">
-            <img src="assets/images/avatar.png" alt="Administrator" class="sidebar-profile-img"
+            <img src="~/assets/images/avatar.png" alt="Administrator" class="sidebar-profile-img"
                  onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&auto=format&fit=crop'">
             <div class="sidebar-profile-info">
                 <div class="sidebar-profile-name">Administrator</div>
@@ -221,7 +221,7 @@
                 <div class="dropdown ms-2">
                     <button class="navbar-profile-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
                             aria-expanded="false" id="profile-dropdown">
-                        <img src="assets/images/avatar.png" alt="Profile Image" class="navbar-profile-img">
+                        <img src="~/assets/images/avatar.png" alt="Profile Image" class="navbar-profile-img">
                         <span class="navbar-profile-name d-none d-md-inline">Administrator</span>
                         <i class="bi bi-chevron-down navbar-profile-caret"></i>
                     </button>
@@ -234,7 +234,7 @@
                             <hr class="dropdown-divider">
                         </li>
                         <li>
-                            <a class="dropdown-item text-danger" href="page-login.html">
+                            <a class="dropdown-item text-danger" href="#">
                                 <i class="bi bi-box-arrow-right"></i>
                                 Logout
                             </a>
@@ -272,12 +272,14 @@
          END: Main Content Area
          ========================================== -->
     <!-- Local Third-Party Libraries Script dependencies -->
-    <script src="assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/libs/apexcharts/apexcharts.min.js"></script>
-    <script src="assets/libs/flatpickr/flatpickr.min.js"></script>
+    <script src="~/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/assets/libs/apexcharts/apexcharts.min.js"></script>
+    <script src="~/assets/libs/flatpickr/flatpickr.min.js"></script>
 
     <!-- Local dashboard interactions controller -->
-    <script src="assets/js/dashboard.js"></script>
+    <script src="~/assets/js/dashboard.js"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 
 </html>
