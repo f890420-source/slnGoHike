@@ -37,4 +37,36 @@ namespace prjGoHike.ViewModels_user.Member
             [Display(Name = "帳號狀態")]
             public string AccountStatus { get; set; }
         }
+    public class MemberLevelViewModel
+    {
+        [Display(Name = "名稱")]
+        public string Nickname { get; set; }
+
+        [Display(Name = "等級")]
+        public string LevelName { get; set; }
+
+        [Display(Name = "目前等級編號")]
+        public long CurrentLevelId { get; set; }
+
+        [Display(Name = "累積經驗值")]
+        public int TotalXp { get; set; }
+
+        [Display(Name = "本級最低經驗值")]
+        public int MinXp { get; set; }
+
+        [Display(Name = "本級最高經驗值")]
+        public int MaxXp { get; set; }
+
+        [Display(Name = "升級進度百分比")]
+        public decimal ProgressPercentage
+        {
+            get => MaxXp > MinXp ? (decimal)(TotalXp - MinXp) / (MaxXp - MinXp) * 100 : 0;
+        }
+
+        [Display(Name = "距離升級還需經驗值")]
+        public int XpForNextLevel
+        {
+            get => Math.Max(0, MaxXp - TotalXp);
+        }
     }
+}
