@@ -4,13 +4,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace prjGoHike.Models;
 
-public partial class GoHikeData40Context : DbContext
+public partial class GoHikeDataContext : DbContext
 {
-    public GoHikeData40Context()
+    public GoHikeDataContext()
     {
     }
 
-    public GoHikeData40Context(DbContextOptions<GoHikeData40Context> options)
+    public GoHikeDataContext(DbContextOptions<GoHikeDataContext> options)
         : base(options)
     {
     }
@@ -93,7 +93,7 @@ public partial class GoHikeData40Context : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Data Source=.;Initial Catalog=GoHikeData40;Integrated Security=True;Trust Server Certificate=True");
+        => optionsBuilder.UseSqlServer("Data Source=.;Initial Catalog=GoHikeData;Integrated Security=True;Trust Server Certificate=True", x => x.UseNetTopologySuite());
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -911,7 +911,7 @@ public partial class GoHikeData40Context : DbContext
         {
             entity.ToTable("users");
 
-            entity.HasIndex(e => e.Email, "UQ__users__AB6E6164F6B68D47").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__users__AB6E61647FC11310").IsUnique();
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.AccountStatus)
