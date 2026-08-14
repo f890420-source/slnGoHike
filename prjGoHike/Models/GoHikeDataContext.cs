@@ -19,6 +19,8 @@ public partial class GoHikeDataContext : DbContext
 
     public virtual DbSet<AlertsTrail> AlertsTrails { get; set; }
 
+    public virtual DbSet<Announcement> Announcements { get; set; }
+
     public virtual DbSet<Article> Articles { get; set; }
 
     public virtual DbSet<ArticleImage> ArticleImages { get; set; }
@@ -93,7 +95,7 @@ public partial class GoHikeDataContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Data Source=.;Initial Catalog=GoHikeData;Integrated Security=True;Trust Server Certificate=True", x => x.UseNetTopologySuite());
+        => optionsBuilder.UseSqlServer("Data Source=.;Initial Catalog=GoHikeData40;Integrated Security=True;Encrypt=False", x => x.UseNetTopologySuite());
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -144,6 +146,21 @@ public partial class GoHikeDataContext : DbContext
                 .HasForeignKey(d => d.TrailId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_AlertsTrails_Trail_Id");
+        });
+
+        modelBuilder.Entity<Announcement>(entity =>
+        {
+            entity.HasKey(e => e.AnnouncementId).HasName("PK__Announce__853AB7CFB653CA76");
+
+            entity.ToTable("Announcement");
+
+            entity.Property(e => e.AnnouncementId).HasColumnName("Announcement_ID");
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Status).HasDefaultValue((byte)1);
+            entity.Property(e => e.Title).HasMaxLength(100);
+            entity.Property(e => e.UpdateDate).HasColumnType("datetime");
         });
 
         modelBuilder.Entity<Article>(entity =>
@@ -911,7 +928,7 @@ public partial class GoHikeDataContext : DbContext
         {
             entity.ToTable("users");
 
-            entity.HasIndex(e => e.Email, "UQ__users__AB6E61647FC11310").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__users__AB6E616496713F0A").IsUnique();
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.AccountStatus)
