@@ -108,7 +108,69 @@
                     }
                 });
             });
-        });
+            $(document).on("click",".Btn-Edit", function(event) {
+
+                event.preventDefault();
+
+                
+                var id = $(this).data("id");
+
+                
+                $.ajax({
+                    url: '@Url.Action("EditEvent", "Mountain")',
+                    type: 'GET',
+                    data: {id:id},
+
+                     
+                    success: function(response) {
+                        if (response.success) {
+                            $("#EditModal [name='MountainW.MountainId']").val(response.data.mountainId);
+                            $("#EditModal [name='MountainW.MountainName']").val(response.data.mountainName);
+                            $("#EditModal [name='MountainW.Location']").val(response.data.location);
+                            $("#EditModal [name='MountainW.Altitude']").val(response.data.altitude);
+                            $("#EditModal [name='MountainW.DifficultyLevel']").val(response.data.difficultyLevel);
+                            $("#EditModal [name='MountainW.MountainsPermitRequired']").val(response.data.mountainsPermitRequired);
+                            $("#EditModal [name='MountainW.NationalParkPermitRequired']").val(response.data.nationalParkPermitRequired);
+                            
+                            var editModalEl = document.getElementById('EditEvent');
+                            var editModal = bootstrap.Modal.getOrCreateInstance(editModalEl);
+                            editModal.show();
+                        } else {
+                            alert("建立失敗：" + response.message);
+             }
+        }
+    });   
+}); 
+                
+            
+            $("#EditModal").on("submit",function(event){
+                event.preventDefault();
+                var dataform = $(this).serialize();
+                $.ajax({
+                        url: '@Url.Action("EditEvent", "Mountain")',
+                        type: 'POST',
+                        data: dataform,
+
+                                success: function(response) {
+                            if (response.success) {
+                                alert(response.message);
+                                var modalElement = document.getElementById('EditEvent');
+                                var modal = bootstrap.Modal.getInstance(modalElement);
+                                
+                                if (modal){ 
+                                    modal.hide()
+                                    location.reload();
+                                }
+                                
+                            }
+                            else{
+                                alert(response.message)
+                            }
+                        }
+                })
+            })
+        }); 
+        
     </script>
 }
 
@@ -119,7 +181,7 @@
                 <h5 class="modal-title">修改資料</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="EditEvent" method="post">
+            <form id="EditModal" method="post">
                 <div class="modal-body">
                     <div class="ErrorMessage">
                     </div>
@@ -166,7 +228,7 @@
                 <div class="modal-footer">
                     <div>
                         <button type="button" class="btn-custom btn-custom-outline-secondary " data-bs-dismiss="modal">取消</button>
-                        <button type="submit" class="btn-custom btn-custom-outline-secondary">儲存</button>
+                        <button id="SaveEdit" type="submit" class="btn-custom btn-custom-outline-secondary">儲存</button>
 
                     </div>
                 </div>
@@ -233,14 +295,10 @@
                     </td>
                     <td>
                         <p class="d-flex justify-content-end">
-                            <button type="button" class="btn-custom btn-custom-outline-secondary"
-                                    data-bs-toggle="modal" data-bs-target="#EditEvent">
+                            <button type="button" data-id="@item.MountainId" class="Btn-Edit btn-custom btn-custom-outline-secondary">      
                                 修改山岳資料
                             </button>
                         </p>
-
-                        <a asp-action="Edit" asp-route-id="@item.MountainId">編輯</a> 
-                        <a asp-action="Delete" asp-route-id="@item.MountainId">刪除</a>
                     </td>
                 </tr>
             }
