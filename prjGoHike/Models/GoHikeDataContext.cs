@@ -1,6 +1,7 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
+using static prjGoHike.Models.UserPermissions;
 
 namespace prjGoHike.Models;
 
@@ -97,6 +98,15 @@ public partial class GoHikeDataContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
+        // TPH 繼承設定:用 Role 欄位的值決定要 new 成哪個子類
+        modelBuilder.Entity<User>()
+            .HasDiscriminator<string>("Role")
+            .HasValue<Member>("一般會員")
+            .HasValue<EventLeader>("團主")
+            .HasValue<Admin>("管理員");
+
         modelBuilder.Entity<Achievement>(entity =>
         {
             entity.ToTable("achievements");

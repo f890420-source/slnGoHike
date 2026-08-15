@@ -42,7 +42,7 @@ namespace prjGoHike.ViewModels_user.Member
         [Display(Name = "名稱")]
         public string Nickname { get; set; }
 
-        [Display(Name = "等級")]
+        [Display(Name = "目前等級")]
         public string LevelName { get; set; }
 
         [Display(Name = "目前等級編號")]
