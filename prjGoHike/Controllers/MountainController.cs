@@ -13,9 +13,13 @@ namespace prjGoHike.Controllers
             CMountainVM mountains = new CMountainVM();
             return View(mountains);
         }
-        public IActionResult CreateNewEvent()
+        [HttpPost]
+        public IActionResult CreateNewEvent(CMountainVM cMountainVM)
         {
-            return View();
+            GoHikeDataContext db = new GoHikeDataContext();
+            db.Mountains.Add(cMountainVM.MountainW.Mountains);
+            db.SaveChanges();
+            return RedirectToAction("Index");
         }
     }
 }

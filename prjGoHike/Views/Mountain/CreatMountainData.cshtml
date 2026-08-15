@@ -18,10 +18,10 @@
                 <h5 class="modal-title">創建新資料</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="NewEvent">
+            <form id="NewEvent" method="post">
                 <div class="modal-body">
                     <div class="ErrorMessage">
-                        錯誤
+                        
                     </div>
                     <div class="col-lg-3 ">
                         @Html.LabelFor(n => n.MountainW.MountainName)
@@ -63,7 +63,7 @@
                 <div class="modal-footer">
                     <div>
                         <button type="button" class="btn-custom btn-custom-outline-secondary "data-bs-dismiss="modal">取消</button>
-                        <button type="submit" class="btn-custom btn-custom-outline-secondary">儲存</button>
+                        <button id="save" type="submit" class="btn-custom btn-custom-outline-secondary">儲存</button>
 
                     </div>
                 </div>
@@ -71,7 +71,16 @@
             </div>
         </div>
     </div>
-            
+@section Scripts {
+    <script>
+        $(function() {
+            $("#save").on("click", function(event) {
+                event.preventDefault()
+                                                
+            });
+        });
+    </script>
+}
            
 <table class="table">
     <thead>
@@ -97,7 +106,7 @@
             <th>
                  @Html.DisplayNameFor(model => model.MountainW.NationalParkPermitRequired)
             </th>
-            <th></th>
+            
         </tr>
     </thead>
     <tbody>
