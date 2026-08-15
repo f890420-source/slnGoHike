@@ -1015,7 +1015,7 @@ public partial class GoHikeDataContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("source");
 
-            entity.HasOne(d => d.Tag).WithMany(p => p.UserSkillTags)
+            entity.HasOne(d => d.SkillTag).WithMany(p => p.UserSkillTags)
                 .HasForeignKey(d => d.TagId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_user_skill_tags_tag_id");
