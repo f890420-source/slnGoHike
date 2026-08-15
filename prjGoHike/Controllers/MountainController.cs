@@ -14,72 +14,24 @@ namespace prjGoHike.Controllers
         {
             _db = db;
         }
-        //    public IActionResult CreatMountainData()
-        //    {
-        //        using (GoHikeDataContext db = new GoHikeDataContext())
-        //        {
-        //            // 查詢所有山岳資料並包裝為 CMountainWarp 列表
-        //            var list = db.Mountains.ToList().Select(m => new CMountainWarp
-        //            {
-        //                Mountains = m
-        //            }).ToList();
-
-        //            // 建立 ViewModel 並賦值
-        //            CMountainVM vm = new CMountainVM
-        //            {
-        //                MountainWrapList = list
-        //            };
-
-        //            return View(vm);
-        //        }
-        //    }
-        //    [HttpPost]
-        //    public IActionResult CreateNewEvent(CMountainVM cMountainVM)
-        //    {
-        //        try
-        //        {
-        //            GoHikeDataContext db = new GoHikeDataContext();
-
-
-        //            Mountain newMountain = new Mountain
-        //            {
-        //                MountainName = cMountainVM.MountainW.MountainName,
-        //                Location = cMountainVM.MountainW.Location,
-        //                Altitude = cMountainVM.MountainW.Altitude,
-        //                DifficultyLevel = cMountainVM.MountainW.DifficultyLevel,
-        //                MountainsPermitRequired = cMountainVM.MountainW.MountainsPermitRequired,
-        //                NationalParkPermitRequired = cMountainVM.MountainW.NationalParkPermitRequired
-        //            };
-
-
-        //            db.Mountains.Add(newMountain);
-        //            db.SaveChanges();
-
-
-        //            return Json(new { success = true, message = "資料建立成功！" });
-        //        }
-        //        catch (Exception ex)
-        //        {
-
-        //            return Json(new { success = false, message = ex.Message });
-        //        }
-        //    }
-        //}
+ 
         public IActionResult CreatMountainData()
         {
-            // 查詢所有山岳資料並包裝為 CMountainWarp 列表
-            var list = _db.Mountains.ToList().Select(m => new CMountainWarp
-            {
-                Mountains = m
-            }).ToList();
+            // 從資料庫取出所有山岳資料，並轉換成畫面需要的顯示格式
+            List<CMountainWarp> mountainList = _db.Mountains
+                .Select(mountain => new CMountainWarp
+                {
+                    Mountains = mountain
+                })
+                .ToList();
 
-            // 建立 ViewModel 並賦值
-            CMountainVM vm = new CMountainVM
+            // 組成 View 要用的 ViewModel
+            CMountainVM viewModel = new CMountainVM
             {
-                MountainWrapList = list
+                MountainWrapList = mountainList
             };
 
-            return View(vm);
+            return View(viewModel);
         }
 
         [HttpPost]
@@ -106,6 +58,19 @@ namespace prjGoHike.Controllers
             {
                 return Json(new { success = false, message = ex.Message });
             }
+        }
+        public IActionResult EditEvent(CMountainVM cMountainVM)
+        {
+            GoHikeDataContext db = new GoHikeDataContext();
+            var vm = db.Mountains.FirstOrDefault(m => m.MountainId == cMountainVM.MountainW.MountainId);
+            vm.MountainName = cMountainVM.MountainW.MountainName;
+            vm.Location = cMountainVM.MountainW.Location;
+            vm.Altitude = cMountainVM.MountainW.Altitude;
+            vm.DifficultyLevel = cMountainVM.MountainW.DifficultyLevel;
+            vm.MountainsPermitRequired = cMountainVM.MountainW.MountainsPermitRequired;
+            vm.NationalParkPermitRequired = cMountainVM.MountainW.NationalParkPermitRequired;
+            db.SaveChanges();
+            return Json(new { success = true, message = "修改成功!" });
         }
     }
 }

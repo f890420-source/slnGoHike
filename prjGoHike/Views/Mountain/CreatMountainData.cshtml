@@ -4,11 +4,11 @@
     ViewData["Title"] = "Index";
 }
 
-<h1>Index</h1>
+<h1>山岳資料</h1>
 <p class="d-flex justify-content-end" >
     <button type="button" class="btn-custom btn-custom-outline-secondary"
             data-bs-toggle="modal" data-bs-target="#CreateNewEvent">
-        創建新資料
+        創建山岳資料
     </button>
 </p>
 <div class="modal fade" id="CreateNewEvent" tabindex="-1" aria-hidden="true">
@@ -111,6 +111,70 @@
         });
     </script>
 }
+
+<div class="modal fade" id="EditEvent" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">修改資料</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="EditEvent" method="post">
+                <div class="modal-body">
+                    <div class="ErrorMessage">
+                    </div>
+                    <div>
+                        @Html.HiddenFor(n => n.MountainW.MountainId)
+                    </div>
+                    <div class="col-lg-3 ">
+                        @Html.LabelFor(n => n.MountainW.MountainName)
+                        @Html.TextBoxFor(n => n.MountainW.MountainName, new { @class = "form-control-custom" })
+                        @Html.ValidationMessageFor(n => n.MountainW.MountainName, "")
+                        
+                    </div>
+                    <div class="col-lg-3">
+                        @Html.LabelFor(n => n.MountainW.Location)
+                        @Html.TextBoxFor(n => n.MountainW.Location, new { @class = "form-control-custom" })
+                        @Html.ValidationMessageFor(n => n.MountainW.Location, "")
+
+                    </div>
+                    <div class="col-lg-3">
+                        @Html.LabelFor(n => n.MountainW.Altitude)
+                        @Html.TextBoxFor(n => n.MountainW.Altitude, new { @class = "form-control-custom" })
+                        @Html.ValidationMessageFor(n => n.MountainW.Altitude, "")
+
+                    </div>
+                    <div class="col-lg-3">
+                        @Html.LabelFor(n => n.MountainW.DifficultyLevel)
+                        @Html.TextBoxFor(n => n.MountainW.DifficultyLevel, new { @class = "form-control-custom" })
+                        @Html.ValidationMessageFor(n => n.MountainW.DifficultyLevel, "")
+
+                    </div>
+                    <div class="col-lg-3">
+                        @Html.LabelFor(n => n.MountainW.MountainsPermitRequired)
+                        @Html.TextBoxFor(n => n.MountainW.MountainsPermitRequired, new { @class = "form-control-custom" })
+                        @Html.ValidationMessageFor(n => n.MountainW.MountainsPermitRequired, "")
+
+                    </div>
+                    <div class="col-lg-3">
+                        @Html.LabelFor(n => n.MountainW.NationalParkPermitRequired)
+                        @Html.TextBoxFor(n => n.MountainW.NationalParkPermitRequired, new { @class = "form-control-custom" })
+                        @Html.ValidationMessageFor(n => n.MountainW.NationalParkPermitRequired, "")
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div>
+                        <button type="button" class="btn-custom btn-custom-outline-secondary " data-bs-dismiss="modal">取消</button>
+                        <button type="submit" class="btn-custom btn-custom-outline-secondary">儲存</button>
+
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
            
 <table class="table">
     <thead>
@@ -168,8 +232,15 @@
                         @Html.DisplayFor(model => item.NationalParkPermitRequired)
                     </td>
                     <td>
-                        <a asp-action="Edit" asp-route-id="@item.MountainId">Edit</a> 
-                        <a asp-action="Delete" asp-route-id="@item.MountainId">Delete</a>
+                        <p class="d-flex justify-content-end">
+                            <button type="button" class="btn-custom btn-custom-outline-secondary"
+                                    data-bs-toggle="modal" data-bs-target="#EditEvent">
+                                修改山岳資料
+                            </button>
+                        </p>
+
+                        <a asp-action="Edit" asp-route-id="@item.MountainId">編輯</a> 
+                        <a asp-action="Delete" asp-route-id="@item.MountainId">刪除</a>
                     </td>
                 </tr>
             }

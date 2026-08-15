@@ -2,13 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using prjGoHike.Models;
 //using prjGoHike.Models;
 var builder = WebApplication.CreateBuilder(args);
-var connectionString = builder.Configuration.GetConnectionString("GoHikeData40Context") ?? throw new InvalidOperationException("Connection string 'GoHikeData40Context' not found.");
+var connectionString = builder.Configuration.GetConnectionString("GoHikeDataContext") ?? throw new InvalidOperationException("Connection string 'GoHikeDataContext' not found.");
 
-//builder.Services.AddDbContext<GoHikeDataContext>(options => options.UseSqlServer(connectionString));
-builder.Services.AddDbContext<GoHikeDataContext>(options =>
-    options.UseSqlServer(connectionString, x => x.UseNetTopologySuite()));
+builder.Services.AddDbContext<GoHikeDataContext>(options => options.UseSqlServer(connectionString));
 
-//builder.Services.AddDbContext<GoHikeData40Context>(options => options.UseSqlServer(connectionString));
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 

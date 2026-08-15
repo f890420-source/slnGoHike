@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace prjGoHike.Models
 {
@@ -20,6 +21,7 @@ namespace prjGoHike.Models
             get { return _Mountain.MountainId; }
             set { _Mountain.MountainId = value; }
         }
+        [DisplayName("山岳名稱")]
         public string MountainName
         {
             get { return _Mountain.MountainName; }
