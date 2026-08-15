@@ -179,11 +179,10 @@ namespace prjGoHike.Controllers
                     // 等級資訊
                     LevelName = user.CurrentLevel?.LevelName ?? "未設定",
                     TotalXp = user.TotalXp,
-                    ProgressPercentage = CalculateProgressPercentage(
-                        user.TotalXp,
-                        user.CurrentLevel?.MinXp ?? 0,
-                        user.CurrentLevel?.MaxXp ?? 1000
-                    ),
+                    ProgressPercentage = user.CurrentLevel != null
+    ? (decimal)(user.TotalXp - user.CurrentLevel.MinXp) / (user.CurrentLevel.MaxXp - user.CurrentLevel.MinXp) * 100
+    : 0,
+
 
                     // 成就資訊
                     UnlockedAchievements = user.UserAchievements
@@ -226,11 +225,11 @@ namespace prjGoHike.Controllers
                         .ToList(),
                     TotalHikeCount = user.HikeRecords.Count,
 
-                    // 停權紀錄
+                    //停權紀錄
                     SuspensionHistory = user.SuspensionSchedules
                         .Select(ss => new SuspensionDto
                         {
-                            SuspensionId = ss.SuspensionScheduleId,
+                            SuspensionId = ss.BanId,
                             Reason = ss.Reason,
                             SuspensionExpirationTime = ss.SuspensionExpirationTime,
                             Status = ss.SuspensionExpirationTime > DateTime.Now ? "停權中" : "已解除"

@@ -1,0 +1,23 @@
+﻿@model prjGoHike.ViewModels_user.Member.MemberLevelViewModel
+
+@{
+    ViewData["Title"] = "等級進度";
+}
+
+<div class="container">
+    <h1>@ViewData["Title"]</h1>
+
+    <div class="member-progress">
+        <p>暱稱: @Model.Nickname</p>
+        <p>目前等級: @Model.LevelName</p>
+        <p>累積經驗值: @Model.TotalXp / @Model.MaxXp</p>
+
+        <div class="progress">
+            <div class="progress-bar" style="width: @Model.ProgressPercentage%">
+                @Model.ProgressPercentage.ToString("F1")%
+            </div>
+        </div>
+
+        <p>距離升級還需: @Model.XpForNextLevel XP</p>
+    </div>
+</div>
