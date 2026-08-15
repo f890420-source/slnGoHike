@@ -23,7 +23,7 @@ namespace prjGoHike.Controllers
         /// <summary>
         /// 取得目前登入的使用者 ID
         /// </summary>
-        private long GetCurrentUserId()
+        private long GetUserId()
         {
             var UserIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             //(ClaimTypes.NameIdentifier).NET預設登入後，會自動將使用者的 ID 存入 ClaimTypes.NameIdentifier 中
@@ -38,7 +38,7 @@ namespace prjGoHike.Controllers
         {
             try
             {
-                long userId = GetCurrentUserId();
+                long userId = GetUserId();
                 if (userId == 0)
                     return Unauthorized("請先登入");
 
@@ -69,5 +69,20 @@ namespace prjGoHike.Controllers
                 return StatusCode(500, "系統錯誤");
             }
         }
+        /// <summary>
+        /// 編輯個人資料
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> Profile(MemberProfileViewModel model)
+        {
+            try
+            {
+                long userid = GetUserId();
+                if (userid == null)
+                    return Unauthorized("請先登入");
+
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userid);
+
+            }
     }
 }
