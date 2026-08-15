@@ -4,7 +4,9 @@ using prjGoHike.Models;
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("GoHikeData40Context") ?? throw new InvalidOperationException("Connection string 'GoHikeData40Context' not found.");
 
-builder.Services.AddDbContext<GoHikeDataContext>(options => options.UseSqlServer(connectionString));
+//builder.Services.AddDbContext<GoHikeDataContext>(options => options.UseSqlServer(connectionString));
+builder.Services.AddDbContext<GoHikeDataContext>(options =>
+    options.UseSqlServer(connectionString, x => x.UseNetTopologySuite()));
 
 //builder.Services.AddDbContext<GoHikeData40Context>(options => options.UseSqlServer(connectionString));
 // Add services to the container.

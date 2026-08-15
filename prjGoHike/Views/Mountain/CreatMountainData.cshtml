@@ -74,9 +74,39 @@
 @section Scripts {
     <script>
         $(function() {
-            $("#save").on("click", function(event) {
-                event.preventDefault()
-                                                
+            $("#NewEvent").on("submit", function(event) {
+                event.preventDefault(); 
+
+                
+                var formData = $(this).serialize();
+
+                
+                $.ajax({
+                    url: '@Url.Action("CreateNewEvent", "Mountain")', 
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        if (response.success) {
+                            alert(response.message);
+
+                            
+                            var modalElement = document.getElementById('CreateNewEvent');
+                            var modal = bootstrap.Modal.getInstance(modalElement);
+                            if (modal) {
+                                modal.hide();
+                            }
+
+                            
+                            location.reload();
+                        } else {
+                            alert("建立失敗：" + response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("傳送失敗：", error);
+                        alert("系統發生錯誤，無法傳送資料。");
+                    }
+                });
             });
         });
     </script>
@@ -118,9 +148,6 @@
                 <tr>
                     <td>
                         @count
-                    </td>
-                    <td>
-                        @Html.DisplayFor(model => item.Mountains)
                     </td>
                     <td>
                         @Html.DisplayFor(model => item.MountainName)
