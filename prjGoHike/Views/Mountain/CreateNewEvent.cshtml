@@ -1,0 +1,48 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@model prjGoHike.Models.CMountainWarp
+<form method="post">
+    <div>
+        <div class="col-lg-3 ">
+            @Html.LabelFor(n => n.MountainName)
+            @Html.TextBoxFor(n => n.MountainName, "MountainName", new { @class = "form-control-custom" })
+            @Html.ValidationMessageFor(n => n.MountainName, "")
+            @* 使用lamda *@
+        </div>
+        <div class="col-lg-3">
+            @Html.LabelFor(n => n.Location)
+            @Html.TextBoxFor(n => n.Location, "", new { @class = "form-control-custom" })
+            @Html.ValidationMessageFor(n => n.Location, "")
+            
+        </div>
+        <div class="col-lg-3">
+            @Html.LabelFor(n => n.Altitude)
+            @Html.TextBoxFor(n => n.Altitude, "", new { @class = "form-control-custom" })
+            @Html.ValidationMessageFor(n => n.Altitude, "")
+            
+        </div>
+        <div class="col-lg-3">
+            @Html.LabelFor(n => n.DifficultyLevel)
+            @Html.TextBoxFor(n => n.DifficultyLevel, "", new { @class = "form-control-custom" })
+            @Html.ValidationMessageFor(n => n.DifficultyLevel, "")
+            
+        </div>
+        <div class="col-lg-3">
+            @Html.LabelFor(n => n.MountainsPermitRequired)
+            @Html.TextBoxFor(n => n.MountainsPermitRequired, "", new { @class = "form-control-custom" })
+            @Html.ValidationMessageFor(n => n.MountainsPermitRequired, "")
+            
+        </div>
+        <div class="col-lg-3">
+            @Html.LabelFor(n => n.NationalParkPermitRequired)
+            @Html.TextBoxFor(n => n.NationalParkPermitRequired, "", new { @class = "form-control-custom" })
+            @Html.ValidationMessageFor(n => n.NationalParkPermitRequired, "")
+            
+        </div>
+    </div>
+    
+</form>
+

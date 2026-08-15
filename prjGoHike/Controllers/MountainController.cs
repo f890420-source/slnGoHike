@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Identity.Client;
 using prjGoHike.Models;
+using prjGoHike.MountainViewModel;
 
 namespace prjGoHike.Controllers
 {
@@ -7,8 +9,13 @@ namespace prjGoHike.Controllers
     {
         public IActionResult CreatMountainData()
         {
-            List<CMountainWarp> mountains = new List<CMountainWarp>();
+            
+            CMountainVM mountains = new CMountainVM();
             return View(mountains);
+        }
+        public IActionResult CreateNewEvent()
+        {
+            return View();
         }
     }
 }

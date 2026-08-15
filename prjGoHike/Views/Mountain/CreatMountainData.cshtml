@@ -1,14 +1,78 @@
-@model IEnumerable<prjGoHike.Models.CMountainWarp>
-
+@using prjGoHike.MountainViewModel
+@model CMountainVM
 @{
     ViewData["Title"] = "Index";
 }
 
 <h1>Index</h1>
+<p class="d-flex justify-content-end" >
+    <button type="button" class="btn-custom btn-custom-outline-secondary"
+            data-bs-toggle="modal" data-bs-target="#CreateNewEvent">
+        創建新資料
+    </button>
+</p>
+<div class="modal fade" id="CreateNewEvent" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">創建新資料</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="NewEvent">
+                <div class="modal-body">
+                    <div class="ErrorMessage">
+                        錯誤
+                    </div>
+                    <div class="col-lg-3 ">
+                        @Html.LabelFor(n => n.MountainW.MountainName)
+                        @Html.TextBoxFor(n => n.MountainW.MountainName, new { @class = "form-control-custom" })
+                        @Html.ValidationMessageFor(n => n.MountainW.MountainName, "")
+                        @* 使用lamda *@
+                    </div>
+                    <div class="col-lg-3">
+                        @Html.LabelFor(n => n.MountainW.Location)
+                        @Html.TextBoxFor(n => n.MountainW.Location, new { @class = "form-control-custom" })
+                        @Html.ValidationMessageFor(n => n.MountainW.Location, "")
 
-@* <p>
-    <a asp-action="Create">Create New</a>
-</p> *@
+                    </div>
+                    <div class="col-lg-3">
+                        @Html.LabelFor(n => n.MountainW.Altitude)
+                        @Html.TextBoxFor(n => n.MountainW.Altitude, new { @class = "form-control-custom" })
+                        @Html.ValidationMessageFor(n => n.MountainW.Altitude, "")
+
+                    </div>
+                    <div class="col-lg-3">
+                        @Html.LabelFor(n => n.MountainW.DifficultyLevel)
+                        @Html.TextBoxFor(n => n.MountainW.DifficultyLevel, new { @class = "form-control-custom" })
+                        @Html.ValidationMessageFor(n => n.MountainW.DifficultyLevel, "")
+
+                    </div>
+                    <div class="col-lg-3">
+                        @Html.LabelFor(n => n.MountainW.MountainsPermitRequired)
+                        @Html.TextBoxFor(n => n.MountainW.MountainsPermitRequired, new { @class = "form-control-custom" })
+                        @Html.ValidationMessageFor(n => n.MountainW.MountainsPermitRequired, "")
+
+                    </div>
+                    <div class="col-lg-3">
+                        @Html.LabelFor(n => n.MountainW.NationalParkPermitRequired)
+                        @Html.TextBoxFor(n => n.MountainW.NationalParkPermitRequired, new { @class = "form-control-custom" })
+                        @Html.ValidationMessageFor(n => n.MountainW.NationalParkPermitRequired, "")
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div>
+                        <button type="button" class="btn-custom btn-custom-outline-secondary "data-bs-dismiss="modal">取消</button>
+                        <button type="submit" class="btn-custom btn-custom-outline-secondary">儲存</button>
+
+                    </div>
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+            
+           
 <table class="table">
     <thead>
         <tr>
@@ -16,25 +80,22 @@
                 序號
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Mountains)
+                  @Html.DisplayNameFor(model => model.MountainW.MountainName)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.MountainName)
+                   @Html.DisplayNameFor(model => model.MountainW.Location)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Location)
+                @Html.DisplayNameFor(model => model.MountainW.Altitude)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Altitude)
+                @Html.DisplayNameFor(model => model.MountainW.DifficultyLevel)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.DifficultyLevel)
+                  @Html.DisplayNameFor(model => model.MountainW.MountainsPermitRequired)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.MountainsPermitRequired)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.NationalParkPermitRequired)
+                 @Html.DisplayNameFor(model => model.MountainW.NationalParkPermitRequired)
             </th>
             <th></th>
         </tr>
@@ -42,7 +103,7 @@
     <tbody>
         @{
             int count = 0;
-            @foreach (var item in Model)
+            @foreach (var item in Model.MountainWrapList)
             {
                 count++;
                 <tr>
@@ -71,8 +132,7 @@
                         @Html.DisplayFor(model => item.NationalParkPermitRequired)
                     </td>
                     <td>
-                        <a asp-action="Edit" asp-route-id="@item.MountainId">Edit</a> |
-                        <a asp-action="Details" asp-route-id="@item.MountainId">Details</a> |
+                        <a asp-action="Edit" asp-route-id="@item.MountainId">Edit</a> 
                         <a asp-action="Delete" asp-route-id="@item.MountainId">Delete</a>
                     </td>
                 </tr>
