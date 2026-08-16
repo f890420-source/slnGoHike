@@ -40,7 +40,7 @@ namespace prjGoHike.Controllers
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "會員新增成功";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(MemberList));
         }
 
         private readonly GoHikeDataContext _context;
@@ -50,7 +50,7 @@ namespace prjGoHike.Controllers
             }
 
             // 會員列表(搜尋 + 角色篩選 + 分頁)
-            public async Task<IActionResult> Index(string? search, string? role, int page = 1, int pageSize = 20)
+            public async Task<IActionResult> MemberList(string? search, string? role, int page = 1, int pageSize = 20)
             {
                 var query = _context.Users.AsQueryable(); // Users 為 TPH 基底 DbSet
 
@@ -86,16 +86,104 @@ namespace prjGoHike.Controllers
                 });
             }
 
-            // 360度總覽(針對指定會員,非目前登入者)
-            public async Task<IActionResult> Dashboard(long id)
+        // 360度總覽(針對指定會員,非目前登入者)
+        //	管理員看指定會員的資料(需要傳 ID)
+        public async Task<IActionResult> Dashboard(long id)
             {
-                var vm = await Dashboard(id); // 抽成共用方法
-                if (vm == null) return NotFound();
-                return View(vm);
-            }
+            var vm = await BuildDashboardViewModel(id);
+            if (vm == null)
+                return NotFound("會員不存在");
 
-            // 角色調整 - 顯示表單
-            [HttpGet]
+            return View(vm);
+        }
+        /// <summary>
+        /// 共用方法:建構會員 Dashboard ViewModel
+        /// </summary>
+        private async Task<MemberDashboardViewModel> BuildDashboardViewModel(long userId)
+        {
+            var user = await _context.Users
+                .Include(u => u.CurrentLevel)
+                .Include(u => u.UserAchievements)
+                    .ThenInclude(ua => ua.Achievement)
+                .Include(u => u.UserSkillTags)
+                    .ThenInclude(ust => ust.SkillTag)
+                .Include(u => u.HikeRecords)
+                .Include(u => u.SuspensionSchedules)
+                .FirstOrDefaultAsync(u => u.UserId == userId);
+
+            if (user == null)
+                return null;
+
+            var totalAchievements = await _context.Achievements.CountAsync();
+
+            return new MemberDashboardViewModel
+            {
+                Nickname = user.Nickname,
+                AvatarUrl = user.AvatarUrl,
+                AccountStatus = user.AccountStatus,
+
+                // 等級資訊(計算屬性會自動算 ProgressPercentage)
+                LevelName = user.CurrentLevel?.LevelName ?? "未設定",
+                TotalXp = user.TotalXp,
+                MinXp = user.CurrentLevel?.MinXp ?? 0,
+                MaxXp = user.CurrentLevel?.MaxXp ?? 1000,
+
+                // 成就資訊
+                UnlockedAchievements = user.UserAchievements
+                    .Where(ua => ua.Achievement != null)
+                    .Select(ua => new AchievementDto
+                    {
+                        AchievementId = ua.AchievementId,
+                        Name = ua.Achievement.Name,
+                        Description = ua.Achievement.Description,
+                        Rarity = ua.Achievement.Rarity,
+                        UnlockedAt = ua.UnlockedAt
+                    })
+                    .ToList(),
+                TotalAchievementCount = totalAchievements,
+
+                // 標籤資訊
+                SkillTags = user.UserSkillTags
+                    .Where(ust => ust.SkillTag != null)
+                    .Select(ust => new SkillTagDto
+                    {
+                        TagId = ust.TagId,
+                        TagName = ust.SkillTag.TagName,
+                        Category = ust.SkillTag.Category,
+                        Source = ust.Source
+                    })
+                    .ToList(),
+
+                // 爬山紀錄
+                HikeRecords = user.HikeRecords
+                    .Select(hr => new HikeRecordDto
+                    {
+                        RecordId = hr.RecordId,
+                        MountainId = hr.MountainId,
+                        MountainName = "待補(另一組模組)",
+                        HikeDate = hr.HikeDate,
+                        CompanionCount = hr.CompanionCount,
+                        Verified = hr.Verified
+                    })
+                    .OrderByDescending(h => h.HikeDate)
+                    .ToList(),
+                TotalHikeCount = user.HikeRecords.Count,
+
+                // 停權紀錄
+                SuspensionHistory = user.SuspensionSchedules
+                    .Select(ss => new SuspensionDto
+                    {
+                        SuspensionId = ss.BanId,
+                        Reason = ss.Reason,
+                        SuspensionExpirationTime = ss.SuspensionExpirationTime,
+                        Status = ss.SuspensionExpirationTime > DateTime.Now ? "停權中" : "已解除"
+                    })
+                    .OrderByDescending(s => s.SuspensionExpirationTime)
+                    .ToList()
+            };
+        }
+        // 角色調整 - 顯示表單
+        [HttpGet]
             public async Task<IActionResult> ChangeRole(long id)
             {
                 var user = await _context.Users.FindAsync(id);
@@ -130,7 +218,7 @@ namespace prjGoHike.Controllers
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
 
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(MemberList));
         }
         }
     }
