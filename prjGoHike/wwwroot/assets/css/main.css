@@ -3183,5 +3183,10 @@ span.flatpickr-weekday {
     color: var(--brand-lime) !important;
 }
 
-
+.field-validation-error {
+    color: #dc3545;
+    font-size: 0.875rem;
+    display: block;
+    margin-top: 4px;
+}
 
