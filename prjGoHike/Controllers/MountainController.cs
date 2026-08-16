@@ -38,6 +38,11 @@ namespace prjGoHike.Controllers
         [HttpPost]
         public IActionResult CreateNewEvent(CMountainVM cMountainVM)
         {
+            if (!ModelState.IsValid)
+            {
+                var error = ModelState.Values.SelectMany(m => m.Errors).Select(s => s.ErrorMessage);
+                return Json(new { success = false, message = string.Join(",", error) });
+            }
             try
             {
                 Mountain newMountain = new Mountain
