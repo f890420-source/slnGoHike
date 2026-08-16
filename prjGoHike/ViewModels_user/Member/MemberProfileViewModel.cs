@@ -85,6 +85,13 @@ namespace prjGoHike.ViewModels_user.Member
         [Display(Name = "目前等級")]
         public string LevelName { get; set; }
 
+        [Display(Name = "本級最低經驗值")]
+        public int MinXp { get; set; }
+
+        [Display(Name = "本級最高經驗值")]
+        public int MaxXp { get; set; }
+
+
         [Display(Name = "累積經驗值")]
         public int TotalXp { get; set; }
 
