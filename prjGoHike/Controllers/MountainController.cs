@@ -118,5 +118,35 @@ namespace prjGoHike.Controllers
                 return Json(new { success = false, message = ex.Message });
             }
         }
+        [HttpPost]
+        public IActionResult DeleteEvent(int? id)
+        {
+            try
+            {
+                var moun = _db.Mountains.FirstOrDefault(m => m.MountainId == id);
+                if (id != null)
+                {
+                    
+                    _db.Remove(moun);
+                    _db.SaveChanges();
+                }
+
+                else
+                {
+                    return Json(new { success = false, message = "無資料" });
+                }
+                if(moun == null)
+                {
+                    return Json(new { success = false, message = "找不到資料庫資料" });
+                }
+            }
+
+
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+            return Json(new { success = false, message = "資料刪除成功" });
+        }
     }   
 }

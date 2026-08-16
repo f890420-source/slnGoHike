@@ -169,6 +169,33 @@
                         }
                 })
             })
+
+            $(document).on("click", ".Btn-Delete",function(event){
+                
+                var id = $(this).data("id");
+                $("#deleteMountainId").val(id);
+
+            })
+            $("#DeleteForm").on("submit", function(event) {
+                event.preventDefault();
+                var id = $("#deleteMountainId").val();
+
+                $.ajax({
+                    url: '@Url.Action("DeleteEvent", "Mountain")',
+                    type: "POST",
+                    data: { id: id },
+                    success: function(response) {
+                        var modalElement = document.getElementById('DeleteEvent');
+                        var modal = bootstrap.Modal.getInstance(modalElement);
+
+                        if (modal) {
+                            modal.hide()
+                            location.reload();
+                        }
+                    }
+
+                })
+            })
         }); 
         
     </script>
@@ -236,7 +263,32 @@
         </div>
     </div>
 </div>
-
+<div class="modal fade" id="DeleteEvent" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+            <div> 
+                <h5 class="modal-title ps-1">刪除資料</h5>
+			</div>
+			</div>
+                <div class="modal-body">
+				<p>確定要刪除嗎?</p>
+                </div>
+                <div class="modal-footer">
+                    <div>
+                        <button type="button" class="btn-custom btn-custom-light" data-bs-dismiss="modal" aria-label="取消">取消</button>
+                    </div>
+                    <form id="DeleteForm" method="post">
+                        <input type="hidden" name="id" id="deleteMountainId" />
+                        <div>
+                            <button type="submit" class="delete-save btn-custom btn-custom-danger" data-bs-dismiss="modal" aria-label="刪除">刪除</button>
+                        </div>
+                    </form>
+                </div>
+            
+        </div>
+    </div>
+</div>
            
 <table class="table">
     <thead>
@@ -297,6 +349,14 @@
                         <p class="d-flex justify-content-end">
                             <button type="button" data-id="@item.MountainId" class="Btn-Edit btn-custom btn-custom-outline-secondary">      
                                 修改山岳資料
+                            </button>
+                        </p>
+                    </td>
+                    <td>
+                        <p class="d-flex justify-content-end">
+                            <button type="button" data-id="@item.MountainId" class="Btn-Delete btn-custom btn-custom-outline-secondary"
+                                    data-bs-toggle="modal" data-bs-target="#DeleteEvent">
+                                刪除資料
                             </button>
                         </p>
                     </td>
