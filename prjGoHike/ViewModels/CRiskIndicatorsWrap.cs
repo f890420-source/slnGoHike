@@ -21,6 +21,11 @@ public class CRiskIndicatorsWrap
         _riskIndicator = new RiskIndicator();
     }
 
+    public CRiskIndicatorsWrap(RiskIndicator riskIndicator)
+    {
+        _riskIndicator = riskIndicator;
+    }
+
     [Key]
     public long RiskIndicatorId
     {
