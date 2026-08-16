@@ -10,7 +10,7 @@ namespace prjGoHike.Controllers
     {
         private readonly GoHikeDataContext _db;
 
-        // 透過建構子注入，讓系統自動帶入 appsettings.json 的連線設定
+        
         public MountainController(GoHikeDataContext db)
         {
             _db = db;
@@ -18,7 +18,8 @@ namespace prjGoHike.Controllers
 
         public IActionResult CreatMountainData()
         {
-            // 從資料庫取出所有山岳資料，並轉換成畫面需要的顯示格式
+            
+            
             List<CMountainWarp> mountainList = _db.Mountains
                 .Select(mountain => new CMountainWarp
                 {
@@ -26,7 +27,7 @@ namespace prjGoHike.Controllers
                 })
                 .ToList();
 
-            // 組成 View 要用的 ViewModel
+            
             CMountainVM viewModel = new CMountainVM
             {
                 MountainWrapList = mountainList
@@ -86,6 +87,7 @@ namespace prjGoHike.Controllers
                             mountainsPermitRequired = moun.MountainsPermitRequired,
                             nationalParkPermitRequired = moun.NationalParkPermitRequired
                         }
+                        //匿名型別
                     });
             }
             else

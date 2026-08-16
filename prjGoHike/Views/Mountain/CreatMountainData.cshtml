@@ -23,39 +23,39 @@
                     <div class="ErrorMessage">
                         
                     </div>
-                    <div class="col-lg-3 ">
+                    <div class="col-lg-12 ">
                         @Html.LabelFor(n => n.MountainW.MountainName)
-                        @Html.TextBoxFor(n => n.MountainW.MountainName, new { @class = "form-control-custom" })
+                        @Html.TextBoxFor(n => n.MountainW.MountainName, new { @class = "form-control-custom",  placeholder = "請輸入資料"})
                         @Html.ValidationMessageFor(n => n.MountainW.MountainName, "")
                         @* 使用lamda *@
                     </div>
-                    <div class="col-lg-3">
+                    <div class="col-lg-12">
                         @Html.LabelFor(n => n.MountainW.Location)
-                        @Html.TextBoxFor(n => n.MountainW.Location, new { @class = "form-control-custom" })
+                        @Html.TextBoxFor(n => n.MountainW.Location, new { @class = "form-control-custom", placeholder = "請輸入資料" })
                         @Html.ValidationMessageFor(n => n.MountainW.Location, "")
 
                     </div>
-                    <div class="col-lg-3">
+                    <div class="col-lg-12">
                         @Html.LabelFor(n => n.MountainW.Altitude)
-                        @Html.TextBoxFor(n => n.MountainW.Altitude, new { @class = "form-control-custom" })
+                        @Html.TextBoxFor(n => n.MountainW.Altitude, new { @class = "form-control-custom", placeholder = "請輸入資料" })
                         @Html.ValidationMessageFor(n => n.MountainW.Altitude, "")
 
                     </div>
-                    <div class="col-lg-3">
+                    <div class="col-lg-12">
                         @Html.LabelFor(n => n.MountainW.DifficultyLevel)
-                        @Html.TextBoxFor(n => n.MountainW.DifficultyLevel, new { @class = "form-control-custom" })
+                        @Html.TextBoxFor(n => n.MountainW.DifficultyLevel, new { @class = "form-control-custom", placeholder = "請輸入資料" })
                         @Html.ValidationMessageFor(n => n.MountainW.DifficultyLevel, "")
 
                     </div>
-                    <div class="col-lg-3">
+                    <div class="col-lg-12">
                         @Html.LabelFor(n => n.MountainW.MountainsPermitRequired)
-                        @Html.TextBoxFor(n => n.MountainW.MountainsPermitRequired, new { @class = "form-control-custom" })
+                        @Html.TextBoxFor(n => n.MountainW.MountainsPermitRequired, new { @class = "form-control-custom", placeholder = "請輸入資料" })
                         @Html.ValidationMessageFor(n => n.MountainW.MountainsPermitRequired, "")
 
                     </div>
-                    <div class="col-lg-3">
+                    <div class="col-lg-12">
                         @Html.LabelFor(n => n.MountainW.NationalParkPermitRequired)
-                        @Html.TextBoxFor(n => n.MountainW.NationalParkPermitRequired, new { @class = "form-control-custom" })
+                        @Html.TextBoxFor(n => n.MountainW.NationalParkPermitRequired, new { @class = "form-control-custom", placeholder = "請輸入資料" })
                         @Html.ValidationMessageFor(n => n.MountainW.NationalParkPermitRequired, "")
 
                     </div>
@@ -219,40 +219,40 @@
                     <div>
                         @Html.HiddenFor(n => n.MountainW.MountainId)
                     </div>
-                    <div class="col-lg-3 ">
+                    <div class="col-lg-12 ">
                         @Html.LabelFor(n => n.MountainW.MountainName)
                         @Html.TextBoxFor(n => n.MountainW.MountainName, new { @class = "form-control-custom" })
-                        @Html.ValidationMessageFor(n => n.MountainW.MountainName, "", new { @class = "field-validation-error" })
+                        @* @Html.ValidationMessageFor(n => n.MountainW.MountainName, "") *@
                         
                     </div>
-                    <div class="col-lg-3">
+                    <div class="col-lg-12">
                         @Html.LabelFor(n => n.MountainW.Location)
                         @Html.TextBoxFor(n => n.MountainW.Location, new { @class = "form-control-custom" })
-                        @Html.ValidationMessageFor(n => n.MountainW.Location, "", new { @class = "field-validation-error" })
+                        @* @Html.ValidationMessageFor(n => n.MountainW.Location, "") *@
 
                     </div>
-                    <div class="col-lg-3">
+                    <div class="col-lg-12">
                         @Html.LabelFor(n => n.MountainW.Altitude)
                         @Html.TextBoxFor(n => n.MountainW.Altitude, new { @class = "form-control-custom" })
-                        @Html.ValidationMessageFor(n => n.MountainW.Altitude, "", new { @class = "field-validation-error" })
+                        @* @Html.ValidationMessageFor(n => n.MountainW.Altitude, "") *@
 
                     </div>
-                    <div class="col-lg-3">
+                    <div class="col-lg-12">
                         @Html.LabelFor(n => n.MountainW.DifficultyLevel)
                         @Html.TextBoxFor(n => n.MountainW.DifficultyLevel, new { @class = "form-control-custom" })
-                        @Html.ValidationMessageFor(n => n.MountainW.DifficultyLevel, "", new { @class = "field-validation-error" })
+                        @* @Html.ValidationMessageFor(n => n.MountainW.DifficultyLevel, "") *@
 
                     </div>
-                    <div class="col-lg-3">
+                    <div class="col-lg-12">
                         @Html.LabelFor(n => n.MountainW.MountainsPermitRequired)
                         @Html.TextBoxFor(n => n.MountainW.MountainsPermitRequired, new { @class = "form-control-custom" })
-                        @Html.ValidationMessageFor(n => n.MountainW.MountainsPermitRequired, "", new { @class = "field-validation-error" })
+                        @* @Html.ValidationMessageFor(n => n.MountainW.MountainsPermitRequired, "") *@
 
                     </div>
-                    <div class="col-lg-3">
+                    <div class="col-lg-12">
                         @Html.LabelFor(n => n.MountainW.NationalParkPermitRequired)
                         @Html.TextBoxFor(n => n.MountainW.NationalParkPermitRequired, new { @class = "form-control-custom" })
-                        @Html.ValidationMessageFor(n => n.MountainW.NationalParkPermitRequired, "", new { @class = "field-validation-error" })
+                        @* @Html.ValidationMessageFor(n => n.MountainW.NationalParkPermitRequired, "") *@
 
                     </div>
                 </div>
