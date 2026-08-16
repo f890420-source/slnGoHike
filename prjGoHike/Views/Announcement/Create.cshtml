@@ -1,0 +1,85 @@
+@model prjGoHike.Models.Announcement
+
+@{
+    ViewData["Title"] = "新增公告";
+}
+
+<div class="container-fluid">
+
+    <div class="mb-4">
+        <h2>新增公告</h2>
+        <p class="text-muted">建立新的網站公告</p>
+    </div>
+
+    <div class="card">
+
+        <div class="card-body">
+
+            <form asp-action="Create" method="post">
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3">
+                </div>
+
+
+                <!-- 公告標題 -->
+                <div class="mb-3">
+
+                    <label asp-for="Title"
+                           class="form-label">
+                        公告標題
+                    </label>
+
+                    <input asp-for="Title"
+                           class="form-control"
+                           placeholder="請輸入公告標題" />
+
+                    <span asp-validation-for="Title"
+                          class="text-danger">
+                    </span>
+
+                </div>
+
+
+                <!-- 公告內容 -->
+                <div class="mb-3">
+
+                    <label asp-for="Content"
+                           class="form-label">
+                        公告內容
+                    </label>
+
+                    <textarea asp-for="Content"
+                              class="form-control"
+                              rows="8"
+                              placeholder="請輸入公告內容"></textarea>
+
+                    <span asp-validation-for="Content"
+                          class="text-danger">
+                    </span>
+
+                </div>
+
+
+                <!-- 按鈕 -->
+                <div class="d-flex gap-2">
+
+                    <button type="submit"
+                            class="btn btn-primary">
+                        發布公告
+                    </button>
+
+                    <a asp-action="Index"
+                       class="btn btn-secondary">
+                        取消
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>

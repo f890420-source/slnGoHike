@@ -1,0 +1,290 @@
+@model IEnumerable<prjGoHike.Models.Announcement>
+
+@{
+    ViewData["Title"] = "公告管理";
+}
+
+<div class="container-fluid">
+
+    <!-- 標題 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2 class="mb-1">公告管理</h2>
+
+            <p class="text-muted mb-0">
+                管理網站公告內容
+            </p>
+        </div>
+
+        <a asp-action="Create"
+           class="btn btn-primary">
+
+            <i class="fa fa-plus"></i>
+            新增公告
+
+        </a>
+
+    </div>
+
+
+    <!-- 公告列表 -->
+    <div class="card">
+
+        <!-- Card Header -->
+        <div class="card-header">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <h5 class="mb-0">
+                    公告列表
+                </h5>
+
+
+                <!-- 狀態篩選 -->
+                <form asp-action="Index"
+                      method="get"
+                      class="d-flex align-items-center gap-2">
+
+                    <label class="mb-0">
+                        狀態：
+                    </label>
+
+                    <select name="status"
+                            class="form-select"
+                            style="width: 150px;"
+                            onchange="this.form.submit()">
+
+                        <option value=""
+                                selected="@(ViewBag.Status == null)">
+                            全部
+                        </option>
+
+                        <option value="1"
+                                selected="@(ViewBag.Status?.ToString() == "1")">
+                            已發布
+                        </option>
+
+                        <option value="0"
+                                selected="@(ViewBag.Status?.ToString() == "0")">
+                            已下架
+                        </option>
+
+                    </select>
+
+                </form>
+
+            </div>
+
+        </div>
+
+
+        <!-- Card Body -->
+        <div class="card-body">
+
+            @if (!Model.Any())
+            {
+                <div class="text-center py-5">
+
+                    <p class="text-muted">
+                        目前沒有公告
+                    </p>
+
+                    <a asp-action="Create"
+                       class="btn btn-primary">
+                        新增第一則公告
+                    </a>
+
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+
+                    <table class="table table-hover align-middle">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    標題
+                                </th>
+
+                                <th>
+                                    內容
+                                </th>
+
+                                <th>
+                                    狀態
+                                </th>
+
+                                <th>
+                                    發布時間
+                                </th>
+
+                                <th class="text-center">
+                                    操作
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+
+                                    <!-- 標題 -->
+                                    <td>
+
+                                        <strong>
+                                            @item.Title
+                                        </strong>
+
+                                    </td>
+
+
+                                    <!-- 內容 -->
+                                    <td>
+
+                                        @{
+                                            var content = item.Content ?? "";
+
+                                            if (content.Length > 50)
+                                            {
+                                                content = content.Substring(0, 50) + "...";
+                                            }
+                                        }
+
+                                        @content
+
+                                    </td>
+
+
+                                    <!-- 狀態 -->
+                                    <td>
+
+                                        @if (item.Status == 1)
+                                        {
+                                            <span class="badge bg-success">
+                                                已發布
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">
+                                                已下架
+                                            </span>
+                                        }
+
+                                    </td>
+
+
+                                    <!-- 發布時間 -->
+                                    <td>
+                                        @item.CreatedDate
+                                    </td>
+
+
+                                    <!-- 操作 -->
+                                    <td class="text-center">
+
+                                        <!-- 編輯 -->
+                                        <a asp-action="Edit"
+                                           asp-route-id="@item.AnnouncementId"
+                                           class="btn btn-sm btn-warning">
+                                            編輯
+                                        </a>
+
+
+                                        <!-- 刪除 -->
+                                        <form asp-action="Delete"
+                                              asp-route-id="@item.AnnouncementId"
+                                              method="post"
+                                              style="display:inline;"
+                                              onsubmit="return confirm('確定要刪除這則公告嗎？');">
+
+                                            @Html.AntiForgeryToken()
+
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-danger">
+                                                刪除
+                                            </button>
+
+                                        </form>
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+
+                    <!-- 分頁 -->
+                    @if (ViewBag.TotalPages > 1)
+                    {
+                        <nav aria-label="公告分頁">
+
+                            <ul class="pagination justify-content-center">
+
+                                <!-- 上一頁 -->
+                                <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+
+                                    <a class="page-link"
+                                       asp-action="Index"
+                                       asp-route-page="@(ViewBag.CurrentPage - 1)"
+                                       asp-route-status="@ViewBag.Status">
+                                        上一頁
+                                    </a>
+
+                                </li>
+
+
+                                <!-- 頁碼 -->
+                                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                                {
+                                    <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+
+                                        <a class="page-link"
+                                           asp-action="Index"
+                                           asp-route-page="@i"
+                                           asp-route-status="@ViewBag.Status">
+                                            @i
+                                        </a>
+
+                                    </li>
+                                }
+
+
+                                <!-- 下一頁 -->
+                                <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+
+                                    <a class="page-link"
+                                       asp-action="Index"
+                                       asp-route-page="@(ViewBag.CurrentPage + 1)"
+                                       asp-route-status="@ViewBag.Status">
+                                        下一頁
+                                    </a>
+
+                                </li>
+
+                            </ul>
+
+                        </nav>
+                    }
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+</div>
