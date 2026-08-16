@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.Models;
+using prjGoHike.ViewModels;
 
 public class AdminTrailsController : Controller
 {

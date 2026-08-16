@@ -1,8 +1,9 @@
 using NetTopologySuite.Geometries;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using prjGoHike.Models;
 
-namespace prjGoHike.Models;
+namespace prjGoHike.ViewModels;
 
 public partial class CTrailWrap
 {
