@@ -17,6 +17,7 @@ namespace prjGoHike.Models
             set { _EventData = value; }
         }
         [Key]
+        [DisplayName("活動編號")]
         public long EventId
         {
             get { return _EventData.EventId; }
