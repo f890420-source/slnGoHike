@@ -1,0 +1,107 @@
+﻿@model prjGoHike.ViewModels_user.Member.MemberDashboardViewModel
+
+@{
+    ViewData["Title"] = "會員總覽";
+}
+
+<div class="container">
+    <h1>@Model.Nickname 的會員資料</h1>
+
+    <!-- 基本資訊 -->
+    <div class="card mb-3">
+        <div class="card-header">基本資訊</div>
+        <div class="card-body">
+            <p>帳號狀態: @Model.AccountStatus</p>
+            <p>等級: @Model.LevelName | 經驗值: @Model.TotalXp</p>
+            <p>進度: @Model.ProgressPercentage.ToString("F1")%</p>
+        </div>
+    </div>
+
+    <!-- 成就 -->
+    <div class="card mb-3">
+        <div class="card-header">成就 (@Model.UnlockedAchievements.Count / @Model.TotalAchievementCount)</div>
+        <div class="card-body">
+            @if (Model.UnlockedAchievements.Count > 0)
+            {
+                @foreach (var ach in Model.UnlockedAchievements)
+                {
+                    <span class="badge badge-info">@ach.Name</span>
+                }
+            }
+            else
+            {
+                <p>還沒解鎖任何成就</p>
+            }
+        </div>
+    </div>
+
+    <!-- 標籤 -->
+    <div class="card mb-3">
+        <div class="card-header">能力標籤</div>
+        <div class="card-body">
+            @if (Model.SkillTags.Count > 0)
+            {
+                @foreach (var tag in Model.SkillTags)
+                {
+                    <span class="badge badge-success">@tag.TagName (@tag.Source)</span>
+                }
+            }
+            else
+            {
+                <p>還沒有任何標籤</p>
+            }
+        </div>
+    </div>
+
+    <!-- 爬山紀錄 -->
+    <div class="card mb-3">
+        <div class="card-header">爬山紀錄 (@Model.TotalHikeCount)</div>
+        <div class="card-body">
+            @if (Model.HikeRecords.Count > 0)
+            {
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>山岳</th>
+                            <th>同伴數</th>
+                            <th>驗證</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var hike in Model.HikeRecords)
+                        {
+                            <tr>
+                                <td>@hike.HikeDate</td>
+                                <td>@hike.MountainName</td>
+                                <td>@hike.CompanionCount</td>
+                                <td>@(hike.Verified ? "✓" : "✗")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p>還沒有爬山紀錄</p>
+            }
+        </div>
+    </div>
+
+    <!-- 停權紀錄 -->
+    @if (Model.SuspensionHistory.Count > 0)
+    {
+        <div class="card mb-3">
+            <div class="card-header">停權紀錄</div>
+            <div class="card-body">
+                @foreach (var suspension in Model.SuspensionHistory)
+                {
+                    <div class="alert alert-warning">
+                        <p>原因: @suspension.Reason</p>
+                        <p>到期時間: @suspension.SuspensionExpirationTime | 狀態: @suspension.Status</p>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>

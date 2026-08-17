@@ -1,0 +1,38 @@
+﻿@model prjGoHike.ViewModels_user.Member.MemberProfileViewModel
+
+@{
+    ViewData["Title"] = "個人資料";
+}
+
+<div class="container">
+    <h1>@ViewData["Title"]</h1>
+
+    <form method="post">
+        <div class="form-group">
+            <label asp-for="Nickname"></label>
+            <input asp-for="Nickname" class="form-control" />
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Bio"></label>
+            <textarea asp-for="Bio" class="form-control"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="RegionPreference"></label>
+            <input asp-for="RegionPreference" class="form-control" />
+        </div>
+
+        <div class="form-group">
+            <label asp-for="DifficultyPreference"></label>
+            <input asp-for="DifficultyPreference" class="form-control" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">更新資料</button>
+    </form>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+</div>
