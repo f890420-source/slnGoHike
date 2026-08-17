@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.Models;
-using prjGoHike.ViewModels_user.Member.GoHike.Models.ViewModels_user;
+using prjGoHike.ViewModels_user.Member;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
