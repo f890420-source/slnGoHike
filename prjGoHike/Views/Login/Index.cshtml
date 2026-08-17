@@ -40,7 +40,7 @@
                         </div>
                         <!-- 記住我 -->
                         <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="rememberMe" name="RememberMe" value="true">
+                            <input asp-for="RememberMe" class="form-check-input" id="rememberMe">
                             <label class="form-check-label" for="rememberMe">
                                 記住我（30 天內免登入）
                             </label>
@@ -54,7 +54,7 @@
 
                     <hr class="my-4">
 
-@*                     <!-- 底部連結 -->
+                                        <!-- 底部連結 -->
                     <div class="text-center">
                         <p class="mb-2">還沒有帳號？</p>
                         <a href="@Url.Action("RegisterIndex", "Login")" class="btn btn-outline-success btn-sm fw-bold">
@@ -63,7 +63,7 @@
                     </div>
 
                     <!-- 暫時隱藏忘記密碼（待實作） -->
-                    <div class="text-center mt-3">
+            @*         <div class="text-center mt-3">
                         <small class="text-muted">
                             <a href="#" class="text-decoration-none" onclick="alert('此功能開發中')">
                                 忘記密碼？
@@ -71,37 +71,37 @@
                         </small>
                     </div>
                 </div>
-            </div>
+            </div> *@
 
             <!-- 測試資料提示（開發階段） -->
-            <div class="alert alert-info mt-3" role="alert">
+@*             <div class="alert alert-info mt-3" role="alert">
                 <small>
-                    <strong>📌 測試帳號：</strong><br>
+                    <strong> 測試帳號：</strong><br>
                     若要測試登入，請先確保資料庫已有使用者記錄。
                 </small>
             </div>
         </div>
     </div>
-</div>
+</div> *@
 
-@section Scripts {
+@* @section Scripts {
     <script>
         // 簡單的表單驗證
-        document.querySelector('form').addEventListener('submit', function (e) {
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
+        // document.querySelector('form').addEventListener('submit', function (e) {
+        //     const email = document.getElementById('email').value.trim();
+        //     const password = document.getElementById('password').value.trim();
 
-            if (!email || !password) {
-                e.preventDefault();
-                alert('請填寫所有必填欄位');
-                return false;
-            }
+        //     if (!email || !password) {
+        //         e.preventDefault();
+        //         alert('請填寫所有必填欄位');
+        //         return false;
+        //     }
 
-            if (!email.includes('@')) {
-                e.preventDefault();
-                alert('請輸入正確的電子郵件格式');
-                return false;
-            }
-        }); *@
-    </script>
+        //     if (!email.includes('@')) {
+        //         e.preventDefault();
+        //         alert('請輸入正確的電子郵件格式');
+        //         return false;
+        //     }
+        // });
+    </script> *@
 }
