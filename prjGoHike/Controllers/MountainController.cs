@@ -37,7 +37,7 @@ namespace prjGoHike.Controllers
         }
 
         [HttpPost]
-        public IActionResult CreateNewEvent(CMountainVM cMountainVM)
+        public IActionResult CreateNewMountain(CMountainVM cMountainVM)
         {
             if (!ModelState.IsValid)
             {

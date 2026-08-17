@@ -7,11 +7,11 @@
 <h1>山岳資料</h1>
 <p class="d-flex justify-content-end" >
     <button type="button" class="btn-custom btn-custom-outline-secondary"
-            data-bs-toggle="modal" data-bs-target="#CreateNewEvent">
+            data-bs-toggle="modal" data-bs-target="#CreateNewMountain">
         創建山岳資料
     </button>
 </p>
-<div class="modal fade" id="CreateNewEvent" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="CreateNewMountain" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -86,7 +86,7 @@
 
                 
                 $.ajax({
-                    url: '@Url.Action("CreateNewEvent", "Mountain")', 
+                    url: '@Url.Action("CreateNewMountain", "Mountain")',
                     type: 'POST',
                     data: formData,
                     success: function(response) {
@@ -94,7 +94,7 @@
                             alert(response.message);
 
                             
-                            var modalElement = document.getElementById('CreateNewEvent');
+                            var modalElement = document.getElementById('CreateNewMountain');
                             var modal = bootstrap.Modal.getInstance(modalElement);
                             if (modal) {
                                 modal.hide();

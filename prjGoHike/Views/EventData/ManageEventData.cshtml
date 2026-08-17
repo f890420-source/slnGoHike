@@ -8,13 +8,13 @@
 <h1>管理活動</h1>
 
 @* <div class="Eventaccordion" id="EventAccordion"> *@
-    @{
-        int count = 0;
-    }
-    @foreach (var item in Model.cEventDatasList)
-    {
-        count++;
-        <div class="accordion">
+@{
+    int count = 0;
+}
+@foreach (var item in Model.cEventDatasList)
+{
+    count++;
+    <div class="accordion">
         <div class="accordion-item">
             <h2 class="accordion-header">
                 <button class="accordion-button" type="button" data-bs-toggle="collapse"
@@ -27,6 +27,9 @@
             <div id="collapse@(count)" class="accordion-collapse collapse show" data-bs-parent="#EventAccordion">
                 <div class="accordion-body">
                     <dl class="row">
+                        <dt class="col-sm-3">@Html.DisplayNameFor(model => item.EventId)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(modelItem => item.EventId)</dd>
+
                         <dt class="col-sm-3">@Html.DisplayNameFor(model => item.MountainId)</dt>
                         <dd class="col-sm-9">@Html.DisplayFor(modelItem => item.MountainId)</dd>
 
@@ -61,88 +64,146 @@
                         <dd class="col-sm-9">@Html.DisplayFor(modelItem => item.LeaderUserId)</dd>
                     </dl>
 
-                    <button type="button" id="Edit" data-id="@item.EventId" data-bs-toggle="modal" data-bs-target="">編輯</button>
-                    <button type="button" id="Delete" data-id="@item.EventId" data-bs-toggle="modal" data-bs-target="">編輯</button>
-                    @* <a asp-action="Edit" id = "Edit" data-id = "@item.EventId">Edit</a>
+                    <button type="button" class="Edit btn-custom btn-custom-outline-secondary" data-id="@item.EventId" data-bs-toggle="modal" data-bs-target="#EditManageEvent">編輯</button>
+                    <button type="button" class="Delete btn-custom btn-custom-outline-secondary" data-id="@item.EventId">刪除</button>
+                    @* <a asp-action="Edit"  = "Edit" data-id = "@item.EventId">Edit</a>
                     <a asp-action="Delete" id="Delete" data-id = "@item.EventId">Delete</a> *@
                 </div>
             </div>
         </div>
     </div>
-    }
-<div class="modal fade" id="CreateNewEvent" tabindex="-1" aria-hidden="true">
+}
+<div class="modal fade" id="EditManageEvent" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div <div class="modal-header">>
+            <div class="modal-header">
                 <h5 class="modal-title">修改資料</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 
-                </div>
-                <form id="EditModal" method="post">
-                    <div class="modal-body">
-                        <div>
-                            @Html.HiddenFor(e => e.cEvent.EventId)
-                        </div>
-                        <div>
-                            @Html.LabelFor(e =>e.cEvent.MountainId)
-                            @Html.TextBoxFor(e => e.cEvent.MountainId)
-                        </div>
-                        <div>
-                        @Html.LabelFor(e => e.cEvent.EventName)
-                        @Html.TextBoxFor(e => e.cEvent.EventName)
-                        </div>
-                        <div>
-                        @Html.LabelFor(e => e.cEvent.MaximumNumber)
-                        @Html.TextBoxFor(e => e.cEvent.MaximumNumber)
-                        </div>
-                        <div>
-                        @Html.LabelFor(e => e.cEvent.ActivityStatus)
-                        @Html.TextBoxFor(e => e.cEvent.ActivityStatus)
-                        </div>
-                        <div>
-                        @Html.LabelFor(e => e.cEvent.ActivityPhoto)
-                        @Html.TextBoxFor(e => e.cEvent.ActivityPhoto)
-                        </div>
-                        <div>
-                        @Html.LabelFor(e => e.cEvent.Description)
-                        @Html.TextBoxFor(e => e.cEvent.Description)
-                        </div>
-                        <div>
-                        @Html.LabelFor(e => e.cEvent.EventDate)
-                        @Html.TextBoxFor(e => e.cEvent.EventDate)
-                        </div>
-                        <div>
-                            @Html.LabelFor(e =>e.cEvent.ReviewRequired)
-                            @Html.TextBoxFor(e => e.cEvent.ReviewRequired)
-                        </div>
-                        <div>
-                            @Html.LabelFor(e => e.cEvent.ReviewStatus)
-                            @Html.TextBoxFor(e => e.cEvent.ReviewStatus)
-                        </div>
-                        <div>
-                            @Html.LabelFor(e =>e.cEvent.HasActiveReport)
-                            @Html.TextBoxFor(e => e.cEvent.HasActiveReport)
-                        </div>
-                        <div>
-                            @Html.LabelFor(e => e.cEvent.LeaderUserId)
-                            @Html.TextBoxFor(e => e.cEvent.LeaderUserId)
-                        </div>
-                    </div>
-
-                </form>
-
-
-
             </div>
+            <form id="EditModal" method="post">
+                <div class="modal-body">
+                    <div>
+
+                        @Html.LabelFor(e => e.cEvent.EventId)
+                        @Html.TextBoxFor(e => e.cEvent.EventId, new { @class = "form-control-custom", @readonly = "readonly" })
+                    </div>
+                    <div>
+                        @Html.LabelFor(e => e.cEvent.MountainId)
+                        @Html.TextBoxFor(e => e.cEvent.MountainId, new { @class = "form-control-custom" })
+                    </div>
+                    <div>
+                        @Html.LabelFor(e => e.cEvent.EventName)
+                        @Html.TextBoxFor(e => e.cEvent.EventName, new { @class = "form-control-custom" })
+                    </div>
+                    <div>
+                        @Html.LabelFor(e => e.cEvent.MaximumNumber)
+                        @Html.TextBoxFor(e => e.cEvent.MaximumNumber, new { @class = "form-control-custom" })
+                    </div>
+                    <div>
+                        @Html.LabelFor(e => e.cEvent.ActivityStatus)
+                        @Html.TextBoxFor(e => e.cEvent.ActivityStatus, new { @class = "form-control-custom" })
+                    </div>
+                    <div>
+                        @Html.LabelFor(e => e.cEvent.ActivityPhoto)
+                        @Html.TextBoxFor(e => e.cEvent.ActivityPhoto, new { @class = "form-control-custom" })
+                    </div>
+                    <div>
+                        @Html.LabelFor(e => e.cEvent.Description)
+                        @Html.TextBoxFor(e => e.cEvent.Description, new { @class = "form-control-custom" })
+                    </div>
+                    <div>
+                        @Html.LabelFor(e => e.cEvent.EventDate)
+                        @Html.TextBoxFor(e => e.cEvent.EventDate, new { @class = "form-control-custom" })
+                    </div>
+                    <div>
+                        @Html.LabelFor(e => e.cEvent.ReviewRequired)
+                        @Html.TextBoxFor(e => e.cEvent.ReviewRequired, new { @class = "form-control-custom" })
+                    </div>
+                    <div>
+                        @Html.LabelFor(e => e.cEvent.ReviewStatus)
+                        @Html.TextBoxFor(e => e.cEvent.ReviewStatus, new { @class = "form-control-custom" })
+                    </div>
+                    <div>
+                        @Html.LabelFor(e => e.cEvent.HasActiveReport)
+                        @Html.TextBoxFor(e => e.cEvent.HasActiveReport, new { @class = "form-control-custom" })
+                    </div>
+                    <div>
+                        @Html.LabelFor(e => e.cEvent.LeaderUserId)
+                        @Html.TextBoxFor(e => e.cEvent.LeaderUserId, new { @class = "form-control-custom" })
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div>
+                        <button type="button" class="btn-custom btn-custom-outline-secondary" data-bs-dismiss="modal">取消</button>
+                        <button id="SaveEdit" type="submit" class="btn-custom btn-custom-outline-secondary">修改</button>
+
+                    </div>
+                </div>
+            </form>
+
         </div>
     </div>
-@section Scripts{
-    <script>
+</div>
+
         
-        $(document).on("click", "Edit", function() {
+@section Scripts {
+    <script>
+
+        $(document).on("click", ".Edit", function() {
             var id = $(this).data("id");
 
-            
+            $.ajax({
+                url: '@Url.Action("EditManageEvent", "EventData")',
+                type: 'GET',
+                data: { id: id },
+                success: function(response) {
+                    if (response.success) {
+                        $("#EditModal [name = 'cEvent.EventId']").val(response.data.eventId);
+                        $("#EditModal [name = 'cEvent.MountainId']").val(response.data.mountainId);
+                        $("#EditModal [name = 'cEvent.EventName']").val(response.data.eventName);
+                        $("#EditModal [name = 'cEvent.MaximumNumber']").val(response.data.maximumNumber);
+                        $("#EditModal [name = 'cEvent.ActivityStatus']").val(response.data.activityStatus);
+                        $("#EditModal [name = 'cEvent.ActivityPhoto']").val(response.data.activityPhoto);
+                        $("#EditModal [name = 'cEvent.Description']").val(response.data.description);
+                        $("#EditModal [name = 'cEvent.EventDate']").val(response.data.eventDate);
+                        $("#EditModal [name = 'cEvent.ReviewRequired']").val(response.data.reviewRequired);
+                        $("#EditModal [name = 'cEvent.ReviewStatus']").val(response.data.reviewStatus);
+                        $("#EditModal [name = 'cEvent.HasActiveReport']").val(response.data.hasActiveReport);
+                        $("#EditModal [name = 'cEvent.LeaderUserId']").val(response.data.leaderUserId);
+                        var editModalEl = document.getElementById('EditManageEvent');
+                        var editModal = bootstrap.Modal.getOrCreateInstance(editModalEl);
+                        editModal.show();
+                    }
+                    else {
+                        alert("建立失敗：" + response.message);
+                    }
+                }
+            });
+        });
+        $("#EditModal").on("submit", function(event) {
+
+            event.preventDefault();
+            var dataform = $(this).serialize();
+            $.ajax({
+                url: '@Url.Action("EditManageEvent", "EventData")',
+                type: "POST",
+                data: dataform,
+                success: function(response) {
+                    if (response.success) {
+                        alert(response.message);
+                        var modalElement = document.getElementById('EditManageEvent');
+                        var modal = bootstrap.Modal.getInstance(modalElement);
+                        if (modal) {
+                            modal.hide();
+                            location.reload();
+                        }
+                    }
+                    else {
+                        alert(response.message)
+                    }
+                }
+            })
         })
     </script>
 
