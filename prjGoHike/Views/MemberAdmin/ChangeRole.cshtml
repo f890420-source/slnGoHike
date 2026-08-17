@@ -1,0 +1,48 @@
+﻿@model prjGoHike.ViewModels_user.Member.MemberAdminViewModel.ChangeRoleViewModel
+
+@{
+    ViewData["Title"] = "變更會員角色";
+}
+
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="bi bi-person-gear"></i> 變更會員角色</h4>
+        </div>
+        <div class="card-body">
+            <p class="fs-5"><strong>會員姓名：</strong> @Model.Name</p>
+            <p class="fs-5">
+                <strong>目前角色：</strong>
+                <span class="badge @(Model.CurrentRole == "管理員" ? "bg-danger" : Model.CurrentRole == "團主" ? "bg-warning text-dark" : "bg-info text-dark")">
+                    @Model.CurrentRole
+                </span>
+            </p>
+
+            <hr />
+
+            <form asp-action="ChangeRole" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.UserId" />
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">選擇新角色：</label>
+                    <select name="newRole" class="form-select form-select-lg" required>
+                        <option value="">-- 請選擇新角色 --</option>
+                        <option value="一般會員" selected="@(Model.CurrentRole == "一般會員")">一般會員</option>
+                        <option value="團主" selected="@(Model.CurrentRole == "團主")">團主</option>
+                        <option value="管理員" selected="@(Model.CurrentRole == "管理員")">管理員</option>
+                    </select>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a asp-action="MemberList" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> 返回列表
+                    </a>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-lg"></i> 確認變更
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

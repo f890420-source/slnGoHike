@@ -227,12 +227,14 @@ namespace prjGoHike.Controllers
                     ModelState.AddModelError("", "無效的角色");
                     return RedirectToAction(nameof(ChangeRole), new { id });
                 }
-            var user = await _context.Users.FindAsync(id);
-            if (user == null) return NotFound();
+            var userExists = await _context.Users.AnyAsync(u => u.UserId == id);
+            if (!userExists) return NotFound("會員不存在");
 
-            user.Role = newRole;  // ← 直接改 Role 欄位即可
-            _context.Users.Update(user);
-            await _context.SaveChangesAsync();
+            await _context.Database.ExecuteSqlInterpolatedAsync(
+           $"UPDATE dbo.users SET Role = {newRole} WHERE user_id = {id}"
+       );
+
+            TempData["SuccessMessage"] = "角色變更成功！";
 
             return RedirectToAction(nameof(Index));
         }
