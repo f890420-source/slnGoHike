@@ -1,0 +1,313 @@
+﻿@model prjGoHike.ViewModels.CEquipmentSuggestionViewModel
+
+@{
+    Layout = null;
+    ViewData["Title"] = "個人裝備建議";
+}
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>個人裝備建議</title>
+
+    <link rel="stylesheet"
+          href="~/assets/libs/bootstrap/css/bootstrap.min.css" />
+</head>
+
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="mb-4">
+            <div class="text-success fw-bold">
+                STEP 02
+            </div>
+
+            <h2>查看個人裝備建議</h2>
+
+            <p class="text-muted">
+                根據山岳、季節、天數及個人條件，
+                系統自動整理建議裝備。
+            </p>
+        </div>
+
+        <div class="alert alert-info">
+            <strong>@Model.MountainName</strong>
+
+            ／ @Model.Condition.HikingDays 天
+
+            ／ @Model.Condition.Season
+
+            ／ @Model.Condition.IntensityLevel
+
+            ／ @Model.Condition.ExperienceLevel
+        </div>
+
+        <form asp-controller="PersonalEquipment"
+              asp-action="Suggestion"
+              method="post">
+
+            <div class="row g-4">
+                <div class="col-lg-9">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                建議裝備清單
+                            </h5>
+
+                            <div class="mb-3">
+                                <button type="button"
+                                        class="btn btn-success
+                                    btn-sm filter-button"
+                                        data-filter="全部">
+                                    全部
+                                </button>
+
+                                <button type="button"
+                                        class="btn btn-outline-success
+                                    btn-sm filter-button"
+                                        data-filter="必備">
+                                    必備
+                                </button>
+
+                                <button type="button"
+                                        class="btn btn-outline-success
+                                    btn-sm filter-button"
+                                        data-filter="建議">
+                                    建議
+                                </button>
+                            </div>
+
+                            <div class="list-group
+                                list-group-flush">
+
+                                @for (
+                                    int i = 0;
+                                    i < Model.Items.Count;
+                                    i++)
+                                {
+                                    <div class="list-group-item
+                                        equipment-row py-3"
+                                         data-requirement="@Model.Items[i].RequirementLevel">
+
+                                        <div class="row align-items-center">
+                                            <div class="col-auto">
+                                                <input asp-for="Items[i].IsSelected"
+                                                       class="form-check-input
+                                                equipment-checkbox"
+                                                       data-weight="@Model.Items[i].UnitWeightGram" />
+
+                                                <input asp-for="Items[i].EquipmentId"
+                                                       type="hidden" />
+                                            </div>
+
+                                            <div class="col">
+                                                <div class="fw-bold">
+                                                    @(Model.Items[i].EquipmentName)
+                                                </div>
+
+                                                <small class="text-muted">
+                                                    @(Model.Items[i].CategoryName)
+                                                </small>
+
+                                                @if (!string.IsNullOrEmpty(
+                                                    Model.Items[i].Notes))
+                                                {
+                                                    <div>
+                                                        <small class="text-muted">
+                                                            @Model.Items[i].Notes
+                                                        </small>
+                                                    </div>
+                                                }
+                                            </div>
+
+                                            <div class="col-auto">
+                                                @if (
+                                                    Model.Items[i]
+                                                        .RequirementLevel
+                                                    == "必備")
+                                                {
+                                                    <span class="badge
+                                                        bg-success">
+                                                        必備
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge
+                                                        bg-info
+                                                        text-dark">
+                                                        建議
+                                                    </span>
+                                                }
+                                            </div>
+
+                                            <div class="col-2 text-end">
+                                                @{
+                                                    decimal weightKg =
+                                                        Model.Items[i]
+                                                            .UnitWeightGram
+                                                        / 1000M;
+                                                }
+
+                                                @weightKg.ToString("0.00")
+                                                kg
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-3">
+                    <div class="card bg-success
+                        text-white shadow-sm">
+                        <div class="card-body">
+                            <h5>建議摘要</h5>
+
+                            <hr />
+
+                            <div class="mb-3">
+                                <div>目前勾選</div>
+
+                                <div class="display-6 fw-bold">
+                                    <span id="selectedCount">0</span>
+                                </div>
+
+                                <div>件裝備</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div>預估重量</div>
+
+                                <div class="fs-3 fw-bold">
+                                    <span id="selectedWeight">
+                                        0.00
+                                    </span>
+                                    kg
+                                </div>
+                            </div>
+
+                            <button type="submit"
+                                    name="submitMode"
+                                    value="all"
+                                    class="btn btn-light w-100">
+                                全部加入清單
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end
+                gap-2 mt-4">
+
+                <a asp-action="Create"
+                   class="btn btn-outline-secondary">
+                    上一步
+                </a>
+
+                <button type="submit"
+                        name="submitMode"
+                        value="selected"
+                        class="btn btn-success">
+                    加入已勾選裝備
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+            const filterButtons =
+                document.querySelectorAll(".filter-button");
+
+            const equipmentRows =
+                document.querySelectorAll(".equipment-row");
+
+            const equipmentCheckboxes =
+                document.querySelectorAll(".equipment-checkbox");
+
+            const selectedCount =
+                document.getElementById("selectedCount");
+
+            const selectedWeight =
+                document.getElementById("selectedWeight");
+
+            function updateSummary() {
+                let count = 0;
+                let totalWeightGram = 0;
+
+                equipmentCheckboxes.forEach(
+                    function (checkbox) {
+                        if (checkbox.checked) {
+                            count++;
+
+                            totalWeightGram +=
+                                parseInt(
+                                    checkbox.dataset.weight);
+                        }
+                    });
+
+                selectedCount.textContent = count;
+
+                selectedWeight.textContent =
+                    (totalWeightGram / 1000)
+                        .toFixed(2);
+            }
+
+            filterButtons.forEach(
+                function (button) {
+                    button.addEventListener(
+                        "click",
+                        function () {
+                            const filter =
+                                button.dataset.filter;
+
+                            equipmentRows.forEach(
+                                function (row) {
+                                    const requirement =
+                                        row.dataset.requirement;
+
+                                    row.style.display =
+                                        filter === "全部"
+                                        || requirement === filter
+                                            ? ""
+                                            : "none";
+                                });
+
+                            filterButtons.forEach(
+                                function (item) {
+                                    item.classList.remove(
+                                        "btn-success");
+
+                                    item.classList.add(
+                                        "btn-outline-success");
+                                });
+
+                            button.classList.remove(
+                                "btn-outline-success");
+
+                            button.classList.add(
+                                "btn-success");
+                        });
+                });
+
+            equipmentCheckboxes.forEach(
+                function (checkbox) {
+                    checkbox.addEventListener(
+                        "change",
+                        updateSummary);
+                });
+
+            updateSummary();
+    </script>
+
+    <script src="~/assets/libs/bootstrap/js/bootstrap.bundle.min.js">
+    </script>
+</body>
+</html>
