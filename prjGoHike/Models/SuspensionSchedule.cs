@@ -19,7 +19,7 @@ public partial class SuspensionSchedule
 
     public DateTime CreatedAt { get; set; }
 
-    public virtual EventDatum? Event { get; set; }
+    public virtual EventData? Event { get; set; }
 
     public virtual User User { get; set; } = null!;
 }

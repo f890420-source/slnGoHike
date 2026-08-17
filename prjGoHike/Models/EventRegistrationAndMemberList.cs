@@ -17,7 +17,7 @@ public partial class EventRegistrationAndMemberList
 
     public DateTime CreatedAt { get; set; }
 
-    public virtual EventDatum Event { get; set; } = null!;
+    public virtual EventData Event { get; set; } = null!;
 
     public virtual User User { get; set; } = null!;
 }

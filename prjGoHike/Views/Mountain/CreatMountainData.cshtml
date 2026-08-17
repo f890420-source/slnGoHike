@@ -1,0 +1,372 @@
+@using prjGoHike.MountainViewModel
+@model CMountainVM
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>山岳資料</h1>
+<p class="d-flex justify-content-end" >
+    <button type="button" class="btn-custom btn-custom-outline-secondary"
+            data-bs-toggle="modal" data-bs-target="#CreateNewEvent">
+        創建山岳資料
+    </button>
+</p>
+<div class="modal fade" id="CreateNewEvent" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">創建新資料</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="NewEvent" method="post">
+                <div class="modal-body">
+                    <div class="ErrorMessage">
+                        
+                    </div>
+                    <div class="col-lg-12 ">
+                        @Html.LabelFor(n => n.MountainW.MountainName)
+                        @Html.TextBoxFor(n => n.MountainW.MountainName, new { @class = "form-control-custom",  placeholder = "請輸入資料"})
+                        @Html.ValidationMessageFor(n => n.MountainW.MountainName, "")
+                        @* 使用lamda *@
+                    </div>
+                    <div class="col-lg-12">
+                        @Html.LabelFor(n => n.MountainW.Location)
+                        @Html.TextBoxFor(n => n.MountainW.Location, new { @class = "form-control-custom", placeholder = "請輸入資料" })
+                        @Html.ValidationMessageFor(n => n.MountainW.Location, "")
+
+                    </div>
+                    <div class="col-lg-12">
+                        @Html.LabelFor(n => n.MountainW.Altitude)
+                        @Html.TextBoxFor(n => n.MountainW.Altitude, new { @class = "form-control-custom", placeholder = "請輸入資料" })
+                        @Html.ValidationMessageFor(n => n.MountainW.Altitude, "")
+
+                    </div>
+                    <div class="col-lg-12">
+                        @Html.LabelFor(n => n.MountainW.DifficultyLevel)
+                        @Html.TextBoxFor(n => n.MountainW.DifficultyLevel, new { @class = "form-control-custom", placeholder = "請輸入資料" })
+                        @Html.ValidationMessageFor(n => n.MountainW.DifficultyLevel, "")
+
+                    </div>
+                    <div class="col-lg-12">
+                        @Html.LabelFor(n => n.MountainW.MountainsPermitRequired)
+                        @Html.TextBoxFor(n => n.MountainW.MountainsPermitRequired, new { @class = "form-control-custom", placeholder = "請輸入資料" })
+                        @Html.ValidationMessageFor(n => n.MountainW.MountainsPermitRequired, "")
+
+                    </div>
+                    <div class="col-lg-12">
+                        @Html.LabelFor(n => n.MountainW.NationalParkPermitRequired)
+                        @Html.TextBoxFor(n => n.MountainW.NationalParkPermitRequired, new { @class = "form-control-custom", placeholder = "請輸入資料" })
+                        @Html.ValidationMessageFor(n => n.MountainW.NationalParkPermitRequired, "")
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div>
+                        <button type="button" class="btn-custom btn-custom-outline-secondary "data-bs-dismiss="modal">取消</button>
+                        <button id="save" type="submit" class="btn-custom btn-custom-outline-secondary">儲存</button>
+
+                    </div>
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+@section Scripts {
+    <script>
+        $(function() {
+            $("#NewEvent").on("submit", function(event) {
+                event.preventDefault(); 
+                if(!$("#NewEvent").valid()){
+                    
+                    return alert("有欄位未填");
+                }
+
+                
+                var formData = $(this).serialize();
+
+                
+                $.ajax({
+                    url: '@Url.Action("CreateNewEvent", "Mountain")', 
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        if (response.success) {
+                            alert(response.message);
+
+                            
+                            var modalElement = document.getElementById('CreateNewEvent');
+                            var modal = bootstrap.Modal.getInstance(modalElement);
+                            if (modal) {
+                                modal.hide();
+                            }
+
+                            
+                            location.reload();
+                        } else {
+                            alert("建立失敗：" + response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("傳送失敗：", error);
+                        alert("系統發生錯誤，無法傳送資料。");
+                    }
+                });
+            });
+            $(document).on("click",".Btn-Edit", function(event) {
+
+                event.preventDefault();
+
+                
+                var id = $(this).data("id");
+
+                
+                $.ajax({
+                    url: '@Url.Action("EditEvent", "Mountain")',
+                    type: 'GET',
+                    data: {id:id},
+
+                     
+                    success: function(response) {
+                        if (response.success) {
+                            $("#EditModal [name='MountainW.MountainId']").val(response.data.mountainId);
+                            $("#EditModal [name='MountainW.MountainName']").val(response.data.mountainName);
+                            $("#EditModal [name='MountainW.Location']").val(response.data.location);
+                            $("#EditModal [name='MountainW.Altitude']").val(response.data.altitude);
+                            $("#EditModal [name='MountainW.DifficultyLevel']").val(response.data.difficultyLevel);
+                            $("#EditModal [name='MountainW.MountainsPermitRequired']").val(response.data.mountainsPermitRequired);
+                            $("#EditModal [name='MountainW.NationalParkPermitRequired']").val(response.data.nationalParkPermitRequired);
+                            
+                            var editModalEl = document.getElementById('EditEvent');
+                            var editModal = bootstrap.Modal.getOrCreateInstance(editModalEl);
+                            editModal.show();
+                        } else {
+                            alert("建立失敗：" + response.message);
+             }
+        }
+    });   
+}); 
+                
+            
+            $("#EditModal").on("submit",function(event){
+                event.preventDefault();
+                var dataform = $(this).serialize();
+                $.ajax({
+                        url: '@Url.Action("EditEvent", "Mountain")',
+                        type: 'POST',
+                        data: dataform,
+
+                                success: function(response) {
+                            if (response.success) {
+                                alert(response.message);
+                                var modalElement = document.getElementById('EditEvent');
+                                var modal = bootstrap.Modal.getInstance(modalElement);
+                                
+                                if (modal){ 
+                                    modal.hide()
+                                    location.reload();
+                                }
+                                
+                            }
+                            else{
+                                alert(response.message)
+                            }
+                        }
+                })
+            })
+
+            $(document).on("click", ".Btn-Delete",function(event){
+                
+                var id = $(this).data("id");
+                $("#deleteMountainId").val(id);
+
+            })
+            $("#DeleteForm").on("submit", function(event) {
+                event.preventDefault();
+                var id = $("#deleteMountainId").val();
+
+                $.ajax({
+                    url: '@Url.Action("DeleteEvent", "Mountain")',
+                    type: "POST",
+                    data: { id: id },
+                    success: function(response) {
+                        var modalElement = document.getElementById('DeleteEvent');
+                        var modal = bootstrap.Modal.getInstance(modalElement);
+
+                        if (modal) {
+                            modal.hide()
+                            location.reload();
+                        }
+                    }
+
+                })
+            })
+        }); 
+        
+    </script>
+}
+
+<div class="modal fade" id="EditEvent" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">修改資料</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="EditModal" method="post">
+                <div class="modal-body">
+                    <div class="ErrorMessage">
+                    </div>
+                    <div>
+                        @Html.HiddenFor(n => n.MountainW.MountainId)
+                    </div>
+                    <div class="col-lg-12 ">
+                        @Html.LabelFor(n => n.MountainW.MountainName)
+                        @Html.TextBoxFor(n => n.MountainW.MountainName, new { @class = "form-control-custom" })
+                        @* @Html.ValidationMessageFor(n => n.MountainW.MountainName, "") *@
+                        
+                    </div>
+                    <div class="col-lg-12">
+                        @Html.LabelFor(n => n.MountainW.Location)
+                        @Html.TextBoxFor(n => n.MountainW.Location, new { @class = "form-control-custom" })
+                        @* @Html.ValidationMessageFor(n => n.MountainW.Location, "") *@
+
+                    </div>
+                    <div class="col-lg-12">
+                        @Html.LabelFor(n => n.MountainW.Altitude)
+                        @Html.TextBoxFor(n => n.MountainW.Altitude, new { @class = "form-control-custom" })
+                        @* @Html.ValidationMessageFor(n => n.MountainW.Altitude, "") *@
+
+                    </div>
+                    <div class="col-lg-12">
+                        @Html.LabelFor(n => n.MountainW.DifficultyLevel)
+                        @Html.TextBoxFor(n => n.MountainW.DifficultyLevel, new { @class = "form-control-custom" })
+                        @* @Html.ValidationMessageFor(n => n.MountainW.DifficultyLevel, "") *@
+
+                    </div>
+                    <div class="col-lg-12">
+                        @Html.LabelFor(n => n.MountainW.MountainsPermitRequired)
+                        @Html.TextBoxFor(n => n.MountainW.MountainsPermitRequired, new { @class = "form-control-custom" })
+                        @* @Html.ValidationMessageFor(n => n.MountainW.MountainsPermitRequired, "") *@
+
+                    </div>
+                    <div class="col-lg-12">
+                        @Html.LabelFor(n => n.MountainW.NationalParkPermitRequired)
+                        @Html.TextBoxFor(n => n.MountainW.NationalParkPermitRequired, new { @class = "form-control-custom" })
+                        @* @Html.ValidationMessageFor(n => n.MountainW.NationalParkPermitRequired, "") *@
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div>
+                        <button type="button" class="btn-custom btn-custom-outline-secondary " data-bs-dismiss="modal">取消</button>
+                        <button id="SaveEdit" type="submit" class="btn-custom btn-custom-outline-secondary">儲存</button>
+
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="DeleteEvent" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+            <div> 
+                <h5 class="modal-title ps-1">刪除資料</h5>
+			</div>
+			</div>
+                <div class="modal-body">
+				<p>確定要刪除嗎?</p>
+                </div>
+                <div class="modal-footer">
+                    <div>
+                        <button type="button" class="btn-custom btn-custom-light" data-bs-dismiss="modal" aria-label="取消">取消</button>
+                    </div>
+                    <form id="DeleteForm" method="post">
+                        <input type="hidden" name="id" id="deleteMountainId" />
+                        <div>
+                            <button type="submit" class="delete-save btn-custom btn-custom-danger" data-bs-dismiss="modal" aria-label="刪除">刪除</button>
+                        </div>
+                    </form>
+                </div>
+            
+        </div>
+    </div>
+</div>
+           
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                序號
+            </th>
+            <th>
+                  @Html.DisplayNameFor(model => model.MountainW.MountainName)
+            </th>
+            <th>
+                   @Html.DisplayNameFor(model => model.MountainW.Location)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MountainW.Altitude)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MountainW.DifficultyLevel)
+            </th>
+            <th>
+                  @Html.DisplayNameFor(model => model.MountainW.MountainsPermitRequired)
+            </th>
+            <th>
+                 @Html.DisplayNameFor(model => model.MountainW.NationalParkPermitRequired)
+            </th>
+            
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            int count = 0;
+            @foreach (var item in Model.MountainWrapList)
+            {
+                count++;
+                <tr>
+                    <td>
+                        @count
+                    </td>
+                    <td>
+                        @Html.DisplayFor(model => item.MountainName)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(model => item.Location)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(model => item.Altitude)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(model => item.DifficultyLevel)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(model => item.MountainsPermitRequired)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(model => item.NationalParkPermitRequired)
+                    </td>
+                    <td>
+                        <p class="d-flex justify-content-end">
+                            <button type="button" data-id="@item.MountainId" class="Btn-Edit btn-custom btn-custom-outline-secondary">      
+                                修改山岳資料
+                            </button>
+                        </p>
+                    </td>
+                    <td>
+                        <p class="d-flex justify-content-end">
+                            <button type="button" data-id="@item.MountainId" class="Btn-Delete btn-custom btn-custom-outline-secondary"
+                                    data-bs-toggle="modal" data-bs-target="#DeleteEvent">
+                                刪除資料
+                            </button>
+                        </p>
+                    </td>
+                </tr>
+            }
+        }
+
+    </tbody>
+</table>
