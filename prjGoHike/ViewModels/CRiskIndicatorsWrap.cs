@@ -10,7 +10,7 @@ public class CRiskIndicatorsWrap
     private RiskIndicator _riskIndicator;
 
     [ScaffoldColumn(false)]
-    public RiskIndicator RiskIndicator
+    public RiskIndicator riskIndicator
     {
         get { return _riskIndicator; }
         set { _riskIndicator = value; }
