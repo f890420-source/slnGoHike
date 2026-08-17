@@ -126,7 +126,7 @@ namespace prjGoHike.Controllers
             }
         }
         [HttpPost]
-        public IActionResult DeleteEvent(int? id)
+        public IActionResult DeleteMountain(int? id)
         {
             try
             {
@@ -136,16 +136,17 @@ namespace prjGoHike.Controllers
                     
                     _db.Remove(moun);
                     _db.SaveChanges();
+                    return Json(new { success = true, message = "資料刪除成功" });
                 }
-
+                else if (moun == null)
+                {
+                    return Json(new { success = false, message = "找不到資料庫資料" });
+                }
                 else
                 {
                     return Json(new { success = false, message = "無資料" });
                 }
-                if(moun == null)
-                {
-                    return Json(new { success = false, message = "找不到資料庫資料" });
-                }
+                
             }
 
 
@@ -153,7 +154,7 @@ namespace prjGoHike.Controllers
             {
                 return Json(new { success = false, message = ex.Message });
             }
-            return Json(new { success = false, message = "資料刪除成功" });
+            
         }
     }   
 }

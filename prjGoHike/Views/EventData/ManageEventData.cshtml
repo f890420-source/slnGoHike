@@ -65,7 +65,7 @@
                     </dl>
 
                     <button type="button" class="Edit btn-custom btn-custom-outline-secondary" data-id="@item.EventId" data-bs-toggle="modal" data-bs-target="#EditManageEvent">編輯</button>
-                    <button type="button" class="Delete btn-custom btn-custom-outline-secondary" data-id="@item.EventId">刪除</button>
+                    <button type="button" class="Delete btn-custom btn-custom-outline-secondary" data-id="@item.EventId" data-bs-toggle="modal" data-bs-target="#DeleteEvent">刪除</button>
                     @* <a asp-action="Edit"  = "Edit" data-id = "@item.EventId">Edit</a>
                     <a asp-action="Delete" id="Delete" data-id = "@item.EventId">Delete</a> *@
                 </div>
@@ -145,6 +145,32 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="DeleteEvent" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title ps-1">刪除資料</h5>
+                </div>
+            </div>
+            <div class="modal-body">
+                <p>確定要刪除嗎?</p>
+            </div>
+            <div class="modal-footer">
+                <div>
+                    <button type="button" class="btn-custom btn-custom-light" data-bs-dismiss="modal" aria-label="取消">取消</button>
+                </div>
+                <form id="DeleteForm" method="post">
+                    <input type="hidden" name="id" id="deleteEventId" />
+                    <div>
+                        <button type="submit" class="delete-save btn-custom btn-custom-danger" data-bs-dismiss="modal" aria-label="刪除">刪除</button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
 
         
 @section Scripts {
@@ -204,7 +230,38 @@
                     }
                 }
             })
-        })
+        });
+        $(document).on("click", ".Delete",function(){
+            
+            var id = $(this).data("id");
+            $("#deleteEventId").val(id);
+
+        });
+        $("#DeleteForm").on("submit",function(event){
+
+            event.preventDefault();
+
+            var id = $("#deleteEventId").val();
+            $.ajax({
+
+                url: '@Url.Action("DeleteEvent", "EventData")',
+                type: 'POST',
+                data: { id: id },
+                success: function(response) {
+                    if (response.success) {
+                        var modalElement = document.getElementById('DeleteEvent');
+                        var modal = bootstrap.Modal.getInstance(modalElement);
+                        if (modal) {
+                            modal.hide();
+                            location.reload();
+                        }
+                    }
+                }
+
+            })
+
+         });
+
     </script>
 
 }

@@ -185,11 +185,11 @@
                 var id = $("#deleteMountainId").val();
 
                 $.ajax({
-                    url: '@Url.Action("DeleteEvent", "Mountain")',
+                    url: '@Url.Action("DeleteMountain", "Mountain")',
                     type: "POST",
                     data: { id: id },
                     success: function(response) {
-                        var modalElement = document.getElementById('DeleteEvent');
+                        var modalElement = document.getElementById('DeleteMountain');
                         var modal = bootstrap.Modal.getInstance(modalElement);
 
                         if (modal) {
@@ -267,7 +267,7 @@
         </div>
     </div>
 </div>
-<div class="modal fade" id="DeleteEvent" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="DeleteMountain" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -359,7 +359,7 @@
                     <td>
                         <p class="d-flex justify-content-end">
                             <button type="button" data-id="@item.MountainId" class="Btn-Delete btn-custom btn-custom-outline-secondary"
-                                    data-bs-toggle="modal" data-bs-target="#DeleteEvent">
+                                    data-bs-toggle="modal" data-bs-target="#DeleteMountain">
                                 刪除資料
                             </button>
                         </p>

@@ -91,5 +91,22 @@ namespace prjGoHike.Controllers
                 return Json(new { success = true, message = "資料修改成功" });
             }
         }
+        [HttpPost]
+        public IActionResult DeleteEvent(int? id)
+        {
+            var vm = _db.EventData.FirstOrDefault(e => e.EventId == id);
+            if (vm != null)
+            {
+                
+                _db.EventData.Remove(vm);
+                _db.SaveChanges();
+                return Json(new { success = true, message = "成功刪除" });
+            }
+            else
+            {
+                return Json(new { success = false, message = "找不到資料" });
+            }
+
+        }
     }
 }
