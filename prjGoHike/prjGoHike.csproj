@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Views\CEventDataWarp\" />
     <Folder Include="Views\CMountainWarp\" />
   </ItemGroup>
 

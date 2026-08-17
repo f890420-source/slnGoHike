@@ -18,10 +18,10 @@ namespace prjGoHike.Controllers
 
         public IActionResult CreatMountainData()
         {
-            
-            
-            List<CMountainWarp> mountainList = _db.Mountains
-                .Select(mountain => new CMountainWarp
+
+
+
+            List<CMountainWarp> mountainList = _db.Mountains.Select(mountain => new CMountainWarp
                 {
                     Mountains = mountain
                 })
