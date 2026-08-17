@@ -37,7 +37,7 @@ public partial class GoHikeDataContext : DbContext
 
     public virtual DbSet<EquipmentCategory> EquipmentCategories { get; set; }
 
-    public virtual DbSet<EventDatum> EventData { get; set; }
+    public virtual DbSet<EventData> EventData { get; set; }
 
     public virtual DbSet<EventLeaderRating> EventLeaderRatings { get; set; }
 
@@ -322,7 +322,7 @@ public partial class GoHikeDataContext : DbContext
             entity.Property(e => e.IsActive).HasDefaultValue(true);
         });
 
-        modelBuilder.Entity<EventDatum>(entity =>
+        modelBuilder.Entity<EventData>(entity =>
         {
             entity.HasKey(e => e.EventId);
 

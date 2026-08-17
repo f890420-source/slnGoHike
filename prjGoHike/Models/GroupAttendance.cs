@@ -11,7 +11,7 @@ public partial class GroupAttendance
 
     public string AttendanceStatus { get; set; } = null!;
 
-    public virtual EventDatum Group { get; set; } = null!;
+    public virtual EventData Group { get; set; } = null!;
 
     public virtual User User { get; set; } = null!;
 }

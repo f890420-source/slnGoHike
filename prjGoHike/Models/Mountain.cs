@@ -21,7 +21,7 @@ public partial class Mountain
 
     public int? NationalParkPermitRequired { get; set; }
 
-    public virtual ICollection<EventDatum> EventData { get; set; } = new List<EventDatum>();
+    public virtual ICollection<EventData> EventData { get; set; } = new List<EventData>();
 
     public virtual ICollection<HikeRecord> HikeRecords { get; set; } = new List<HikeRecord>();
 

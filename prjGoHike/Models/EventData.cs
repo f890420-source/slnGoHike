@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace prjGoHike.Models;
 
-public partial class EventDatum
+public partial class EventData
 {
     public long EventId { get; set; }
 

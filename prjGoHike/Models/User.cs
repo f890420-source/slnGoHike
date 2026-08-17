@@ -45,7 +45,7 @@ public partial class User
 
     public virtual Level CurrentLevel { get; set; } = null!;
 
-    public virtual ICollection<EventDatum> EventData { get; set; } = new List<EventDatum>();
+    public virtual ICollection<EventData> EventData { get; set; } = new List<EventData>();
 
     public virtual ICollection<EventLeaderRating> EventLeaderRatings { get; set; } = new List<EventLeaderRating>();
 
