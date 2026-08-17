@@ -6,6 +6,7 @@ using System.Collections;
 
 namespace prj.Controllers
 {
+    //TODO: 表單驗證安全細節
     public class AdminRiskinController : Controller
     {
         private readonly GoHikeDataContext _context;
