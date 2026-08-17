@@ -133,15 +133,15 @@
                         @Html.TextBoxFor(e => e.cEvent.LeaderUserId, new { @class = "form-control-custom" })
                         </div>
                     </div>
-
-                </form>
                 <div class="modal-footer">
-                <div>
-                    <button type="button" class="btn-custom btn-custom-outline-secondary" data-bs-dismiss="modal">取消</button>
-                    <button id="SaveEdit" type="submit" class="btn-custom btn-custom-outline-secondary">修改</button>
+                    <div>
+                        <button type="button" class="btn-custom btn-custom-outline-secondary" data-bs-dismiss="modal">取消</button>
+                        <button id="SaveEdit" type="submit" class="btn-custom btn-custom-outline-secondary">修改</button>
 
+                    </div>
                 </div>
-			</div>
+                </form>
+
           </div>
     </div>
 </div>
@@ -182,6 +182,31 @@
                 }
             });
         });
+        $("#EditModal").on("submit",function(event){
+            
+            event.preventDefault();
+            var dataform = $(this).serialize();
+            $.ajax({
+                url: '@Url.Action("EditManageEvent","EventData")',
+                type: "POST",
+                data: dataform,
+                success: function(response){
+                    if(response.success){
+                        alert(response.message);
+                        var modalElement = document.getElementById('EditManageEvent');
+                        var modal = bootstrap.Modal.getInstance(modalElement);
+                        if(modal){
+                            modal.hide();
+                            location.reload();
+                        }
+                    }
+                    else
+                    {
+                        alert(response.message)
+                    }
+                }
+            })
+        })
     </script>
 
 }

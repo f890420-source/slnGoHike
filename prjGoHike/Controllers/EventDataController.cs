@@ -26,6 +26,7 @@ namespace prjGoHike.Controllers
 
             return View(ce);
         }
+        [HttpGet]
         public IActionResult EditManageEvent(int? id)
         {
             var cEventDataWarp = _db.EventData.FirstOrDefault(e => e.EventId == id);
@@ -63,6 +64,32 @@ namespace prjGoHike.Controllers
 
 
 
+        }
+        [HttpPost]
+        public IActionResult EditManageEvent(CEventDataVM vm)
+        {
+            var cEventDataWarp = _db.EventData.FirstOrDefault(e => e.EventId == vm.cEvent.EventId);
+            if(cEventDataWarp == null)
+            {
+                return Json(new { success = false, message = "資料庫查詢無資料" });
+            }
+            else
+            {
+                cEventDataWarp.EventId = vm.cEvent.EventId;
+                cEventDataWarp.MountainId = vm.cEvent.MountainId;
+                cEventDataWarp.EventName = vm.cEvent.EventName;
+                cEventDataWarp.MaximumNumber = vm.cEvent.MaximumNumber;
+                cEventDataWarp.ActivityStatus = vm.cEvent.ActivityStatus;
+                cEventDataWarp.ActivityPhoto = vm.cEvent.ActivityPhoto;
+                cEventDataWarp.Description = vm.cEvent.Description;
+                cEventDataWarp.EventDate = vm.cEvent.EventDate;
+                cEventDataWarp.ReviewRequired = vm.cEvent.ReviewRequired;
+                cEventDataWarp.ReviewStatus = vm.cEvent.ReviewStatus;
+                cEventDataWarp.HasActiveReport = vm.cEvent.HasActiveReport;
+                cEventDataWarp.LeaderUserId = vm.cEvent.LeaderUserId;
+                _db.SaveChanges();
+                return Json(new { success = true, message = "資料修改成功" });
+            }
         }
     }
 }
