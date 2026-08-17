@@ -1,0 +1,152 @@
+@model prjGoHike.Models.Announcement
+
+@{
+    ViewData["Title"] = "編輯公告";
+}
+
+<div class="container-fluid">
+
+    <!-- 標題 -->
+    <div class="mb-4">
+        <h2>編輯公告</h2>
+        <p class="text-muted">修改公告內容與發布狀態</p>
+    </div>
+
+    <div class="card">
+
+        <div class="card-body">
+
+            <form asp-action="Edit" method="post">
+
+                <!-- 公告 ID -->
+                <input type="hidden" asp-for="AnnouncementId" />
+
+                <!-- 錯誤訊息 -->
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3">
+                </div>
+
+
+                <!-- 公告標題 -->
+                <div class="mb-3">
+
+                    <label asp-for="Title"
+                           class="form-label">
+                        公告標題
+                    </label>
+
+                    <input asp-for="Title"
+                           class="form-control"
+                           placeholder="請輸入公告標題" />
+
+                    <span asp-validation-for="Title"
+                          class="text-danger">
+                    </span>
+
+                </div>
+
+
+                <!-- 公告內容 -->
+                <div class="mb-3">
+
+                    <label asp-for="Content"
+                           class="form-label">
+                        公告內容
+                    </label>
+
+                    <textarea asp-for="Content"
+                              class="form-control"
+                              rows="10"
+                              placeholder="請輸入公告內容"></textarea>
+
+                    <span asp-validation-for="Content"
+                          class="text-danger">
+                    </span>
+
+                </div>
+
+                <!-- 時間 -->
+                <div class="row">
+
+                    <!-- 發布時間 -->
+                    <div class="col-md-6 mb-3">
+
+                        <label class="form-label">
+                            發布時間
+                        </label>
+
+                        <input type="text"
+                               class="form-control"
+                               value="@Convert.ToDateTime(Model.CreatedDate).ToString("yyyy-MM-dd HH:mm:ss")"
+                               readonly />
+
+                    </div>
+
+
+                    <!-- 更新時間 -->
+                    <div class="col-md-6 mb-3">
+
+                        <label class="form-label">
+                            最後更新時間
+                        </label>
+
+                        <input type="text"
+                               class="form-control"
+                               value="@Convert.ToDateTime(Model.UpdateDate).ToString("yyyy-MM-dd HH:mm:ss")"
+                               readonly />
+
+                    </div>
+
+                </div>
+
+
+                <!-- 公告狀態 -->
+                <div class="mb-4">
+
+                    <label asp-for="Status"
+                           class="form-label">
+                        公告狀態
+                    </label>
+
+                    <select asp-for="Status"
+                            class="form-select">
+
+                        <option value="1">
+                            已發布
+                        </option>
+
+                        <option value="0">
+                            已下架
+                        </option>
+
+                    </select>
+
+                    <span asp-validation-for="Status"
+                          class="text-danger">
+                    </span>
+
+                </div>
+
+
+                <!-- 按鈕 -->
+                <div class="d-flex gap-2">
+
+                    <button type="submit"
+                            class="btn btn-primary">
+                        儲存修改
+                    </button>
+
+                    <a asp-action="Index"
+                       class="btn btn-secondary">
+                        返回公告列表
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
