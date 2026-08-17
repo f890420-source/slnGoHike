@@ -1,0 +1,86 @@
+@model IEnumerable<prjGoHike.ViewModels.CDisasterAlertWrap>
+
+@{
+    ViewData["Title"] = "警示管理";
+}
+
+<h1>警示管理</h1>
+
+<p>
+    <a asp-action="Create" class="btn-custom btn-custom-outline-primary">新增警示</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.AlertType)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AlertTitle)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AlertDescription)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SeverityLevel)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EffectiveFrom)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EffectiveTo)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SourceAgency)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SourceUrl)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.IsActive)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(model => item.AlertType)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.AlertTitle)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.AlertDescription)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.SeverityLevel)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.EffectiveFrom)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.EffectiveTo)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.SourceAgency)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.SourceUrl)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.IsActive)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.AlertId" class="table-btn-action" title="編輯">
+                    <i class="bi bi-pencil"></i>
+                </a>
+                <a asp-action="Delete" asp-route-id="@item.AlertId" class="table-btn-action delete" title="刪除">
+                    <i class="bi bi-trash"></i>
+                </a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
