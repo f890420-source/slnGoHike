@@ -58,7 +58,7 @@ public class AdminTrailsController : Controller
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
-        return View(trail);
+        return View();
     }
 
     // GET: AdminTrails/Edit/5
@@ -88,32 +88,27 @@ public class AdminTrailsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int? id, [Bind("TrailId,TrailName,Region,DifficultyLevel,DistanceKm,EstimatedHours,PermitRequired,GuideRequired,RegulationNote,TrailPath,IsPublished,AlertsTrails,HikeRecordDetails,TrailFeatures,TrailRiskIndicators,TrailSubscriptions,TripReports")] Trail trail)
     {
-        if (id != trail.TrailId)
+        if (id != trail.TrailId || !ModelState.IsValid)
         {
             return NotFound();
         }
-
-        if (ModelState.IsValid)
+        try
         {
-            try
-            {
-                _context.Update(trail);
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!TrailExists(trail.TrailId))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-            return RedirectToAction(nameof(Index));
+            _context.Update(trail);
+            await _context.SaveChangesAsync();
         }
-        return View(trail);
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!TrailExists(trail.TrailId))
+            {
+                return NotFound();
+            }
+            else
+            {
+                throw;
+            }
+        }
+        return RedirectToAction(nameof(Index));
     }
 
     // GET: AdminTrails/Delete/5
