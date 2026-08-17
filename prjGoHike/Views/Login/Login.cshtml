@@ -1,0 +1,117 @@
+﻿@model prjGoHike.ViewModels_user.Member.LoginViewModel
+
+@{
+    ViewData["Title"] = "會員登入 - GO-HIKE";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow-lg border-0">
+                <div class="card-body p-5">
+                    <!-- 標題 -->
+                    <h2 class="text-center mb-4 fw-bold">
+                        <i class="bi bi-box-arrow-in-right"></i> 會員登入
+                    </h2>
+
+                    <!-- 錯誤訊息 -->
+                    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="bi bi-exclamation-circle"></i> @Model.ErrorMessage
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <!-- 登入表單 -->
+                    <form method="post">
+                        <!-- 電子郵件 -->
+                        <div class="mb-3">
+                            <label for="email" class="form-label fw-bold">電子郵件</label>
+                            <input type="email" class="form-control form-control-lg @(ModelState.IsValid && Model.Email == null ? "" : ModelState["Email"]?.ValidationState == Microsoft.AspNetCore.Mvc.ModelBinding.ModelValidationState.Invalid ? "is-invalid" : "")" 
+                                   id="email" 
+                                   name="Email" 
+                                   placeholder="example@gmail.com"
+                                   value="@Model.Email"
+                                   required>
+                            <span class="invalid-feedback d-block">@ModelState["Email"]?.Errors.FirstOrDefault()?.ErrorMessage</span>
+                        </div>
+
+                        <!-- 密碼 -->
+                        <div class="mb-3">
+                            <label for="password" class="form-label fw-bold">密碼</label>
+                            <input type="password" class="form-control form-control-lg @(ModelState["Password"]?.ValidationState == Microsoft.AspNetCore.Mvc.ModelBinding.ModelValidationState.Invalid ? "is-invalid" : "")" 
+                                   id="password" 
+                                   name="Password" 
+                                   placeholder="輸入您的密碼"
+                                   required>
+                            <span class="invalid-feedback d-block">@ModelState["Password"]?.Errors.FirstOrDefault()?.ErrorMessage</span>
+                        </div>
+
+                        <!-- 記住我 -->
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="rememberMe" name="RememberMe" value="true">
+                            <label class="form-check-label" for="rememberMe">
+                                記住我（30 天內免登入）
+                            </label>
+                        </div>
+
+                        <!-- 登入按鈕 -->
+                        <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold mb-3">
+                            <i class="bi bi-box-arrow-in-right"></i> 登入
+                        </button>
+                    </form>
+
+                    <hr class="my-4">
+
+@*                     <!-- 底部連結 -->
+                    <div class="text-center">
+                        <p class="mb-2">還沒有帳號？</p>
+                        <a href="@Url.Action("RegisterIndex", "Login")" class="btn btn-outline-success btn-sm fw-bold">
+                            <i class="bi bi-person-plus"></i> 立即註冊
+                        </a>
+                    </div>
+
+                    <!-- 暫時隱藏忘記密碼（待實作） -->
+                    <div class="text-center mt-3">
+                        <small class="text-muted">
+                            <a href="#" class="text-decoration-none" onclick="alert('此功能開發中')">
+                                忘記密碼？
+                            </a>
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 測試資料提示（開發階段） -->
+            <div class="alert alert-info mt-3" role="alert">
+                <small>
+                    <strong>📌 測試帳號：</strong><br>
+                    若要測試登入，請先確保資料庫已有使用者記錄。
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // 簡單的表單驗證
+        document.querySelector('form').addEventListener('submit', function (e) {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (!email || !password) {
+                e.preventDefault();
+                alert('請填寫所有必填欄位');
+                return false;
+            }
+
+            if (!email.includes('@')) {
+                e.preventDefault();
+                alert('請輸入正確的電子郵件格式');
+                return false;
+            }
+        }); *@
+    </script>
+}

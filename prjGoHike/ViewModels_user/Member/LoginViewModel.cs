@@ -2,8 +2,8 @@
 {
     using System.ComponentModel.DataAnnotations;
 
-    namespace GoHike.Models.ViewModels_user
-    {
+ 
+ 
         /// <summary>
         /// 登入表單 ViewModel
         /// </summary>
@@ -67,4 +67,4 @@
             public string ErrorMessage { get; set; }
         }
     }
-}
+
