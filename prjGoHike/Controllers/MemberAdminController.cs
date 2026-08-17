@@ -20,12 +20,17 @@ namespace prjGoHike.Controllers
         {
             if (!ModelState.IsValid)
                 return View(vm);
-
+            bool isEmailExist = await _context.Users.AnyAsync(u => u.Email == vm.Email);
+            if (isEmailExist)
+            {
+                ModelState.AddModelError("Email", "此電子郵件已被註冊，請使用其他 Email");
+                return View(vm);
+            }
             var user = new Member
             {
                 Nickname = vm.Nickname,
                 Email = vm.Email,
-                PasswordHash = vm.PasswordHash,  // ⚠️ 實務上要加密
+                PasswordHash = vm.PasswordHash,  //  實務上要加密
                 Role = "一般會員",
                 AccountStatus = "正常",
                 CurrentLevelId = 1,  // 新人預設等級 1
@@ -40,7 +45,7 @@ namespace prjGoHike.Controllers
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "會員新增成功";
-            return RedirectToAction(nameof(MemberList));
+            return RedirectToAction(nameof(Index));
         }
 
         private readonly GoHikeDataContext _context;
@@ -49,42 +54,45 @@ namespace prjGoHike.Controllers
                 _context = context;
             }
 
-            // 會員列表(搜尋 + 角色篩選 + 分頁)
-            public async Task<IActionResult> MemberList(string? search, string? role, int page = 1, int pageSize = 20)
-            {
-                var query = _context.Users.AsQueryable(); // Users 為 TPH 基底 DbSet
+        // 會員列表(搜尋 + 角色篩選 + 分頁)
+        public async Task<IActionResult> Index(string? search, string? role, int page = 1, int pageSize = 20)
+        {
+            var query = _context.Users.AsQueryable();
 
-                if (!string.IsNullOrWhiteSpace(search))
-                    query = query.Where(u => u.Nickname.Contains(search) || u.Email.Contains(search));
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(u => u.Nickname.Contains(search) || u.Email.Contains(search));
 
             if (!string.IsNullOrWhiteSpace(role))
                 query = query.Where(u => u.Role == role);
 
             var total = await query.CountAsync();
 
-                var items = await query
-                    .OrderBy(u => u.UserId)
-                    .Skip((page - 1) * pageSize)
-                    .Take(pageSize)
-                    .Select(u => new MemberListItemViewModel
-                    {
-                        Id = u.UserId,
-                        Name = u.Nickname,
-                        Email = u.Email,
-                        Role = EF.Property<string>(u, "Discriminator"),
-                        IsSuspended = u.SuspensionSchedules.Any(s => s.SuspensionExpirationTime > DateTime.Now)
-                    })
-                    .ToListAsync();
-
-                return View(new MemberListViewModel
+            var items = await query
+                .OrderBy(u => u.UserId)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(u => new MemberListItemViewModel
                 {
-                    Items = items,
-                    CurrentPage = page,
-                    TotalPages = (int)Math.Ceiling(total / (double)pageSize),
-                    Search = search,
-                    RoleFilter = role
-                });
-            }
+                    Id = u.UserId,
+                    Name = u.Nickname,
+                    Email = u.Email,
+                    //Role = EF.Property<string>(u, "Role"),
+                    //EF.Property需再研究，下面一般寫法
+                    Role = u is Admin ? "管理員" :
+                    u is EventLeader ? "團主" : "一般會員",
+                    IsSuspended = u.SuspensionSchedules.Any(s => s.SuspensionExpirationTime > DateTime.Now)
+                })
+                .ToListAsync();
+
+            return View(new MemberListViewModel
+            {
+                Items = items,
+                CurrentPage = page,
+                TotalPages = (int)Math.Ceiling(total / (double)pageSize),
+                Search = search,
+                RoleFilter = role
+            });
+        }
 
         // 360度總覽(針對指定會員,非目前登入者)
         //	管理員看指定會員的資料(需要傳 ID)
@@ -189,10 +197,18 @@ namespace prjGoHike.Controllers
                 var user = await _context.Users.FindAsync(id);
                 if (user == null) return NotFound();
 
-                var currentRole = _context.Entry(user)
-                    .Property("Discriminator").CurrentValue?.ToString();
+            //var currentRole = _context.Entry(user)
+            //    .Property("Role").CurrentValue?.ToString();
+            // EF.Property需再研究
+            string currentRole = user switch
+            {
+                Admin => "管理員",
+                EventLeader => "團主",
+                Member => "一般會員",
+                _ => "一般會員"
+            };
 
-                return View(new ChangeRoleViewModel
+            return View(new ChangeRoleViewModel
                 {
                     UserId = user.UserId,
                     Name = user.Nickname,
@@ -218,7 +234,7 @@ namespace prjGoHike.Controllers
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
 
-            return RedirectToAction(nameof(MemberList));
+            return RedirectToAction(nameof(Index));
         }
         }
     }

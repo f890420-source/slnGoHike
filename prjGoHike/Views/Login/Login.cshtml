@@ -4,7 +4,7 @@
     ViewData["Title"] = "會員登入 - GO-HIKE";
 }
 
-@* <div class="container mt-5">
+<div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-5">
             <div class="card shadow-lg border-0">
@@ -25,29 +25,19 @@
 
                     <!-- 登入表單 -->
                     <form method="post">
-                        <!-- 電子郵件 -->
                         <div class="mb-3">
-                            <label for="email" class="form-label fw-bold">電子郵件</label>
-                            <input type="email" class="form-control form-control-lg @(ModelState.IsValid && Model.Email == null ? "" : ModelState["Email"]?.ValidationState == Microsoft.AspNetCore.Mvc.ModelBinding.ModelValidationState.Invalid ? "is-invalid" : "")" 
-                                   id="email" 
-                                   name="Email" 
-                                   placeholder="example@gmail.com"
-                                   value="@Model.Email"
-                                   required>
-                            <span class="invalid-feedback d-block">@ModelState["Email"]?.Errors.FirstOrDefault()?.ErrorMessage</span>
+                            <label asp-for="Email" class="form-label fw-bold"></label>
+                            <input type="email" asp-for="Email" class="form-control form-control-lg"
+                                   placeholder="example@gmail.com" required>
+                            <span asp-validation-for="Email" class="invalid-feedback d-block"></span>
                         </div>
 
-                        <!-- 密碼 -->
                         <div class="mb-3">
-                            <label for="password" class="form-label fw-bold">密碼</label>
-                            <input type="password" class="form-control form-control-lg @(ModelState["Password"]?.ValidationState == Microsoft.AspNetCore.Mvc.ModelBinding.ModelValidationState.Invalid ? "is-invalid" : "")" 
-                                   id="password" 
-                                   name="Password" 
-                                   placeholder="輸入您的密碼"
-                                   required>
-                            <span class="invalid-feedback d-block">@ModelState["Password"]?.Errors.FirstOrDefault()?.ErrorMessage</span>
+                            <label asp-for="Password" class="form-label fw-bold"></label>
+                            <input type="password" asp-for="Password" class="form-control form-control-lg"
+                                   placeholder="輸入您的密碼" required>
+                            <span asp-validation-for="Password" class="invalid-feedback d-block"></span>
                         </div>
-
                         <!-- 記住我 -->
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" id="rememberMe" name="RememberMe" value="true">
@@ -62,7 +52,7 @@
                         </button>
                     </form>
 
-                    <hr class="my-4"> *@
+                    <hr class="my-4">
 
 @*                     <!-- 底部連結 -->
                     <div class="text-center">

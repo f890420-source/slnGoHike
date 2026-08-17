@@ -1,0 +1,143 @@
+﻿@model prjGoHike.ViewModels_user.Member.MemberAdminViewModel.MemberListViewModel
+
+@{
+    ViewData["Title"] = "會員管理列表";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="bi bi-people-fill"></i> 會員管理列表</h2>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-person-plus-fill"></i> 新增會員
+        </a>
+    </div>
+
+    <!-- 成功提示訊息 -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- 搜尋與篩選區塊 -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <form method="get" asp-action="MemberList" class="row g-3">
+                <div class="col-md-5">
+                    <input type="text" name="search" class="form-control" placeholder="搜尋暱稱或 Email..." value="@Model.Search">
+                </div>
+                <div class="col-md-4">
+                    <select name="role" class="form-select">
+                        <option value="">-- 全部角色 --</option>
+                        <option value="一般會員" selected="@(Model.RoleFilter == "一般會員")">一般會員</option>
+                        <option value="團主" selected="@(Model.RoleFilter == "團主")">團主</option>
+                        <option value="管理員" selected="@(Model.RoleFilter == "管理員")">管理員</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-secondary w-100">
+                        <i class="bi bi-search"></i> 搜尋
+                    </button>
+                    <a asp-action="MemberList" class="btn btn-outline-secondary">重設</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 會員列表表格 -->
+    <div class="table-responsive card shadow-sm">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>暱稱</th>
+                    <th>Email</th>
+                    <th>角色</th>
+                    <th>帳號狀態</th>
+                    <th class="text-center">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items != null && Model.Items.Any())
+                {
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>@item.Id</td>
+                            <td class="fw-bold">@item.Name</td>
+                            <td>@item.Email</td>
+                            <td>
+                                <span class="badge @(item.Role == "管理員" ? "bg-danger" : item.Role == "團主" ? "bg-warning text-dark" : "bg-info text-dark")">
+                                    @item.Role
+                                </span>
+                            </td>
+                            <td>
+                                @if (item.IsSuspended)
+                                {
+                                    <span class="badge bg-danger">停權中</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">正常</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <a asp-action="Dashboard" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary me-1">
+                                    <i class="bi bi-speedometer2"></i> 360° 總覽
+                                </a>
+                                <a asp-action="ChangeRole" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-person-gear"></i> 變更角色
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">
+                            查無任何會員資料
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 分頁元件 -->
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                <!-- 上一頁 -->
+                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                    <a class="page-link" asp-action="MemberList"
+                       asp-route-page="@(Model.CurrentPage - 1)"
+                       asp-route-search="@Model.Search"
+                       asp-route-role="@Model.RoleFilter">上一頁</a>
+                </li>
+
+                <!-- 頁碼 -->
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                        <a class="page-link" asp-action="MemberList"
+                           asp-route-page="@i"
+                           asp-route-search="@Model.Search"
+                           asp-route-role="@Model.RoleFilter">@i</a>
+                    </li>
+                }
+
+                <!-- 下一頁 -->
+                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link" asp-action="MemberList"
+                       asp-route-page="@(Model.CurrentPage + 1)"
+                       asp-route-search="@Model.Search"
+                       asp-route-role="@Model.RoleFilter">下一頁</a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>
