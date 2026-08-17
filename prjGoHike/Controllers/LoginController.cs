@@ -6,6 +6,7 @@ namespace prjGoHike.Controllers
     {
         public IActionResult login()
         {
+
             return View();
         }
     }
