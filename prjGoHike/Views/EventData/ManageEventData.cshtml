@@ -1,4 +1,5 @@
-@model IEnumerable<prjGoHike.Models.CEventDataWarp>
+@using prjGoHike.EventDataViewModel
+@model CEventDataVM
 
 @{
     ViewData["Title"] = "管理活動";
@@ -10,7 +11,7 @@
     @{
         int count = 0;
     }
-    @foreach (var item in Model)
+    @foreach (var item in Model.cEventDatasList)
     {
         count++;
         <div class="accordion">
@@ -80,9 +81,52 @@
                 <form id="EditModal" method="post">
                     <div class="modal-body">
                         <div>
-
+                            @Html.HiddenFor(e => e.cEvent.EventId)
                         </div>
-
+                        <div>
+                            @Html.LabelFor(e =>e.cEvent.MountainId)
+                            @Html.TextBoxFor(e => e.cEvent.MountainId)
+                        </div>
+                        <div>
+                        @Html.LabelFor(e => e.cEvent.EventName)
+                        @Html.TextBoxFor(e => e.cEvent.EventName)
+                        </div>
+                        <div>
+                        @Html.LabelFor(e => e.cEvent.MaximumNumber)
+                        @Html.TextBoxFor(e => e.cEvent.MaximumNumber)
+                        </div>
+                        <div>
+                        @Html.LabelFor(e => e.cEvent.ActivityStatus)
+                        @Html.TextBoxFor(e => e.cEvent.ActivityStatus)
+                        </div>
+                        <div>
+                        @Html.LabelFor(e => e.cEvent.ActivityPhoto)
+                        @Html.TextBoxFor(e => e.cEvent.ActivityPhoto)
+                        </div>
+                        <div>
+                        @Html.LabelFor(e => e.cEvent.Description)
+                        @Html.TextBoxFor(e => e.cEvent.Description)
+                        </div>
+                        <div>
+                        @Html.LabelFor(e => e.cEvent.EventDate)
+                        @Html.TextBoxFor(e => e.cEvent.EventDate)
+                        </div>
+                        <div>
+                            @Html.LabelFor(e =>e.cEvent.ReviewRequired)
+                            @Html.TextBoxFor(e => e.cEvent.ReviewRequired)
+                        </div>
+                        <div>
+                            @Html.LabelFor(e => e.cEvent.ReviewStatus)
+                            @Html.TextBoxFor(e => e.cEvent.ReviewStatus)
+                        </div>
+                        <div>
+                            @Html.LabelFor(e =>e.cEvent.HasActiveReport)
+                            @Html.TextBoxFor(e => e.cEvent.HasActiveReport)
+                        </div>
+                        <div>
+                            @Html.LabelFor(e => e.cEvent.LeaderUserId)
+                            @Html.TextBoxFor(e => e.cEvent.LeaderUserId)
+                        </div>
                     </div>
 
                 </form>
