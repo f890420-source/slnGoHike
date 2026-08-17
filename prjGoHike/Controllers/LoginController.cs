@@ -209,11 +209,11 @@ namespace GoHike.Controllers
 
                 _logger.LogInformation($"新會員註冊成功：{newMember.Nickname} ({newMember.UserId})");
 
-                // 自動登入新會員
-                await SignInUser(newMember, rememberMe: false);
+                
+                TempData["SuccessMessage"] = $"註冊成功！請使用新帳號密碼進行登入。";
 
-                TempData["SuccessMessage"] = $"歡迎 {newMember.Nickname}！註冊成功，已自動登入";
-                return RedirectToAction("Dashboard", "Member");
+               
+                return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {

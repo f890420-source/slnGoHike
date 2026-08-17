@@ -13,7 +13,13 @@
                     <h2 class="text-center mb-4 fw-bold">
                         <i class="bi bi-box-arrow-in-right"></i> 會員登入
                     </h2>
-
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="bi bi-check-circle-fill"></i> @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
                     <!-- 錯誤訊息 -->
                     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
                     {

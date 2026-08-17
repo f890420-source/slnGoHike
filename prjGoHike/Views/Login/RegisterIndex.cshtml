@@ -45,7 +45,11 @@
                     <input asp-for="Password" type="password" class="form-control form-control-lg" placeholder="請輸入密碼" required />
                     <span asp-validation-for="Password" class="text-danger small"></span>
                 </div>
-
+                <div class="mb-3">
+                    <label asp-for="ConfirmPassword" class="form-label fw-bold"></label>
+                    <input asp-for="ConfirmPassword" class="form-control form-control-lg" placeholder="請再次輸入密碼" required />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                </div>
                 <!-- 偏好地區（選填） -->
                 <div class="mb-3">
                     <label asp-for="RegionPreference" class="form-label fw-bold">地區偏好（選填）</label>
