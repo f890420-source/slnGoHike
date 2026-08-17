@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using NetTopologySuite.Geometries;
 
 namespace prjGoHike.Models;
 
@@ -19,8 +18,6 @@ public partial class DisasterAlert
     public DateTime EffectiveFrom { get; set; }
 
     public DateTime? EffectiveTo { get; set; }
-
-    public Geometry? AffectedArea { get; set; }
 
     public string? SourceAgency { get; set; }
 

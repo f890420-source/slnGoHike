@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using NetTopologySuite.Geometries;
 
 namespace prjGoHike.Models;
 
@@ -19,8 +18,6 @@ public partial class TripReport
     public string ReportType { get; set; } = null!;
 
     public string ReportContent { get; set; } = null!;
-
-    public Geometry? Location { get; set; }
 
     public DateTime? OccurredAt { get; set; }
 

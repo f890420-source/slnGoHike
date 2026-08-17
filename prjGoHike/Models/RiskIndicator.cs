@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using NetTopologySuite.Geometries;
 
 namespace prjGoHike.Models;
 
@@ -17,8 +16,6 @@ public partial class RiskIndicator
     public byte RiskLevel { get; set; }
 
     public string? IndicatorDescription { get; set; }
-
-    public Geometry? SpatialArea { get; set; }
 
     public DateTime? ValidFrom { get; set; }
 

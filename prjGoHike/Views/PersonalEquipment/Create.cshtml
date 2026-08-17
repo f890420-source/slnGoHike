@@ -1,0 +1,211 @@
+﻿@model prjGoHike.ViewModels.CEquipmentConditionViewModel
+
+@{
+    Layout = null;
+    ViewData["Title"] = "登山條件設定";
+}
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>登山條件設定</title>
+
+    <link rel="stylesheet"
+          href="~/assets/libs/bootstrap/css/bootstrap.min.css" />
+</head>
+
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">登山條件設定</h3>
+            </div>
+
+            <div class="card-body">
+                <form asp-controller="PersonalEquipment"
+                      asp-action="Create"
+                      method="post">
+
+                    <div asp-validation-summary="ModelOnly"
+                         class="text-danger"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="ListName"
+                               class="form-label"></label>
+
+                        <input asp-for="ListName"
+                               class="form-control" />
+
+                        <span asp-validation-for="ListName"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="MountainId"
+                               class="form-label"></label>
+
+                        <select asp-for="MountainId"
+                                asp-items="ViewBag.Mountains"
+                                class="form-select">
+                            <option value="0">請選擇山岳</option>
+                        </select>
+
+                        <span asp-validation-for="MountainId"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="HikingDate"
+                               class="form-label"></label>
+
+                        <input asp-for="HikingDate"
+                               class="form-control" />
+
+                        <span asp-validation-for="HikingDate"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="HikingDays"
+                               class="form-label"></label>
+
+                        <input asp-for="HikingDays"
+                               class="form-control" />
+
+                        <span asp-validation-for="HikingDays"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Season"
+                               class="form-label"></label>
+
+                        <select asp-for="Season"
+                                class="form-select">
+                            <option value="">請選擇季節</option>
+                            <option value="春季">春季</option>
+                            <option value="夏季">夏季</option>
+                            <option value="秋季">秋季</option>
+                            <option value="冬季">冬季</option>
+                        </select>
+
+                        <span asp-validation-for="Season"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="IntensityLevel"
+                               class="form-label"></label>
+
+                        <select asp-for="IntensityLevel"
+                                class="form-select">
+                            <option value="">請選擇行程強度</option>
+                            <option value="輕度">輕度</option>
+                            <option value="中等">中等</option>
+                            <option value="高強度">高強度</option>
+                        </select>
+
+                        <span asp-validation-for="IntensityLevel"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="BodyWeightKg"
+                               class="form-label"></label>
+
+                        <div class="input-group">
+                            <input asp-for="BodyWeightKg"
+                                   type="number"
+                                   min="20"
+                                   max="300"
+                                   step="0.1"
+                                   class="form-control" />
+
+                            <span class="input-group-text">公斤</span>
+                        </div>
+
+                        <span asp-validation-for="BodyWeightKg"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ExperienceLevel"
+                               class="form-label"></label>
+
+                        <select asp-for="ExperienceLevel"
+                                class="form-select">
+                            <option value="">請選擇負重經驗</option>
+                            <option value="新手">新手</option>
+                            <option value="一般">一般</option>
+                            <option value="熟練">熟練</option>
+                        </select>
+
+                        <div class="form-text">
+                            新手：較少重裝經驗；
+                            一般：有過夜登山經驗；
+                            熟練：熟悉多日重裝與配重。
+                        </div>
+
+                        <span asp-validation-for="ExperienceLevel"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="alert alert-success">
+                        <div class="fw-bold">安全負重上限</div>
+
+                        <span id="maxCarryWeightValue">
+                            @Model.MaxCarryWeightKg.ToString("0.00")
+                        </span>
+                        kg
+
+                        <span class="text-muted">
+                            （體重 × 20%）
+                        </span>
+                    </div>
+
+                    <button type="submit"
+                            class="btn btn-primary">
+                        下一步
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+            const bodyWeightInput =
+                document.getElementById("BodyWeightKg");
+
+            const maxCarryWeightValue =
+                document.getElementById("maxCarryWeightValue");
+
+            function updateMaxCarryWeight() {
+                const bodyWeight =
+                    parseFloat(bodyWeightInput.value);
+
+                if (isNaN(bodyWeight)) {
+                    maxCarryWeightValue.textContent = "0.00";
+                    return;
+                }
+
+                const maxCarryWeight =
+                    bodyWeight * 0.20;
+
+                maxCarryWeightValue.textContent =
+                    maxCarryWeight.toFixed(2);
+            }
+
+            bodyWeightInput.addEventListener(
+                "input",
+                updateMaxCarryWeight);
+
+            updateMaxCarryWeight();
+    </script>
+
+    <script src="~/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
