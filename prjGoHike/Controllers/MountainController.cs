@@ -46,20 +46,25 @@ namespace prjGoHike.Controllers
             }
             try
             {
-                Mountain newMountain = new Mountain
+                Mountain newMountain = new Mountain();
+                
+                if(cMountainVM.MountainW.MountainName == _db.Mountains.First().MountainName)
                 {
-                    MountainName = cMountainVM.MountainW.MountainName,
-                    Location = cMountainVM.MountainW.Location,
-                    Altitude = cMountainVM.MountainW.Altitude,
-                    DifficultyLevel = cMountainVM.MountainW.DifficultyLevel,
-                    MountainsPermitRequired = cMountainVM.MountainW.MountainsPermitRequired,
-                    NationalParkPermitRequired = cMountainVM.MountainW.NationalParkPermitRequired
-                };
+                    return Json(new { success = false, message = "山岳名字不可重複" });
+                }
+                else
+                {
+                    newMountain.MountainName = cMountainVM.MountainW.MountainName;
+                    newMountain.Location = cMountainVM.MountainW.Location;
+                    newMountain.Altitude = cMountainVM.MountainW.Altitude;
+                    newMountain.DifficultyLevel = cMountainVM.MountainW.DifficultyLevel;
+                    newMountain.MountainsPermitRequired = cMountainVM.MountainW.MountainsPermitRequired;
+                    newMountain.NationalParkPermitRequired = cMountainVM.MountainW.NationalParkPermitRequired;
+                    _db.Mountains.Add(newMountain);
+                    _db.SaveChanges();
 
-                _db.Mountains.Add(newMountain);
-                _db.SaveChanges();
-
-                return Json(new { success = true, message = "資料建立成功！" });
+                    return Json(new { success = true, message = "資料建立成功！" });
+                }            
             }
             catch (Exception ex)
             {
