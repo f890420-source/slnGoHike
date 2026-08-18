@@ -74,9 +74,15 @@ namespace prjGoHike.Controllers
             return View(report);
         }
         [HttpPost]
-        public IActionResult ProcessReport(int ReportId, byte Status, string? Reply)
+        [ValidateAntiForgeryToken]
+        public IActionResult ProcessReport(
+          int ReportId,
+          byte Status,
+          byte ArticleStatus,
+          string? Reply)
         {
             var report = _context.Reports
+                .Include(r => r.Article)
                 .FirstOrDefault(r => r.ReportId == ReportId);
 
             if (report == null)
@@ -84,9 +90,21 @@ namespace prjGoHike.Controllers
                 return NotFound();
             }
 
+            // 修改檢舉狀態
             report.Status = Status;
+
+            // 修改管理員回覆
             report.Reply = Reply;
+
+            // 修改處理時間
             report.ReviewDate = DateTime.Now;
+
+            // 修改文章狀態
+            if (report.Article != null)
+            {
+                report.Article.Status = ArticleStatus;
+                report.Article.UpdateDate = DateTime.Now;
+            }
 
             _context.SaveChanges();
 

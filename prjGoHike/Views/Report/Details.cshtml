@@ -113,6 +113,39 @@
 
                 </div>
 
+                <!-- 文章狀態 -->
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        文章狀態
+                    </label>
+
+                    <select name="ArticleStatus"
+                            class="form-select">
+
+                        <option value="1"
+                                selected="@(Model.Article?.Status == 1)">
+                            正常
+                        </option>
+
+                        <option value="0"
+                                selected="@(Model.Article?.Status == 0)">
+                            隱藏
+                        </option>
+
+                        <option value="2"
+                                selected="@(Model.Article?.Status == 2)">
+                            下架
+                        </option>
+
+                        <option value="3"
+                                selected="@(Model.Article?.Status == 3)">
+                            已審核／禁止再次檢舉
+                        </option>
+
+                    </select>
+
+                </div>
 
                 <!-- 管理員回覆 -->
                 <div class="mb-3">
