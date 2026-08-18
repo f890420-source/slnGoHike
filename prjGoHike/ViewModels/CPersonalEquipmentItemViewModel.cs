@@ -10,6 +10,8 @@ namespace prjGoHike.ViewModels
         [DisplayName("裝備名稱")]
         public string EquipmentName { get; set; } = "";
 
+        public string CategoryName { get; set; } = "";
+
         [DisplayName("數量")]
         [Range(
             1,

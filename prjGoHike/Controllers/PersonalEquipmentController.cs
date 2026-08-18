@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using prjGoHike.Models;
 using prjGoHike.ViewModels;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace prjGoHike.Controllers
@@ -13,6 +14,22 @@ namespace prjGoHike.Controllers
         public PersonalEquipmentController(GoHikeDataContext db)
         {
             _db = db;
+        }
+
+        private long? GetCurrentUserId()
+        {
+            string? userIdClaim =
+                User.FindFirstValue(
+                    ClaimTypes.NameIdentifier);
+
+            if (long.TryParse(
+                userIdClaim,
+                out long userId))
+            {
+                return userId;
+            }
+
+            return null;
         }
 
         public IActionResult TestDatabase()
@@ -503,6 +520,9 @@ namespace prjGoHike.Controllers
                         EquipmentName =
                             customName,
 
+                        CategoryName =
+                            "自訂裝備",
+
                         Quantity =
                             vm.NewCustomQuantity,
 
@@ -560,7 +580,7 @@ namespace prjGoHike.Controllers
                 TempData["SuccessMessage"] =
                     "裝備已刪除。";
             }
-            else
+            else if (submitMode != "analysis")
             {
                 TempData["SuccessMessage"] =
                     "裝備修改已儲存。";
@@ -574,7 +594,130 @@ namespace prjGoHike.Controllers
                 CDictionary.SK_PERSONAL_EQUIPMENT_ITEMS,
                 updatedItemsJson);
 
+            if (submitMode == "analysis")
+            {
+                return RedirectToAction(
+                    "WeightAnalysis");
+            }
+
             return RedirectToAction("EditItems");
         }
+
+        // STEP 04：計算並分析裝備重量
+        public IActionResult WeightAnalysis()
+        {
+            string? conditionJson =
+                HttpContext.Session.GetString(
+                    CDictionary.SK_PERSONAL_EQUIPMENT_CONDITION);
+
+            string? itemsJson =
+                HttpContext.Session.GetString(
+                    CDictionary.SK_PERSONAL_EQUIPMENT_ITEMS);
+
+            if (string.IsNullOrEmpty(conditionJson)
+                || string.IsNullOrEmpty(itemsJson))
+            {
+                return RedirectToAction("Create");
+            }
+
+            CEquipmentConditionViewModel? condition =
+                JsonSerializer.Deserialize
+                <CEquipmentConditionViewModel>(
+                    conditionJson);
+
+            List<CPersonalEquipmentItemViewModel>? items =
+                JsonSerializer.Deserialize
+                <List<CPersonalEquipmentItemViewModel>>(
+                    itemsJson);
+
+            if (condition == null
+                || items == null
+                || items.Count == 0)
+            {
+                return RedirectToAction("EditItems");
+            }
+
+            Mountain? mountain = _db.Mountains
+                .FirstOrDefault(m =>
+                    m.MountainId ==
+                    condition.MountainId);
+
+            if (mountain == null)
+            {
+                return RedirectToAction("Create");
+            }
+
+            CEquipmentWeightAnalysisViewModel vm =
+                new CEquipmentWeightAnalysisViewModel
+                {
+                    Condition = condition,
+                    MountainName = mountain.MountainName,
+                    Items = items
+                };
+
+            return View(vm);
+        }
+
+        // STEP 05：儲存個人裝備清單
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult SaveList()
+        {
+            long? memberId =
+                GetCurrentUserId();
+
+            if (!memberId.HasValue)
+            {
+                TempData["ErrorMessage"] =
+                    "請先登入後再儲存裝備清單。";
+
+                return RedirectToAction(
+                    "WeightAnalysis");
+            }
+
+            string? conditionJson =
+                HttpContext.Session.GetString(
+                    CDictionary.SK_PERSONAL_EQUIPMENT_CONDITION);
+
+            string? itemsJson =
+                HttpContext.Session.GetString(
+                    CDictionary.SK_PERSONAL_EQUIPMENT_ITEMS);
+
+            if (string.IsNullOrEmpty(conditionJson)
+                || string.IsNullOrEmpty(itemsJson))
+            {
+                TempData["ErrorMessage"] =
+                    "清單資料已失效，請重新建立。";
+
+                return RedirectToAction("Create");
+            }
+
+            CEquipmentConditionViewModel? condition =
+                JsonSerializer.Deserialize
+                <CEquipmentConditionViewModel>(
+                    conditionJson);
+
+            List<CPersonalEquipmentItemViewModel>? items =
+                JsonSerializer.Deserialize
+                <List<CPersonalEquipmentItemViewModel>>(
+                    itemsJson);
+
+            if (condition == null
+                || items == null
+                || items.Count == 0)
+            {
+                TempData["ErrorMessage"] =
+                    "清單資料不完整，請重新操作。";
+
+                return RedirectToAction("Create");
+            }
+
+            return Content(
+                $"儲存前檢查成功。" +
+                $"會員編號：{memberId.Value}，" +
+                $"清單名稱：{condition.ListName}，" +
+                $"裝備項目：{items.Count} 筆。");
+        }
+
     }
 }
