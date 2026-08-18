@@ -17,6 +17,7 @@ namespace prjGoHike.Models
             set { _EventData = value; }
         }
         [Key]
+        [DisplayName("活動編號")]
         public long EventId
         {
             get { return _EventData.EventId; }
@@ -45,7 +46,7 @@ namespace prjGoHike.Models
         }
 
         [DisplayName("活動狀態")]
-
+        //之後需變成當活動時間到期自動轉變狀態
         public string ActivityStatus
         {
             get { return _EventData.ActivityStatus; }
@@ -82,19 +83,19 @@ namespace prjGoHike.Models
             set { _EventData.ReviewRequired = value; }
         }
 
-
+        [DisplayName("是否所有團員都有入山證/入園證")]
         public string ReviewStatus
         {
             get { return _EventData.ReviewStatus; }
             set { _EventData.ReviewStatus = value; }
         }
-
+        [DisplayName("有無舉報")]
         public bool HasActiveReport
         {
             get { return _EventData.HasActiveReport; }
             set { _EventData.HasActiveReport = value; }
         }
-
+        [DisplayName("團主ID")]
         public long LeaderUserId 
         {
             get { return _EventData.LeaderUserId; }

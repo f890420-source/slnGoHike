@@ -18,7 +18,7 @@
                 <h5 class="modal-title">創建新資料</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="NewEvent" method="post">
+            <form id="NewMountain" method="post">
                 <div class="modal-body">
                     <div class="ErrorMessage">
                         
@@ -74,9 +74,9 @@
 @section Scripts {
     <script>
         $(function() {
-            $("#NewEvent").on("submit", function(event) {
+            $("#NewMountain").on("submit", function(event) {
                 event.preventDefault(); 
-                if(!$("#NewEvent").valid()){
+                if (!$("#NewMountain").valid()) {
                     
                     return alert("有欄位未填");
                 }
@@ -121,7 +121,7 @@
 
                 
                 $.ajax({
-                    url: '@Url.Action("EditEvent", "Mountain")',
+                    url: '@Url.Action("EditMountain", "Mountain")',
                     type: 'GET',
                     data: {id:id},
 
@@ -136,7 +136,7 @@
                             $("#EditModal [name='MountainW.MountainsPermitRequired']").val(response.data.mountainsPermitRequired);
                             $("#EditModal [name='MountainW.NationalParkPermitRequired']").val(response.data.nationalParkPermitRequired);
                             
-                            var editModalEl = document.getElementById('EditEvent');
+                            var editModalEl = document.getElementById('EditMountain');
                             var editModal = bootstrap.Modal.getOrCreateInstance(editModalEl);
                             editModal.show();
                         } else {
@@ -151,14 +151,14 @@
                 event.preventDefault();
                 var dataform = $(this).serialize();
                 $.ajax({
-                        url: '@Url.Action("EditEvent", "Mountain")',
+                    url: '@Url.Action("EditMountain", "Mountain")',
                         type: 'POST',
                         data: dataform,
 
                                 success: function(response) {
                             if (response.success) {
                                 alert(response.message);
-                                var modalElement = document.getElementById('EditEvent');
+                            var modalElement = document.getElementById('EditMountain');
                                 var modal = bootstrap.Modal.getInstance(modalElement);
                                 
                                 if (modal){ 
@@ -205,7 +205,7 @@
     </script>
 }
 
-<div class="modal fade" id="EditEvent" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="EditMountain" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">

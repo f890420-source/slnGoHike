@@ -116,17 +116,17 @@
                         @Html.LabelFor(e => e.cEvent.EventDate)
                         @Html.TextBoxFor(e => e.cEvent.EventDate, new { @class = "form-control-custom" })
                     </div>
-                    <div>
+                    <div class="my-3">
                         @Html.LabelFor(e => e.cEvent.ReviewRequired)
-                        @Html.TextBoxFor(e => e.cEvent.ReviewRequired, new { @class = "form-control-custom" })
+                        @Html.CheckBoxFor(e => e.cEvent.ReviewRequired, new { @class = "form-check-input-custom" })
                     </div>
                     <div>
                         @Html.LabelFor(e => e.cEvent.ReviewStatus)
                         @Html.TextBoxFor(e => e.cEvent.ReviewStatus, new { @class = "form-control-custom" })
                     </div>
-                    <div>
+                    <div class="my-3">
                         @Html.LabelFor(e => e.cEvent.HasActiveReport)
-                        @Html.TextBoxFor(e => e.cEvent.HasActiveReport, new { @class = "form-control-custom" })
+                        @Html.CheckBoxFor(e => e.cEvent.HasActiveReport, new { @class = "form-check-input-custom" })
                     </div>
                     <div>
                         @Html.LabelFor(e => e.cEvent.LeaderUserId)
@@ -193,10 +193,17 @@
                         $("#EditModal [name = 'cEvent.ActivityPhoto']").val(response.data.activityPhoto);
                         $("#EditModal [name = 'cEvent.Description']").val(response.data.description);
                         $("#EditModal [name = 'cEvent.EventDate']").val(response.data.eventDate);
-                        $("#EditModal [name = 'cEvent.ReviewRequired']").val(response.data.reviewRequired);
+                        // $("#EditModal [name = 'cEvent.ReviewRequired']").val(response.data.reviewRequired);
                         $("#EditModal [name = 'cEvent.ReviewStatus']").val(response.data.reviewStatus);
-                        $("#EditModal [name = 'cEvent.HasActiveReport']").val(response.data.hasActiveReport);
+                        // $("#EditModal [name = 'cEvent.HasActiveReport']").val(response.data.hasActiveReport);
                         $("#EditModal [name = 'cEvent.LeaderUserId']").val(response.data.leaderUserId);
+
+                        $("#EditModal input[name='cEvent.ReviewRequired'][type='checkbox']").prop("checked", response.data.reviewRequired);
+                        $("#EditModal input[name='cEvent.HasActiveReport'][type='checkbox']").prop("checked", response.data.hasActiveReport);
+
+                        $("#EditModal [name = 'cEvent.ReviewStatus']").val(response.data.reviewStatus);
+                        $("#EditModal [name = 'cEvent.LeaderUserId']").val(response.data.leaderUserId);
+
                         var editModalEl = document.getElementById('EditManageEvent');
                         var editModal = bootstrap.Modal.getOrCreateInstance(editModalEl);
                         editModal.show();

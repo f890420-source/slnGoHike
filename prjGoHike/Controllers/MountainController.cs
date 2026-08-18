@@ -67,7 +67,7 @@ namespace prjGoHike.Controllers
             }
         }
         [HttpGet]
-        public IActionResult EditEvent(int id)
+        public IActionResult EditMountain(int id)
         {
             
             var moun = _db.Mountains.FirstOrDefault(m => m.MountainId == id);
@@ -99,7 +99,7 @@ namespace prjGoHike.Controllers
         }
         
         [HttpPost]
-        public IActionResult EditEvent(CMountainVM cMountainVM)
+        public IActionResult EditMountain(CMountainVM cMountainVM)
         {
             try
             {
