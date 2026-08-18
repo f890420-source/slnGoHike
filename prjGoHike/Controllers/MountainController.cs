@@ -3,6 +3,7 @@ using Microsoft.Identity.Client;
 using NetTopologySuite.Geometries;
 using prjGoHike.Models;
 using prjGoHike.MountainViewModel;
+using System.Text.RegularExpressions;
 
 namespace prjGoHike.Controllers
 {
@@ -47,8 +48,8 @@ namespace prjGoHike.Controllers
             try
             {
                 Mountain newMountain = new Mountain();
-                
-                if(cMountainVM.MountainW.MountainName == _db.Mountains.First().MountainName)
+                bool isNameExists = _db.Mountains.Any(m => m.MountainName == cMountainVM.MountainW.MountainName);
+                if (isNameExists)
                 {
                     return Json(new { success = false, message = "山岳名字不可重複" });
                 }

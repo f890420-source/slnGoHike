@@ -37,6 +37,7 @@ namespace prjGoHike.Models
         }
         [DisplayName("高度")]
         [Required(ErrorMessage = "請輸入高度")]
+        [RegularExpression(@"^[0-9]+$", ErrorMessage = "請輸入有效數字，{0}欄位 不可含有中文")]
         public int Altitude
         {
             get { return _Mountain.Altitude; }
@@ -44,6 +45,7 @@ namespace prjGoHike.Models
         }
         [DisplayName("山岳難度")]
         [Required(ErrorMessage = "請輸入難度")]
+        [RegularExpression(@"^[0-9]+$", ErrorMessage = "請輸入有效數字，{0}欄位 不可含有中文")]
         public int DifficultyLevel
         {
             get { return _Mountain.DifficultyLevel; }
@@ -51,6 +53,7 @@ namespace prjGoHike.Models
         }
         [DisplayName("入山證")]
         [Required(ErrorMessage = "請輸入是否需要入山證(請填入1或0)")]
+        [RegularExpression(@"^[0-9]+$", ErrorMessage = "請輸入有效數字，{0}欄位 不可含有中文")]
         public int? MountainsPermitRequired
         {
             get { return _Mountain.MountainsPermitRequired; }
@@ -58,6 +61,7 @@ namespace prjGoHike.Models
         }
         [DisplayName("入園證")]
         [Required(ErrorMessage = "請輸入是否需要入園證(請填入1或0)")]
+        [RegularExpression(@"^[0-9]+$", ErrorMessage = "請輸入有效數字，{0}欄位 不可含有中文")]
         public int? NationalParkPermitRequired
         {
             get { return _Mountain.NationalParkPermitRequired; }

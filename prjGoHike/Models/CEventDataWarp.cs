@@ -84,6 +84,7 @@ namespace prjGoHike.Models
         }
 
         [DisplayName("是否所有團員都有入山證/入園證")]
+        //之後需改成接收前端資料來自動判斷
         public string ReviewStatus
         {
             get { return _EventData.ReviewStatus; }
