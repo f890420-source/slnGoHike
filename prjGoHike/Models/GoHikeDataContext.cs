@@ -84,6 +84,8 @@ public partial class GoHikeDataContext : DbContext
 
     public virtual DbSet<TrailRiskIndicator> TrailRiskIndicators { get; set; }
 
+    public virtual DbSet<TrailSegment> TrailSegments { get; set; }
+
     public virtual DbSet<TrailSubscription> TrailSubscriptions { get; set; }
 
     public virtual DbSet<TripReport> TripReports { get; set; }
@@ -883,6 +885,27 @@ public partial class GoHikeDataContext : DbContext
                 .HasForeignKey(d => d.TrailId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_TrailRiskIndicators_Trail_Id");
+        });
+
+        modelBuilder.Entity<TrailSegment>(entity =>
+        {
+            entity.HasIndex(e => e.TrailId, "IX_TrailSegments_Trail_Id");
+
+            entity.Property(e => e.TrailSegmentId).HasColumnName("TrailSegment_Id");
+            entity.Property(e => e.RoutePath).HasColumnName("Route_Path");
+            entity.Property(e => e.Source).HasMaxLength(50);
+            entity.Property(e => e.SourceId)
+                .HasMaxLength(100)
+                .HasColumnName("Source_Id");
+            entity.Property(e => e.SourceUrl)
+                .HasMaxLength(500)
+                .HasColumnName("Source_Url");
+            entity.Property(e => e.TrailId).HasColumnName("Trail_Id");
+
+            entity.HasOne(d => d.Trail).WithMany(p => p.TrailSegments)
+                .HasForeignKey(d => d.TrailId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TrailSegments_Trails");
         });
 
         modelBuilder.Entity<TrailSubscription>(entity =>
