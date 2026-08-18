@@ -22,7 +22,7 @@ public class AdminTrailsController : Controller
     }
 
     // GET: AdminTrails/Details/5
-    public async Task<IActionResult> Details(int? id)
+    public async Task<IActionResult> Map(long? id)
     {
         if (id == null)
         {
@@ -36,7 +36,27 @@ public class AdminTrailsController : Controller
             return NotFound();
         }
 
-        return View(trail);
+        var segments = await _context.TrailSegments
+                            .Where(s => s.TrailId == id)
+                            .ToListAsync();
+
+        var viewModel = new TrailMapViewModel
+        {
+            TrailId = trail.TrailId,
+            TrailName = trail.TrailName,
+            Segments = segments.Where(s => s.RoutePath != null)
+                               .Select(s => new TrailSegmentMapViewModel
+                               {
+                                   TrailSegmentId = s.TrailSegmentId,
+                                   Source = s.Source,
+                                   Coordinates = s.RoutePath.Coordinates
+                                   .Select(c => new[] { c.X, c.Y })
+                                   .ToArray()
+                               })
+                               .ToList()
+        };
+
+        return View(viewModel);
     }
 
     // GET: AdminTrails/Create
