@@ -21,7 +21,8 @@
                         </div>
                     }
                     <!-- 錯誤訊息 -->
-                    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+@*                     Controller 傳過來的 Model 可能是 null
+ *@                    @if (!string.IsNullOrEmpty(Model?.ErrorMessage))
                     {
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
                             <i class="bi bi-exclamation-circle"></i> @Model.ErrorMessage
@@ -60,7 +61,7 @@
 
                     <hr class="my-4">
 
-                                        <!-- 底部連結 -->
+                      <!-- 底部連結 -->
                     <div class="text-center">
                         <p class="mb-2">還沒有帳號？</p>
                         <a href="@Url.Action("RegisterIndex", "Login")" class="btn btn-outline-success btn-sm fw-bold">
