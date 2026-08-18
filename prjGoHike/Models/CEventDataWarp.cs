@@ -39,6 +39,7 @@ namespace prjGoHike.Models
         }
 
         [DisplayName("最大參與人數")]
+        //也需要改成由前端判斷
         public int MaximumNumber
         {
             get { return _EventData.MaximumNumber; }
