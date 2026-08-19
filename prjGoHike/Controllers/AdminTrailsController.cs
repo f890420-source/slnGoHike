@@ -19,9 +19,18 @@ public class AdminTrailsController : Controller
     }
 
     // GET: AdminTrails
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(CKeywordViewModel vm)
     {
-        var trails = await _context.Trails.AsNoTracking().ToListAsync();
+        List<Trail>? trails = null;
+        if (string.IsNullOrWhiteSpace(vm.txtKeyword))
+        {
+            trails = await _context.Trails.AsNoTracking().ToListAsync();
+        }
+        else
+        {
+            trails = await _context.Trails.AsNoTracking().Where(t => t.TrailName.Contains(vm.txtKeyword)).ToListAsync();
+        }
+
         var twList = trails.Select(t => new CTrailWrap(t)).ToList();
         return View(twList);
     }

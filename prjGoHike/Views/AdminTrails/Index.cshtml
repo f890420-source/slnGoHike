@@ -12,9 +12,16 @@
 
 <h2>步道管理</h2>
 
-<p>
+<div class="d-flex align-items-center gap-3 m-3">
     <a asp-action="Create" class="btn-custom btn-custom-outline-primary">新增步道</a>
-</p>
+    <form class="navbar-search-wrapper" method="post">
+        <input name="txtKeyword" type="text" class="navbar-search-input" placeholder="搜尋步道">
+        <button type="submit" class="navbar-search-btn" aria-label="Search">
+            <i class="bi bi-search"></i>
+        </button>
+    </form>
+</div>
+
 <div class="table-responsive">
     <table class="table-custom align-middle">
         <thead>
