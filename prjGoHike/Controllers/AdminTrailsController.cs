@@ -1,11 +1,12 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 using NetTopologySuite;
 using NetTopologySuite.Geometries;
+using NetTopologySuite.Triangulate;
 using prjGoHike.Models;
 using prjGoHike.ViewModels;
+using System.Text.Json;
 
 public class AdminTrailsController : Controller
 {
@@ -134,16 +135,32 @@ public class AdminTrailsController : Controller
             return NotFound();
         }
 
-        var traildb = await _context.Trails.FindAsync(id);
+        var traildb = await _context.Trails
+            .Include(t => t.TrailSegments)
+            .FirstOrDefaultAsync(t => t.TrailId == id);
         if (traildb == null)
         {
             return NotFound();
         }
-        CTrailWrap tw = new CTrailWrap()
+        var segment = traildb.TrailSegments.FirstOrDefault();
+        var vm = new TrailEditViewModel
         {
-            trail = traildb
+            TrailId = traildb.TrailId,
+            TrailName = traildb.TrailName,
+            Region = traildb.Region,
+            DifficultyLevel = traildb.DifficultyLevel,
+            DistanceKm = traildb.DistanceKm,
+            PermitRequired = traildb.PermitRequired,
+            GuideRequired = traildb.GuideRequired,
+            RegulationNote = traildb.RegulationNote,
+            IsPublished = traildb.IsPublished,
+
+            CurrentRouteCoordinates = segment?.RoutePath.Coordinates
+        .Select(c => new[] { c.X, c.Y })
+        .ToArray()
+        ?? Array.Empty<double[]>()
         };
-        return View(tw);
+        return View(vm);
     }
 
     // POST: AdminTrails/Edit/5
@@ -151,28 +168,96 @@ public class AdminTrailsController : Controller
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int? id, [Bind("TrailId,TrailName,Region,DifficultyLevel,DistanceKm,EstimatedHours,PermitRequired,GuideRequired,RegulationNote,TrailPath,IsPublished,AlertsTrails,HikeRecordDetails,TrailFeatures,TrailRiskIndicators,TrailSubscriptions,TripReports")] Trail trail)
+    public async Task<IActionResult> Edit(int? id, TrailEditViewModel vm)
     {
-        if (id != trail.TrailId || !ModelState.IsValid)
+        if (id != vm.TrailId || !ModelState.IsValid)
         {
             return NotFound();
         }
+
+        // 因為後臺匯入的步道會有多段資料
+        var trail = await _context.Trails
+                      .Include(t => t.TrailSegments)
+                      .SingleOrDefaultAsync(t => t.TrailId == id);
+
+        if (trail == null)
+        {
+            return NotFound();
+        }
+
+        LineString? newRoutePath = null;
+
+        // 有選擇新檔案時才驗證、覆蓋路線。
+        if (vm.GeoJsonFile != null)
+        {
+            try
+            {
+                newRoutePath =
+                    await ReadTrailGeometryAsync(vm.GeoJsonFile);
+            }
+            catch (InvalidDataException ex)
+            {
+                ModelState.AddModelError(
+                    nameof(vm.GeoJsonFile),
+                    ex.Message
+                );
+            }
+        }
+
+        if (!ModelState.IsValid)
+        {
+            // 重新補上既有路線，讓畫面仍可顯示地圖
+            vm.CurrentRouteCoordinates = GetRouteCoordinates(trail);
+            return View(vm);
+        }
+
+        // 更新 Trail 的一般欄位。
+        trail.TrailName = vm.TrailName.Trim();
+        trail.Region = vm.Region.Trim();
+        trail.DifficultyLevel = vm.DifficultyLevel;
+        trail.DistanceKm = vm.DistanceKm;
+        trail.PermitRequired = vm.PermitRequired;
+        trail.GuideRequired = vm.GuideRequired;
+        trail.RegulationNote = vm.RegulationNote;
+        trail.IsPublished = vm.IsPublished;
+
+        // 有上傳新檔案才覆蓋 RoutePath。
+        if (newRoutePath != null)
+        {
+            TrailSegment? segment =
+                trail.TrailSegments.SingleOrDefault();
+
+            if (segment == null)
+            {
+                trail.TrailSegments.Add(
+                    new TrailSegment
+                    {
+                        RoutePath = newRoutePath,
+                        Source = "Edit Upload (GeoJSON)"
+                    }
+                );
+            }
+            else
+            {
+                segment.RoutePath = newRoutePath;
+                segment.Source = "Edit Upload (GeoJSON)";
+            }
+        }
+
         try
         {
-            _context.Update(trail);
             await _context.SaveChangesAsync();
         }
         catch (DbUpdateConcurrencyException)
         {
-            if (!TrailExists(trail.TrailId))
+            if (!TrailExists(vm.TrailId))
             {
                 return NotFound();
             }
-            else
-            {
-                throw;
-            }
+
+            throw;
         }
+
         return RedirectToAction(nameof(Index));
     }
 
@@ -394,6 +479,26 @@ public class AdminTrailsController : Controller
         // GeoJSON：[經度, 緯度]
         // NTS：Coordinate(X, Y)
         return new Coordinate(longitude, latitude);
+    }
+
+    private static double[][] GetRouteCoordinates(
+    Trail trail)
+    {
+        TrailSegment? segment =
+            trail.TrailSegments.SingleOrDefault();
+
+        if (segment?.RoutePath == null)
+        {
+            return Array.Empty<double[]>();
+        }
+
+        return segment.RoutePath.Coordinates
+            .Select(coordinate => new[]
+            {
+            coordinate.X,
+            coordinate.Y
+            })
+            .ToArray();
     }
 
     private bool TrailExists(long? trailid)
