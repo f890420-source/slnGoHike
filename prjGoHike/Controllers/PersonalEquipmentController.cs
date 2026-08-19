@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.Models;
@@ -8,12 +9,10 @@ using System.Text.Json;
 
 namespace prjGoHike.Controllers
 {
+    [Authorize]
     public class PersonalEquipmentController : Controller
     {
         private readonly GoHikeDataContext _db;
-
-        // TODO：登入功能整合後，改由 Claim 取得會員 ID
-        private const long DevelopmentMemberId = 2;
 
         public PersonalEquipmentController(GoHikeDataContext db)
         {
@@ -41,11 +40,19 @@ namespace prjGoHike.Controllers
             string? searchKeyword,
             string? statusFilter)
         {
+            long? memberId = GetCurrentUserId();
+
+            if (!memberId.HasValue)
+            {
+                return Challenge();
+            }
+
             IQueryable<PersonalEquipmentList> query =
                 _db.PersonalEquipmentLists
                     .AsNoTracking()
                     .Where(list =>
-                        !list.IsDeleted);
+                        list.MemberId == memberId.Value
+                        && !list.IsDeleted);
 
             string normalizedKeyword =
                 searchKeyword?.Trim() ?? "";
@@ -841,7 +848,14 @@ namespace prjGoHike.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult SaveList()
         {
-            long memberId = DevelopmentMemberId;
+            long? currentUserId = GetCurrentUserId();
+
+            if (!currentUserId.HasValue)
+            {
+                return Challenge();
+            }
+
+            long memberId = currentUserId.Value;
 
             bool memberExists =
                 _db.Users.Any(u =>
@@ -850,7 +864,7 @@ namespace prjGoHike.Controllers
             if (!memberExists)
             {
                 TempData["ErrorMessage"] =
-                    "找不到開發用測試會員，請確認會員資料。";
+                    "找不到目前登入的會員資料。";
 
                 return RedirectToAction(
                     "WeightAnalysis");
@@ -1160,11 +1174,19 @@ namespace prjGoHike.Controllers
         // STEP 05：查看裝備清單詳細內容
         public IActionResult Details(long id)
         {
+            long? memberId = GetCurrentUserId();
+
+            if (!memberId.HasValue)
+            {
+                return Challenge();
+            }
+
             CPersonalEquipmentListDetailsViewModel? vm =
                 _db.PersonalEquipmentLists
                     .AsNoTracking()
                     .Where(list =>
                         list.ListId == id
+                        && list.MemberId == memberId.Value
                         && !list.IsDeleted)
                     .Select(list =>
                         new
@@ -1273,10 +1295,18 @@ namespace prjGoHike.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Delete(long id)
         {
+            long? memberId = GetCurrentUserId();
+
+            if (!memberId.HasValue)
+            {
+                return Challenge();
+            }
+
             PersonalEquipmentList? list =
                 _db.PersonalEquipmentLists
                     .FirstOrDefault(item =>
                         item.ListId == id
+                        && item.MemberId == memberId.Value
                         && !item.IsDeleted);
 
             if (list == null)
@@ -1310,6 +1340,13 @@ namespace prjGoHike.Controllers
         // STEP 05：載入既有清單進行編輯
         public IActionResult Edit(long id)
         {
+            long? memberId = GetCurrentUserId();
+
+            if (!memberId.HasValue)
+            {
+                return Challenge();
+            }
+
             PersonalEquipmentList? list =
                 _db.PersonalEquipmentLists
                     .AsNoTracking()
@@ -1323,6 +1360,7 @@ namespace prjGoHike.Controllers
                                 equipment!.Category)
                     .FirstOrDefault(item =>
                         item.ListId == id
+                        && item.MemberId == memberId.Value
                         && !item.IsDeleted);
 
             if (list == null)
