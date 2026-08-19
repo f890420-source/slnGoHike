@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using prjGoHike.Models;
 using prjGoHike.ViewModels;
 using System.Security.Claims;
@@ -10,6 +11,9 @@ namespace prjGoHike.Controllers
     public class PersonalEquipmentController : Controller
     {
         private readonly GoHikeDataContext _db;
+
+        // TODO：登入功能整合後，改由 Claim 取得會員 ID
+        private const long DevelopmentMemberId = 2;
 
         public PersonalEquipmentController(GoHikeDataContext db)
         {
@@ -32,6 +36,99 @@ namespace prjGoHike.Controllers
             return null;
         }
 
+        // STEP 05：顯示裝備清單記錄
+        public IActionResult Index(
+            string? searchKeyword,
+            string? statusFilter)
+        {
+            IQueryable<PersonalEquipmentList> query =
+                _db.PersonalEquipmentLists
+                    .AsNoTracking()
+                    .Where(list =>
+                        !list.IsDeleted);
+
+            string normalizedKeyword =
+                searchKeyword?.Trim() ?? "";
+
+            string normalizedStatus =
+                statusFilter?.Trim() ?? "";
+
+            if (!string.IsNullOrEmpty(
+                normalizedKeyword))
+            {
+                query = query.Where(list =>
+                    list.ListName.Contains(
+                        normalizedKeyword)
+                    || list.Mountain.MountainName.Contains(
+                        normalizedKeyword));
+            }
+
+            string[] allowedStatuses =
+            {
+        "安全範圍",
+        "接近安全上限",
+        "超過安全上限"
+    };
+
+            if (allowedStatuses.Contains(
+                normalizedStatus))
+            {
+                query = query.Where(list =>
+                    list.WeightStatus ==
+                    normalizedStatus);
+            }
+
+            List<CPersonalEquipmentListItemViewModel>
+                items =
+                    query
+                        .OrderByDescending(list =>
+                            list.CreatedAt)
+                        .Select(list =>
+                            new
+                            CPersonalEquipmentListItemViewModel
+                            {
+                                ListId =
+                                    list.ListId,
+
+                                ListName =
+                                    list.ListName,
+
+                                MountainName =
+                                    list.Mountain.MountainName,
+
+                                HikingDate =
+                                    list.HikingDate,
+
+                                HikingDays =
+                                    list.HikingDays,
+
+                                TotalWeightGram =
+                                    list.TotalWeightGram,
+
+                                WeightStatus =
+                                    list.WeightStatus,
+
+                                CreatedAt =
+                                    list.CreatedAt
+                            })
+                        .ToList();
+
+            CPersonalEquipmentListIndexViewModel vm =
+                new CPersonalEquipmentListIndexViewModel
+                {
+                    SearchKeyword =
+                        normalizedKeyword,
+
+                    StatusFilter =
+                        normalizedStatus,
+
+                    Items =
+                        items
+                };
+
+            return View(vm);
+        }
+
         public IActionResult TestDatabase()
         {
             int mountainCount = _db.Mountains.Count();
@@ -42,6 +139,10 @@ namespace prjGoHike.Controllers
         // GET：顯示表單
         public IActionResult Create()
         {
+
+            HttpContext.Session.Remove(
+            CDictionary.SK_PERSONAL_EQUIPMENT_EDIT_LIST_ID);
+
             var mountains = _db.Mountains
                 .OrderBy(m => m.MountainName)
                 .ToList();
@@ -659,17 +760,97 @@ namespace prjGoHike.Controllers
         }
 
         // STEP 05：儲存個人裝備清單
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public IActionResult SaveList()
+        //{
+        //    //long? memberId =
+        //    //    GetCurrentUserId();
+
+        //    //if (!memberId.HasValue)
+        //    //{
+        //    //    TempData["ErrorMessage"] =
+        //    //        "請先登入後再儲存裝備清單。";
+
+        //    //    return RedirectToAction(
+        //    //        "WeightAnalysis");
+        //    //}
+
+        //    long memberId = DevelopmentMemberId;
+
+        //    bool memberExists =
+        //        _db.Users.Any(u =>
+        //            u.UserId == memberId);
+
+        //    if (!memberExists)
+        //    {
+        //        TempData["ErrorMessage"] =
+        //            "找不到開發用測試會員，請確認會員資料。";
+
+        //        return RedirectToAction(
+        //            "WeightAnalysis");
+        //    }
+
+        //    string? conditionJson =
+        //        HttpContext.Session.GetString(
+        //            CDictionary.SK_PERSONAL_EQUIPMENT_CONDITION);
+
+        //    string? itemsJson =
+        //        HttpContext.Session.GetString(
+        //            CDictionary.SK_PERSONAL_EQUIPMENT_ITEMS);
+
+        //    if (string.IsNullOrEmpty(conditionJson)
+        //        || string.IsNullOrEmpty(itemsJson))
+        //    {
+        //        TempData["ErrorMessage"] =
+        //            "清單資料已失效，請重新建立。";
+
+        //        return RedirectToAction("Create");
+        //    }
+
+        //    CEquipmentConditionViewModel? condition =
+        //        JsonSerializer.Deserialize
+        //        <CEquipmentConditionViewModel>(
+        //            conditionJson);
+
+        //    List<CPersonalEquipmentItemViewModel>? items =
+        //        JsonSerializer.Deserialize
+        //        <List<CPersonalEquipmentItemViewModel>>(
+        //            itemsJson);
+
+        //    if (condition == null
+        //        || items == null
+        //        || items.Count == 0)
+        //    {
+        //        TempData["ErrorMessage"] =
+        //            "清單資料不完整，請重新操作。";
+
+        //        return RedirectToAction("Create");
+        //    }
+
+        //    return Content(
+        //        $"儲存前檢查成功。" +
+        //        //$"會員編號：{memberId.Value}，" +
+        //        $"會員編號：{memberId}，" +
+        //        $"清單名稱：{condition.ListName}，" +
+        //        $"裝備項目：{items.Count} 筆。");
+        //}
+
+        // STEP 05：儲存個人裝備清單
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult SaveList()
         {
-            long? memberId =
-                GetCurrentUserId();
+            long memberId = DevelopmentMemberId;
 
-            if (!memberId.HasValue)
+            bool memberExists =
+                _db.Users.Any(u =>
+                    u.UserId == memberId);
+
+            if (!memberExists)
             {
                 TempData["ErrorMessage"] =
-                    "請先登入後再儲存裝備清單。";
+                    "找不到開發用測試會員，請確認會員資料。";
 
                 return RedirectToAction(
                     "WeightAnalysis");
@@ -712,11 +893,536 @@ namespace prjGoHike.Controllers
                 return RedirectToAction("Create");
             }
 
-            return Content(
-                $"儲存前檢查成功。" +
-                $"會員編號：{memberId.Value}，" +
-                $"清單名稱：{condition.ListName}，" +
-                $"裝備項目：{items.Count} 筆。");
+            Mountain? mountain =
+                _db.Mountains.FirstOrDefault(m =>
+                    m.MountainId ==
+                    condition.MountainId);
+
+            if (mountain == null)
+            {
+                TempData["ErrorMessage"] =
+                    "指定的山岳不存在。";
+
+                return RedirectToAction("Create");
+            }
+
+            // 驗證 Session 中的正式裝備仍存在且啟用
+            List<long> equipmentIds =
+                items
+                    .Where(item =>
+                        item.EquipmentId.HasValue)
+                    .Select(item =>
+                        item.EquipmentId!.Value)
+                    .Distinct()
+                    .ToList();
+
+            int validEquipmentCount =
+                _db.Equipments.Count(e =>
+                    equipmentIds.Contains(
+                        e.EquipmentId)
+                    && e.IsActive);
+
+            if (validEquipmentCount !=
+                equipmentIds.Count)
+            {
+                TempData["ErrorMessage"] =
+                    "部分裝備資料已不存在或停用，請重新建立清單。";
+
+                return RedirectToAction("Create");
+            }
+
+            // 再次驗證數量與重量，避免 Session 異常
+            bool hasInvalidItem =
+                items.Any(item =>
+                    item.Quantity < 1
+                    || item.Quantity > 20
+                    || item.UnitWeightGram < 0
+                    || item.UnitWeightGram > 50000
+                    || string.IsNullOrWhiteSpace(
+                        item.EquipmentName));
+
+            if (hasInvalidItem)
+            {
+                TempData["ErrorMessage"] =
+                    "裝備資料格式不正確，請重新調整清單。";
+
+                return RedirectToAction("EditItems");
+            }
+
+            CEquipmentWeightAnalysisViewModel analysis =
+                new CEquipmentWeightAnalysisViewModel
+                {
+                    Condition = condition,
+                    MountainName =
+                        mountain.MountainName,
+                    Items = items
+                };
+
+            int maxCarryWeightGram =
+                decimal.ToInt32(
+                    analysis.MaxCarryWeightKg *
+                    1000M);
+
+            int remainingWeightGram =
+                decimal.ToInt32(
+                    analysis.RemainingWeightKg *
+                    1000M);
+
+            string? editListIdText =
+    HttpContext.Session.GetString(
+        CDictionary.SK_PERSONAL_EQUIPMENT_EDIT_LIST_ID);
+
+            bool isEditMode =
+                long.TryParse(
+                    editListIdText,
+                    out long editListId);
+
+            using var transaction =
+                _db.Database.BeginTransaction();
+
+            try
+            {
+                PersonalEquipmentList list;
+
+                if (isEditMode)
+                {
+                    PersonalEquipmentList? existingList =
+                        _db.PersonalEquipmentLists
+                            .Include(item =>
+                                item.PersonalEquipmentDetails)
+                            .FirstOrDefault(item =>
+                                item.ListId == editListId
+                                && item.MemberId == memberId
+                                && !item.IsDeleted);
+
+                    if (existingList == null)
+                    {
+                        transaction.Rollback();
+
+                        TempData["ErrorMessage"] =
+                            "找不到要編輯的裝備清單。";
+
+                        return RedirectToAction("Index");
+                    }
+
+                    list = existingList;
+
+                    List<PersonalEquipmentDetail>
+                        oldDetails =
+                            list.PersonalEquipmentDetails
+                                .ToList();
+
+                    _db.PersonalEquipmentDetails
+                        .RemoveRange(oldDetails);
+
+                    list.UpdatedAt = DateTime.Now;
+                }
+                else
+                {
+                    list = new PersonalEquipmentList
+                    {
+                        MemberId = memberId,
+                        IsDeleted = false,
+                        CreatedAt = DateTime.Now
+                    };
+
+                    _db.PersonalEquipmentLists.Add(
+                        list);
+                }
+
+                // 新增與編輯都要更新的清單主檔欄位
+                list.MountainId =
+                    condition.MountainId;
+
+                list.ListName =
+                    condition.ListName.Trim();
+
+                list.HikingDate =
+                    DateOnly.FromDateTime(
+                        condition.HikingDate);
+
+                list.HikingDays =
+                    condition.HikingDays;
+
+                list.Season =
+                    condition.Season;
+
+                list.IntensityLevel =
+                    condition.IntensityLevel;
+
+                list.ExperienceLevel =
+                    condition.ExperienceLevel;
+
+                list.BodyWeightKg =
+                    condition.BodyWeightKg;
+
+                list.MaxCarryWeightGram =
+                    maxCarryWeightGram;
+
+                list.TotalWeightGram =
+                    analysis.TotalWeightGram;
+
+                list.RemainingWeightGram =
+                    remainingWeightGram;
+
+                list.WeightPercentage =
+                    analysis.BodyWeightPercentage;
+
+                list.WeightStatus =
+                    analysis.WeightStatus;
+
+                // 重新建立這份清單的裝備明細
+                for (int index = 0;
+                     index < items.Count;
+                     index++)
+                {
+                    CPersonalEquipmentItemViewModel item =
+                        items[index];
+
+                    PersonalEquipmentDetail detail =
+                        new PersonalEquipmentDetail
+                        {
+                            EquipmentId =
+                                item.EquipmentId,
+
+                            CustomEquipmentName =
+                                item.EquipmentId.HasValue
+                                    ? null
+                                    : item.EquipmentName.Trim(),
+
+                            Quantity =
+                                item.Quantity,
+
+                            UnitWeightGram =
+                                item.UnitWeightGram,
+
+                            TotalWeightGram =
+                                item.TotalWeightGram,
+
+                            RequirementLevel =
+                                item.RequirementLevel,
+
+                            IsPrepared = false,
+
+                            SortOrder =
+                                index + 1,
+
+                            Notes =
+                                item.Notes
+                        };
+
+                    list.PersonalEquipmentDetails.Add(
+                        detail);
+                }
+
+                _db.SaveChanges();
+
+                transaction.Commit();
+
+                HttpContext.Session.Remove(
+                    CDictionary.SK_PERSONAL_EQUIPMENT_CONDITION);
+
+                HttpContext.Session.Remove(
+                    CDictionary.SK_PERSONAL_EQUIPMENT_ITEMS);
+
+                HttpContext.Session.Remove(
+                    CDictionary.SK_PERSONAL_EQUIPMENT_EDIT_LIST_ID);
+
+                TempData["SuccessMessage"] =
+                    isEditMode
+                        ? $"裝備清單「{list.ListName}」已成功更新。"
+                        : $"裝備清單「{list.ListName}」已成功儲存。";
+
+                return RedirectToAction("Index");
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                transaction.Rollback();
+
+                TempData["ErrorMessage"] =
+                    "清單已被其他操作更新，請重新載入後再試。";
+
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                transaction.Rollback();
+
+                TempData["ErrorMessage"] =
+                    "儲存失敗：" +
+                    ex.GetBaseException().Message;
+
+                return RedirectToAction(
+                    "WeightAnalysis");
+            }
+        }
+
+        // STEP 05：查看裝備清單詳細內容
+        public IActionResult Details(long id)
+        {
+            CPersonalEquipmentListDetailsViewModel? vm =
+                _db.PersonalEquipmentLists
+                    .AsNoTracking()
+                    .Where(list =>
+                        list.ListId == id
+                        && !list.IsDeleted)
+                    .Select(list =>
+                        new
+                        CPersonalEquipmentListDetailsViewModel
+                        {
+                            ListId =
+                                list.ListId,
+
+                            ListName =
+                                list.ListName,
+
+                            MountainName =
+                                list.Mountain.MountainName,
+
+                            HikingDate =
+                                list.HikingDate,
+
+                            HikingDays =
+                                list.HikingDays,
+
+                            Season =
+                                list.Season,
+
+                            IntensityLevel =
+                                list.IntensityLevel ?? "",
+
+                            ExperienceLevel =
+                                list.ExperienceLevel ?? "",
+
+                            BodyWeightKg =
+                                list.BodyWeightKg,
+
+                            MaxCarryWeightGram =
+                                list.MaxCarryWeightGram,
+
+                            TotalWeightGram =
+                                list.TotalWeightGram,
+
+                            RemainingWeightGram =
+                                list.RemainingWeightGram,
+
+                            WeightPercentage =
+                                list.WeightPercentage,
+
+                            WeightStatus =
+                                list.WeightStatus,
+
+                            CreatedAt =
+                                list.CreatedAt,
+
+                            Items =
+                                list.PersonalEquipmentDetails
+                                    .OrderBy(detail =>
+                                        detail.SortOrder)
+                                    .Select(detail =>
+                                        new
+                                        CPersonalEquipmentListDetailItemViewModel
+                                        {
+                                            EquipmentName =
+                                                detail.Equipment != null
+                                                    ? detail.Equipment
+                                                        .EquipmentName
+                                                    : detail.CustomEquipmentName
+                                                        ?? "自訂裝備",
+
+                                            CategoryName =
+                                                detail.Equipment != null
+                                                    ? detail.Equipment
+                                                        .Category
+                                                        .CategoryName
+                                                    : "自訂裝備",
+
+                                            Quantity =
+                                                detail.Quantity,
+
+                                            UnitWeightGram =
+                                                detail.UnitWeightGram,
+
+                                            TotalWeightGram =
+                                                detail.TotalWeightGram,
+
+                                            RequirementLevel =
+                                                detail.RequirementLevel
+                                                    ?? "",
+
+                                            Notes =
+                                                detail.Notes,
+
+                                            IsCustomEquipment =
+                                                detail.EquipmentId == null
+                                        })
+                                    .ToList()
+                        })
+                    .FirstOrDefault();
+
+            if (vm == null)
+            {
+                return NotFound();
+            }
+
+            return View(vm);
+        }
+
+        // STEP 05：軟刪除裝備清單
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Delete(long id)
+        {
+            PersonalEquipmentList? list =
+                _db.PersonalEquipmentLists
+                    .FirstOrDefault(item =>
+                        item.ListId == id
+                        && !item.IsDeleted);
+
+            if (list == null)
+            {
+                TempData["ErrorMessage"] =
+                    "找不到指定的裝備清單。";
+
+                return RedirectToAction("Index");
+            }
+
+            list.IsDeleted = true;
+            list.UpdatedAt = DateTime.Now;
+
+            try
+            {
+                _db.SaveChanges();
+
+                TempData["SuccessMessage"] =
+                    $"裝備清單「{list.ListName}」已刪除。";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] =
+                    "刪除失敗：" +
+                    ex.GetBaseException().Message;
+            }
+
+            return RedirectToAction("Index");
+        }
+
+        // STEP 05：載入既有清單進行編輯
+        public IActionResult Edit(long id)
+        {
+            PersonalEquipmentList? list =
+                _db.PersonalEquipmentLists
+                    .AsNoTracking()
+                    .Include(item =>
+                        item.Mountain)
+                    .Include(item =>
+                        item.PersonalEquipmentDetails)
+                        .ThenInclude(detail =>
+                            detail.Equipment)
+                            .ThenInclude(equipment =>
+                                equipment!.Category)
+                    .FirstOrDefault(item =>
+                        item.ListId == id
+                        && !item.IsDeleted);
+
+            if (list == null)
+            {
+                TempData["ErrorMessage"] =
+                    "找不到指定的裝備清單。";
+
+                return RedirectToAction("Index");
+            }
+
+            CEquipmentConditionViewModel condition =
+                new CEquipmentConditionViewModel
+                {
+                    ListName =
+                        list.ListName,
+
+                    MountainId =
+                        list.MountainId,
+
+                    HikingDate =
+                        list.HikingDate.ToDateTime(
+                            TimeOnly.MinValue),
+
+                    HikingDays =
+                        list.HikingDays,
+
+                    Season =
+                        list.Season,
+
+                    IntensityLevel =
+                        list.IntensityLevel ?? "",
+
+                    BodyWeightKg =
+                        list.BodyWeightKg,
+
+                    ExperienceLevel =
+                        list.ExperienceLevel ?? ""
+                };
+
+            List<CPersonalEquipmentItemViewModel> items =
+                list.PersonalEquipmentDetails
+                    .OrderBy(detail =>
+                        detail.SortOrder)
+                    .Select(detail =>
+                        new
+                        CPersonalEquipmentItemViewModel
+                        {
+                            EquipmentId =
+                                detail.EquipmentId,
+
+                            EquipmentName =
+                                detail.Equipment != null
+                                    ? detail.Equipment
+                                        .EquipmentName
+                                    : detail.CustomEquipmentName
+                                        ?? "自訂裝備",
+
+                            CategoryName =
+                                detail.Equipment != null
+                                    ? detail.Equipment
+                                        .Category
+                                        .CategoryName
+                                    : "自訂裝備",
+
+                            Quantity =
+                                detail.Quantity,
+
+                            UnitWeightGram =
+                                detail.UnitWeightGram,
+
+                            RequirementLevel =
+                                detail.RequirementLevel
+                                    ?? "",
+
+                            Notes =
+                                detail.Notes
+                        })
+                    .ToList();
+
+            if (items.Count == 0)
+            {
+                TempData["ErrorMessage"] =
+                    "這份清單沒有可編輯的裝備明細。";
+
+                return RedirectToAction("Index");
+            }
+
+            HttpContext.Session.SetString(
+                CDictionary.SK_PERSONAL_EQUIPMENT_EDIT_LIST_ID,
+                list.ListId.ToString());
+
+            HttpContext.Session.SetString(
+                CDictionary.SK_PERSONAL_EQUIPMENT_CONDITION,
+                JsonSerializer.Serialize(condition));
+
+            HttpContext.Session.SetString(
+                CDictionary.SK_PERSONAL_EQUIPMENT_ITEMS,
+                JsonSerializer.Serialize(items));
+
+            return RedirectToAction("EditItems");
         }
 
     }
