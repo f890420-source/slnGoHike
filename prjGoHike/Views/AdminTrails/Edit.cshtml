@@ -4,6 +4,8 @@
     ViewData["Title"] = "編輯步道資訊";
 }
 
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
 <h3>編輯步道資訊</h3>
 <hr />
 <div class="row">
@@ -51,7 +53,8 @@
                 <input asp-for="RegulationNote" class="form-control" />
                 <span asp-validation-for="RegulationNote" class="text-danger"></span>
             </div>
-            <div class="form-group">
+            <div class="form-group mb-3">
+                <label asp-for="GeoJsonFile" class="control-label">替換步道路線 GeoJSON</label>
                 <input asp-for="GeoJsonFile"
                        type="file"
                        class="form-control"
@@ -60,6 +63,11 @@
                 <span asp-validation-for="GeoJsonFile"
                       class="text-danger"></span>
             </div>
+            <div class="form-group mb-3">
+                <label class="control-label">上傳資料預覽</label>
+                <div id="trailMap" style="height: 500px;"></div>
+            </div>
+
             <div class="form-group d-flex gap-2 p-2">
                 <input type="submit" value="儲存修改" class="btn-custom btn-custom-primary" />
                 <a asp-action="Index" class="btn-custom btn-custom-outline-primary">回到列表</a>
@@ -69,6 +77,69 @@
 </div>
 
 @section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const map = L.map("trailMap").setView([23.7, 121], 7);
+        L.tileLayer(
+            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            {
+                attribution: "&copy; OpenStreetMap contributors"
+            }
+        ).addTo(map);
+
+        let myGeoJsonLayer = null;
+
+        document.getElementById("GeoJsonFile")
+            .addEventListener("change", async function() {
+
+                const file = this.files[0];
+                if (!file) {
+                    return;
+                }
+
+                try {
+                    const text = await file.text();
+                    const geoJson = JSON.parse(text);
+
+                    // 前端先做一次 UX 驗證
+                    if (
+                        geoJson.type !== "FeatureCollection" ||
+                        !Array.isArray(geoJson.features)
+                    ) {
+                        alert("GeoJSON 格式錯誤! (類型不是 FeatureCollection )");
+                        this.ariaValueMax = "";
+                        return;
+                    }
+
+                    if (geoJson.features.length !== 1) {
+                        alert("只支援一個 Feature 的 GeoJSON 格式上傳!")
+                        this.value = "";
+                        return;
+                    }
+
+                    if (myGeoJsonLayer) {
+                        map.removeLayer(myGeoJsonLayer);
+                    }
+
+                    myGeoJsonLayer = L.geoJson(geoJson).addTo(map);
+
+                    const bounds = myGeoJsonLayer.getBounds();
+
+                    if (bounds.isValid()) {
+                        map.fitBounds(
+                            bounds, {
+                            padding: [20, 20]
+                        }
+                        )
+                    }
+                }
+                catch (error) {
+                    console.error(error);
+                    alert("請檢查 GeoJSON 格式!")
+                    this.value = "";
+                }
+            });
+    </script>
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }

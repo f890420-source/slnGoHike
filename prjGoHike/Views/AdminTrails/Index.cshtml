@@ -4,6 +4,11 @@
     ViewData["Title"] = "步道管理";
 }
 
+<style>
+    .trail-badge {
+        font-size: 1.2rem;
+    }
+</style>
 
 <h2>步道管理</h2>
 
@@ -36,9 +41,6 @@
                     @Html.DisplayNameFor(model => model.GuideRequired)
                 </th>
                 <th>
-                    @Html.DisplayNameFor(model => model.RegulationNote)
-                </th>
-                <th>
                     @Html.DisplayNameFor(model => model.IsPublished)
                 </th>
                 <th></th>
@@ -64,16 +66,36 @@
                             @Html.DisplayFor(model => item.EstimatedHours)
                         </td> *@
                     <td>
-                        @Html.DisplayFor(model => item.PermitRequired)
+                        @if (item.PermitRequired)
+                        {
+                            <span class="badge-table success">需要申請</span>
+                        }
+                        else
+                        {
+                            <span class="badge-table pending">免申請</span>
+                        }
                     </td>
+
                     <td>
-                        @Html.DisplayFor(model => item.GuideRequired)
+                        @if (item.GuideRequired)
+                        {
+                            <span class="badge-table success">需要嚮導</span>
+                        }
+                        else
+                        {
+                            <span class="badge-table pending">不需嚮導</span>
+                        }
                     </td>
-                    @* <td>
-                            @Html.DisplayFor(model => item.RegulationNote)
-                        </td> *@
+
                     <td>
-                        @Html.DisplayFor(model => item.IsPublished)
+                        @if (item.IsPublished)
+                        {
+                            <span class="badge-table success">已發布</span>
+                        }
+                        else
+                        {
+                            <span class="badge-table pending">未發布</span>
+                        }
                     </td>
                     <td>
                         <a asp-action="Map" asp-route-id="@item.TrailId" class="table-btn-action" title="查看地圖">

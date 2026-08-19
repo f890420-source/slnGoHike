@@ -101,7 +101,7 @@ public partial class CTrailWrap
     }
 
     [ScaffoldColumn(false)]
-    [DisplayName("是否發布")]
+    [DisplayName("是否已發布")]
     public bool IsPublished
     {
         get { return _trail.IsPublished; }
