@@ -27,8 +27,8 @@
                     @Html.DisplayNameFor(model => model.DistanceKm)
                 </th>
                 @* <th>
-                    @Html.DisplayNameFor(model => model.EstimatedHours)
-                </th> *@
+                        @Html.DisplayNameFor(model => model.EstimatedHours)
+                    </th> *@
                 <th>
                     @Html.DisplayNameFor(model => model.PermitRequired)
                 </th>
@@ -61,8 +61,8 @@
                         @Html.DisplayFor(model => item.DistanceKm)
                     </td>
                     @* <td>
-                        @Html.DisplayFor(model => item.EstimatedHours)
-                    </td> *@
+                            @Html.DisplayFor(model => item.EstimatedHours)
+                        </td> *@
                     <td>
                         @Html.DisplayFor(model => item.PermitRequired)
                     </td>
@@ -70,12 +70,15 @@
                         @Html.DisplayFor(model => item.GuideRequired)
                     </td>
                     @* <td>
-                        @Html.DisplayFor(model => item.RegulationNote)
-                    </td> *@
+                            @Html.DisplayFor(model => item.RegulationNote)
+                        </td> *@
                     <td>
                         @Html.DisplayFor(model => item.IsPublished)
                     </td>
                     <td>
+                        <a asp-action="Map" asp-route-id="@item.TrailId" class="table-btn-action" title="查看地圖">
+                            <i class="bi bi-map"></i>
+                        </a>
                         <a asp-action="Edit" asp-route-id="@item.TrailId" class="table-btn-action" title="編輯">
                             <i class="bi bi-pencil"></i>
                         </a>
