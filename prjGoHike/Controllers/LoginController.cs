@@ -273,7 +273,8 @@ namespace GoHike.Controllers
                 new Claim(ClaimTypes.Name, user.Nickname),
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim("Role", user.Role),
-                new Claim("AccountStatus", user.AccountStatus)
+                new Claim("AccountStatus", user.AccountStatus),
+                new Claim("AvatarUrl", user.AvatarUrl ?? "")
             };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

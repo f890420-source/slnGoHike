@@ -18,8 +18,10 @@ namespace prjGoHike.ViewModels_user.Member
 
             [Display(Name = "頭貼網址")]
             public string AvatarUrl { get; set; }
+        [Display(Name = "上傳大頭貼")]
+        public IFormFile? AvatarFile { get; set; }
 
-            [Display(Name = "頭貼模糊狀態")]
+        [Display(Name = "頭貼模糊狀態")]
             public string AvatarBlurState { get; set; }
 
             [Display(Name = "常去區域")]

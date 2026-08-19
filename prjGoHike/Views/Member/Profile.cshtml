@@ -4,23 +4,64 @@
     ViewData["Title"] = "個人資料";
 }
 
-<div class="container">
-    <h1>@ViewData["Title"]</h1>
+<div class="container py-4">
+    <h1 class="mb-4">@ViewData["Title"]</h1>
 
-    <form method="post">
-        <div class="form-group">
-            <label asp-for="Nickname"></label>
-            <input asp-for="Nickname" class="form-control" />
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- 重點：上傳檔案必須加上 enctype="multipart/form-data" -->
+    <form method="post" enctype="multipart/form-data" class="card shadow-sm p-4">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="UserId" />
+        <input type="hidden" asp-for="AvatarUrl" />
+
+        <!-- 大頭貼展示與上傳區塊 -->
+        <div class="mb-4 text-center">
+            <div class="mb-3">
+                @if (!string.IsNullOrEmpty(Model.AvatarUrl))
+                {
+                    <img src="@Model.AvatarUrl" id="avatarPreview" class="rounded-circle img-thumbnail shadow-sm"
+                         style="width: 120px; height: 120px; object-fit: cover;" alt="當前頭貼" />
+                }
+                else
+                {
+                    <div id="avatarPreviewPlaceholder" class="rounded-circle bg-secondary text-white d-inline-flex align-items-center justify-content-center shadow-sm"
+                         style="width: 120px; height: 120px; font-size: 3rem;">
+                        <i class="bi bi-person"></i>
+                    </div>
+                    <img id="avatarPreview" class="rounded-circle img-thumbnail shadow-sm d-none"
+                         style="width: 120px; height: 120px; object-fit: cover;" />
+                }
+            </div>
+
+            <div class="col-md-6 mx-auto">
+                <label asp-for="AvatarFile" class="form-label fw-bold"></label>
+                <input asp-for="AvatarFile" class="form-control" type="file" accept="image/*" onchange="previewImage(this)" />
+                <span asp-validation-for="AvatarFile" class="text-danger small"></span>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label asp-for="Bio"></label>
-            <textarea asp-for="Bio" class="form-control"></textarea>
+        <hr class="my-4">
+
+        <div class="mb-3">
+            <label asp-for="Nickname" class="form-label fw-bold"></label>
+            <input asp-for="Nickname" class="form-control" required />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Bio" class="form-label fw-bold"></label>
+            <textarea asp-for="Bio" class="form-control" rows="3"></textarea>
         </div>
 
         <div class="mb-3">
             <label asp-for="RegionPreference" class="form-label fw-bold">地區偏好（選填）</label>
-            <select asp-for="RegionPreference" class="form-select form-select-lg">
+            <select asp-for="RegionPreference" class="form-select">
                 <option value="">-- 請選擇偏好地區 --</option>
                 <option value="北部">北部</option>
                 <option value="中部">中部</option>
@@ -28,9 +69,10 @@
                 <option value="東部">東部</option>
             </select>
         </div>
+
         <div class="mb-4">
             <label asp-for="DifficultyPreference" class="form-label fw-bold">難度偏好（選填）</label>
-            <select asp-for="DifficultyPreference" class="form-select form-select-lg">
+            <select asp-for="DifficultyPreference" class="form-select">
                 <option value="">-- 請選擇偏好難度 --</option>
                 <option value="新手">新手</option>
                 <option value="中級">中級</option>
@@ -38,11 +80,28 @@
             </select>
         </div>
 
-        <button type="submit" class="btn btn-primary">更新資料</button>
+        <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold">
+            <i class="bi bi-save me-1"></i> 更新資料
+        </button>
     </form>
-
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
-    }
 </div>
+
+<!-- 即時預覽圖片的 JS -->
+@section Scripts {
+    <script>
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.getElementById('avatarPreview');
+                    const placeholder = document.getElementById('avatarPreviewPlaceholder');
+
+                    img.src = e.target.result;
+                    img.classList.remove('d-none');
+                    if (placeholder) placeholder.classList.add('d-none');
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+}
