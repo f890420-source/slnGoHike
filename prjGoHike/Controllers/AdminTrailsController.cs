@@ -28,7 +28,11 @@ public class AdminTrailsController : Controller
         }
         else
         {
-            trails = await _context.Trails.AsNoTracking().Where(t => t.TrailName.Contains(vm.txtKeyword)).ToListAsync();
+            trails = await _context.Trails
+                            .AsNoTracking()
+                            .Where(t => t.TrailName.Contains(vm.txtKeyword)
+                                     || t.Region.Contains(vm.txtKeyword))
+                            .ToListAsync();
         }
 
         var twList = trails.Select(t => new CTrailWrap(t)).ToList();
