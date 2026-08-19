@@ -249,12 +249,17 @@
                         {
                             <li class="dropdown-header">你好，@User.Identity.Name！</li>
                             <li>
+                                <a class="dropdown-item" asp-controller="Member" asp-action="Dashboard">
+                                    <i class="bi bi-person me-2"></i> 會員總覽
+                                </a>
+                            </li>
+                            <li>
                                 <a class="dropdown-item" asp-controller="MemberAdmin" asp-action="Index">
                                     <i class="bi bi-person me-2"></i> 會員管理
                                 </a>
                             </li>
                             <li><a class="dropdown-item" asp-controller="Member" asp-action="Profile" >
-                                <i class="bi bi-gear me-2"></i> 個人設定</a></li>
+                                <i class="bi bi-gear me-2"></i> 資料更新</a></li>
                             <li>
                                 <hr class="dropdown-divider">
                             </li>

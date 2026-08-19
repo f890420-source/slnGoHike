@@ -96,12 +96,33 @@ namespace prjGoHike.Controllers
 
         // 360度總覽(針對指定會員,非目前登入者)
         //	管理員看指定會員的資料(需要傳 ID)
-        public async Task<IActionResult> Dashboard(long id)
+        public async Task<IActionResult> Dashboard(long? id)
             {
-            var vm = await BuildDashboardViewModel(id);
+       
+            long targetUserId;
+            // 1. 如果網址沒傳 ID，就從登入 Session自動抓取 ID
+            if (!id.HasValue || id.Value == 0)
+            {
+                // 抓取登入時存入 Claim 的 UserId (ClaimTypes.NameIdentifier)
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out targetUserId))
+                {
+                    // 防呆：抓不到登入資訊，導回登入頁
+                    return RedirectToAction("Index", "Login");
+                }
+            }
+            else
+            {
+                // 如果網址有傳 ID（例如管理員看特定會員），就用傳進來的 ID
+                targetUserId = id.Value;
+            }
+
+            // 2. 建構 ViewModel
+            var vm = await BuildDashboardViewModel(targetUserId);
+
             if (vm == null)
                 return NotFound("會員不存在");
-
             return View(vm);
         }
         /// <summary>
