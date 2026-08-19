@@ -17,6 +17,7 @@ namespace prjGoHike.Models
             set { _EventData = value; }
         }
         [Key]
+        [DisplayName("活動編號")]
         public long EventId
         {
             get { return _EventData.EventId; }
@@ -38,6 +39,7 @@ namespace prjGoHike.Models
         }
 
         [DisplayName("最大參與人數")]
+        //也需要改成由前端判斷
         public int MaximumNumber
         {
             get { return _EventData.MaximumNumber; }
@@ -45,7 +47,7 @@ namespace prjGoHike.Models
         }
 
         [DisplayName("活動狀態")]
-
+        //之後需變成當活動時間到期自動轉變狀態
         public string ActivityStatus
         {
             get { return _EventData.ActivityStatus; }
@@ -82,23 +84,55 @@ namespace prjGoHike.Models
             set { _EventData.ReviewRequired = value; }
         }
 
-
+        [DisplayName("是否所有團員都有入山證/入園證")]
+        //之後需改成接收前端資料來自動判斷
         public string ReviewStatus
         {
             get { return _EventData.ReviewStatus; }
             set { _EventData.ReviewStatus = value; }
         }
-
+        [DisplayName("有無舉報")]
+        //有無檢舉那欄要做成按鈕 點開是新的痾網頁?
         public bool HasActiveReport
         {
             get { return _EventData.HasActiveReport; }
             set { _EventData.HasActiveReport = value; }
         }
-
+        [DisplayName("團主ID")]
         public long LeaderUserId 
         {
             get { return _EventData.LeaderUserId; }
             set { _EventData.LeaderUserId = value; }
         }
+
+
+        [DisplayName("山岳名稱")]
+        public string MountainName { get; set;  }
+
+        [DisplayName("山岳難度")]
+        public int DifficultyLevel { get; set; }
+
+        [DisplayName("需要入山證嗎")]
+        public bool MountainsPermitRequired { get; set; }
+
+        [DisplayName("需要入園證嗎")]
+        public bool NationalParkPermitRequired { get; set; }
+
+        [DisplayName("活動創立時間")]
+        public DateTime? EventStartTime
+        {
+            get { return _EventData.EventStartTime; }
+            set { _EventData.EventStartTime = value; }
+        }
+        [DisplayName("活動結束時間")]
+        public DateTime? EventEndTime
+        {
+            get { return _EventData.EventEndTime; }
+            set { _EventData.EventEndTime = value; }
+        }
+
+
+
+
     }
 }

@@ -7,18 +7,18 @@
 <h1>山岳資料</h1>
 <p class="d-flex justify-content-end" >
     <button type="button" class="btn-custom btn-custom-outline-secondary"
-            data-bs-toggle="modal" data-bs-target="#CreateNewEvent">
+            data-bs-toggle="modal" data-bs-target="#CreateNewMountain">
         創建山岳資料
     </button>
 </p>
-<div class="modal fade" id="CreateNewEvent" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="CreateNewMountain" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">創建新資料</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="NewEvent" method="post">
+            <form id="NewMountain" method="post">
                 <div class="modal-body">
                     <div class="ErrorMessage">
                         
@@ -47,15 +47,15 @@
                         @Html.ValidationMessageFor(n => n.MountainW.DifficultyLevel, "")
 
                     </div>
-                    <div class="col-lg-12">
+                    <div class="col-lg-12 mb-3">
                         @Html.LabelFor(n => n.MountainW.MountainsPermitRequired)
-                        @Html.TextBoxFor(n => n.MountainW.MountainsPermitRequired, new { @class = "form-control-custom", placeholder = "請輸入資料" })
+                        @Html.CheckBoxFor(n => n.MountainW.MountainsPermitRequired, new { @class = "form-check-input-custom" })
                         @Html.ValidationMessageFor(n => n.MountainW.MountainsPermitRequired, "")
 
                     </div>
-                    <div class="col-lg-12">
+                    <div class="col-lg-12 mb-3">
                         @Html.LabelFor(n => n.MountainW.NationalParkPermitRequired)
-                        @Html.TextBoxFor(n => n.MountainW.NationalParkPermitRequired, new { @class = "form-control-custom", placeholder = "請輸入資料" })
+                        @Html.CheckBoxFor(n => n.MountainW.NationalParkPermitRequired, new { @class = "form-check-input-custom", })
                         @Html.ValidationMessageFor(n => n.MountainW.NationalParkPermitRequired, "")
 
                     </div>
@@ -74,9 +74,9 @@
 @section Scripts {
     <script>
         $(function() {
-            $("#NewEvent").on("submit", function(event) {
+            $("#NewMountain").on("submit", function(event) {
                 event.preventDefault(); 
-                if(!$("#NewEvent").valid()){
+                if (!$("#NewMountain").valid()) {
                     
                     return alert("有欄位未填");
                 }
@@ -86,7 +86,7 @@
 
                 
                 $.ajax({
-                    url: '@Url.Action("CreateNewEvent", "Mountain")', 
+                    url: '@Url.Action("CreateNewMountain", "Mountain")',
                     type: 'POST',
                     data: formData,
                     success: function(response) {
@@ -94,13 +94,11 @@
                             alert(response.message);
 
                             
-                            var modalElement = document.getElementById('CreateNewEvent');
+                            var modalElement = document.getElementById('CreateNewMountain');
                             var modal = bootstrap.Modal.getInstance(modalElement);
                             if (modal) {
                                 modal.hide();
                             }
-
-                            
                             location.reload();
                         } else {
                             alert("建立失敗：" + response.message);
@@ -121,7 +119,7 @@
 
                 
                 $.ajax({
-                    url: '@Url.Action("EditEvent", "Mountain")',
+                    url: '@Url.Action("EditMountain", "Mountain")',
                     type: 'GET',
                     data: {id:id},
 
@@ -133,10 +131,10 @@
                             $("#EditModal [name='MountainW.Location']").val(response.data.location);
                             $("#EditModal [name='MountainW.Altitude']").val(response.data.altitude);
                             $("#EditModal [name='MountainW.DifficultyLevel']").val(response.data.difficultyLevel);
-                            $("#EditModal [name='MountainW.MountainsPermitRequired']").val(response.data.mountainsPermitRequired);
-                            $("#EditModal [name='MountainW.NationalParkPermitRequired']").val(response.data.nationalParkPermitRequired);
+                            $("#EditModal [name='MountainW.MountainsPermitRequired'][type='checkbox']").prop("checked",response.data.mountainsPermitRequired);
+                            $("#EditModal [name='MountainW.NationalParkPermitRequired'][type='checkbox']").prop("checked",response.data.nationalParkPermitRequired);
                             
-                            var editModalEl = document.getElementById('EditEvent');
+                            var editModalEl = document.getElementById('EditMountain');
                             var editModal = bootstrap.Modal.getOrCreateInstance(editModalEl);
                             editModal.show();
                         } else {
@@ -151,14 +149,14 @@
                 event.preventDefault();
                 var dataform = $(this).serialize();
                 $.ajax({
-                        url: '@Url.Action("EditEvent", "Mountain")',
+                    url: '@Url.Action("EditMountain", "Mountain")',
                         type: 'POST',
                         data: dataform,
 
                                 success: function(response) {
                             if (response.success) {
                                 alert(response.message);
-                                var modalElement = document.getElementById('EditEvent');
+                            var modalElement = document.getElementById('EditMountain');
                                 var modal = bootstrap.Modal.getInstance(modalElement);
                                 
                                 if (modal){ 
@@ -185,11 +183,11 @@
                 var id = $("#deleteMountainId").val();
 
                 $.ajax({
-                    url: '@Url.Action("DeleteEvent", "Mountain")',
+                    url: '@Url.Action("DeleteMountain", "Mountain")',
                     type: "POST",
                     data: { id: id },
                     success: function(response) {
-                        var modalElement = document.getElementById('DeleteEvent');
+                        var modalElement = document.getElementById('DeleteMountain');
                         var modal = bootstrap.Modal.getInstance(modalElement);
 
                         if (modal) {
@@ -205,7 +203,7 @@
     </script>
 }
 
-<div class="modal fade" id="EditEvent" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="EditMountain" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -243,15 +241,15 @@
                         @* @Html.ValidationMessageFor(n => n.MountainW.DifficultyLevel, "") *@
 
                     </div>
-                    <div class="col-lg-12">
+                    <div class="col-lg-12 mb-3">
                         @Html.LabelFor(n => n.MountainW.MountainsPermitRequired)
-                        @Html.TextBoxFor(n => n.MountainW.MountainsPermitRequired, new { @class = "form-control-custom" })
+                        @Html.CheckBoxFor(n => n.MountainW.MountainsPermitRequired, new { @class = "form-check-input-custom" })
                         @* @Html.ValidationMessageFor(n => n.MountainW.MountainsPermitRequired, "") *@
 
                     </div>
-                    <div class="col-lg-12">
+                    <div class="col-lg-12 mb-3">
                         @Html.LabelFor(n => n.MountainW.NationalParkPermitRequired)
-                        @Html.TextBoxFor(n => n.MountainW.NationalParkPermitRequired, new { @class = "form-control-custom" })
+                        @Html.CheckBoxFor(n => n.MountainW.NationalParkPermitRequired, new { @class = "form-check-input-custom" })
                         @* @Html.ValidationMessageFor(n => n.MountainW.NationalParkPermitRequired, "") *@
 
                     </div>
@@ -267,7 +265,7 @@
         </div>
     </div>
 </div>
-<div class="modal fade" id="DeleteEvent" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="DeleteMountain" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -359,7 +357,7 @@
                     <td>
                         <p class="d-flex justify-content-end">
                             <button type="button" data-id="@item.MountainId" class="Btn-Delete btn-custom btn-custom-outline-secondary"
-                                    data-bs-toggle="modal" data-bs-target="#DeleteEvent">
+                                    data-bs-toggle="modal" data-bs-target="#DeleteMountain">
                                 刪除資料
                             </button>
                         </p>
