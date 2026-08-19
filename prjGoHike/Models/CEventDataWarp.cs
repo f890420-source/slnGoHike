@@ -92,6 +92,7 @@ namespace prjGoHike.Models
             set { _EventData.ReviewStatus = value; }
         }
         [DisplayName("有無舉報")]
+        //有無檢舉那欄要做成按鈕 點開是新的痾網頁?
         public bool HasActiveReport
         {
             get { return _EventData.HasActiveReport; }
