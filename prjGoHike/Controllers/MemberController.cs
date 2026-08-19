@@ -288,13 +288,13 @@ namespace prjGoHike.Controllers
             // 2. 增加總經驗值
             user.TotalXp += xpEarned;
 
-            // 3. 核心邏輯：用新的 TotalXp 去 levels 表找出符合 MinXp ~ MaxXp 的等級
+            // 3. 用新的 TotalXp 去 levels 表找出符合 MinXp ~ MaxXp 的等級
             var matchedLevel = await _context.Levels
                 .FirstOrDefaultAsync(l => user.TotalXp >= l.MinXp && user.TotalXp <= l.MaxXp);
 
             bool isLeveledUp = false;
 
-            // 4. 如果找到對應等級，且與原本等級不同，代表「升級」了！
+            // 4. 如果找到對應等級，且與原本等級不同，代表升級了
             if (matchedLevel != null && user.CurrentLevelId != matchedLevel.LevelId)
             {
                 user.CurrentLevelId = matchedLevel.LevelId;
