@@ -89,8 +89,8 @@ namespace prjGoHike.Controllers
             {
                 cEventDataWarp.EventId = vm.cEvent.EventId;
                 cEventDataWarp.MountainId = vm.cEvent.MountainId;
-                cEventDataWarp.Mountain.MountainName = vm.cEvent.MountainName;
-                cEventDataWarp.Mountain.DifficultyLevel = vm.cEvent.DifficultyLevel;
+                //cEventDataWarp.Mountain.MountainName = vm.cEvent.MountainName;
+                //cEventDataWarp.Mountain.DifficultyLevel = vm.cEvent.DifficultyLevel;
                 cEventDataWarp.EventName = vm.cEvent.EventName;
                 cEventDataWarp.MaximumNumber = vm.cEvent.MaximumNumber;
                 cEventDataWarp.EventStartTime = vm.cEvent.EventStartTime;
@@ -98,8 +98,8 @@ namespace prjGoHike.Controllers
                 cEventDataWarp.ActivityStatus = vm.cEvent.ActivityStatus;
                 cEventDataWarp.ActivityPhoto = vm.cEvent.ActivityPhoto;
                 cEventDataWarp.Description = vm.cEvent.Description;
-                cEventDataWarp.Mountain.MountainsPermitRequired = vm.cEvent.MountainsPermitRequired;
-                cEventDataWarp.Mountain.NationalParkPermitRequired = vm.cEvent.NationalParkPermitRequired;
+                //cEventDataWarp.Mountain.MountainsPermitRequired = vm.cEvent.MountainsPermitRequired;
+                //cEventDataWarp.Mountain.NationalParkPermitRequired = vm.cEvent.NationalParkPermitRequired;
                 //cEventDataWarp.EventDate = vm.cEvent.EventDate;
                 //cEventDataWarp.ReviewRequired = vm.cEvent.ReviewRequired;
                 //cEventDataWarp.ReviewStatus = vm.cEvent.ReviewStatus;

@@ -110,15 +110,15 @@
                     </div>
                     <div>
                         @Html.LabelFor(e => e.cEvent.MountainId)
-                        @Html.TextBoxFor(e => e.cEvent.MountainId, new { @class = "form-control-custom" })
+                        @Html.TextBoxFor(e => e.cEvent.MountainId, new { @class = "form-control-custom", @readonly = "readonly"  })
                     </div>
                     <div>
                         @Html.LabelFor(e => e.cEvent.MountainName)
-                        @Html.TextBoxFor(e => e.cEvent.MountainName, new { @class = "form-control-custom" })
+                        @Html.TextBoxFor(e => e.cEvent.MountainName, new { @class = "form-control-custom", @readonly = "readonly" })
                     </div>
                     <div>
                         @Html.LabelFor(e => e.cEvent.DifficultyLevel)
-                        @Html.TextBoxFor(e => e.cEvent.DifficultyLevel, new { @class = "form-control-custom" })
+                        @Html.TextBoxFor(e => e.cEvent.DifficultyLevel, new { @class = "form-control-custom", @readonly = "readonly" })
                     </div>
                     <div>
                         @Html.LabelFor(e => e.cEvent.EventName)
@@ -158,11 +158,11 @@
                     </div> *@
                     <div class="my-3">
                         @Html.LabelFor(e => e.cEvent.MountainsPermitRequired)
-                        @Html.CheckBoxFor(e => e.cEvent.MountainsPermitRequired, new { @class = "form-check-input-custom" })
+                        @Html.CheckBoxFor(e => e.cEvent.MountainsPermitRequired, new { @class = "form-check-input-custom", @disabled = "disabled" })
                     </div>
                     <div class="my-3">
                         @Html.LabelFor(e => e.cEvent.NationalParkPermitRequired)
-                        @Html.CheckBoxFor(e => e.cEvent.NationalParkPermitRequired, new { @class = "form-check-input-custom" })
+                        @Html.CheckBoxFor(e => e.cEvent.NationalParkPermitRequired, new { @class = "form-check-input-custom", @disabled = "disabled" })
                     </div>
                     @* <div>
                         @Html.LabelFor(e => e.cEvent.ReviewStatus)
