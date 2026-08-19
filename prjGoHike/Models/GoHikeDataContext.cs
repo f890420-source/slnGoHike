@@ -359,6 +359,15 @@ public partial class GoHikeDataContext : DbContext
             entity.Property(e => e.EventDate)
                 .HasColumnType("datetime")
                 .HasColumnName("Event_Date");
+
+            entity.Property(e => e.EventStartTime)
+                .HasColumnType("datetime")
+                .HasColumnName("Event_Start_Time");
+
+            entity.Property(e => e.EventEndTime)
+                .HasColumnType("datetime")
+                .HasColumnName("Event_End_Time");
+
             entity.Property(e => e.EventName)
                 .HasMaxLength(50)
                 .HasColumnName("Event_Name");

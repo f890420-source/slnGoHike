@@ -104,5 +104,35 @@ namespace prjGoHike.Models
             get { return _EventData.LeaderUserId; }
             set { _EventData.LeaderUserId = value; }
         }
+
+
+        [DisplayName("山岳名稱")]
+        public string MountainName { get; set;  }
+
+        [DisplayName("山岳難度")]
+        public int DifficultyLevel { get; set; }
+
+        [DisplayName("入山證")]
+        public bool MountainsPermitRequired { get; set; }
+
+        [DisplayName("入園證")]
+        public bool NationalParkPermitRequired { get; set; }
+
+        [DisplayName("活動創立時間")]
+        public DateTime? EventStartTime
+        {
+            get { return _EventData.EventStartTime; }
+            set { _EventData.EventStartTime = value; }
+        }
+        [DisplayName("活動結束時間")]
+        public DateTime? EventEndTime
+        {
+            get { return _EventData.EventEndTime; }
+            set { _EventData.EventEndTime = value; }
+        }
+
+
+
+
     }
 }

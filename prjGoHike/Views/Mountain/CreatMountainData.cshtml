@@ -47,15 +47,15 @@
                         @Html.ValidationMessageFor(n => n.MountainW.DifficultyLevel, "")
 
                     </div>
-                    <div class="col-lg-12">
+                    <div class="col-lg-12 mb-3">
                         @Html.LabelFor(n => n.MountainW.MountainsPermitRequired)
-                        @Html.TextBoxFor(n => n.MountainW.MountainsPermitRequired, new { @class = "form-control-custom", placeholder = "請輸入資料" })
+                        @Html.CheckBoxFor(n => n.MountainW.MountainsPermitRequired, new { @class = "form-check-input-custom" })
                         @Html.ValidationMessageFor(n => n.MountainW.MountainsPermitRequired, "")
 
                     </div>
-                    <div class="col-lg-12">
+                    <div class="col-lg-12 mb-3">
                         @Html.LabelFor(n => n.MountainW.NationalParkPermitRequired)
-                        @Html.TextBoxFor(n => n.MountainW.NationalParkPermitRequired, new { @class = "form-control-custom", placeholder = "請輸入資料" })
+                        @Html.CheckBoxFor(n => n.MountainW.NationalParkPermitRequired, new { @class = "form-check-input-custom", })
                         @Html.ValidationMessageFor(n => n.MountainW.NationalParkPermitRequired, "")
 
                     </div>
@@ -131,8 +131,8 @@
                             $("#EditModal [name='MountainW.Location']").val(response.data.location);
                             $("#EditModal [name='MountainW.Altitude']").val(response.data.altitude);
                             $("#EditModal [name='MountainW.DifficultyLevel']").val(response.data.difficultyLevel);
-                            $("#EditModal [name='MountainW.MountainsPermitRequired']").val(response.data.mountainsPermitRequired);
-                            $("#EditModal [name='MountainW.NationalParkPermitRequired']").val(response.data.nationalParkPermitRequired);
+                            $("#EditModal [name='MountainW.MountainsPermitRequired'][type='checkbox']").prop("checked",response.data.mountainsPermitRequired);
+                            $("#EditModal [name='MountainW.NationalParkPermitRequired'][type='checkbox']").prop("checked",response.data.nationalParkPermitRequired);
                             
                             var editModalEl = document.getElementById('EditMountain');
                             var editModal = bootstrap.Modal.getOrCreateInstance(editModalEl);
@@ -241,15 +241,15 @@
                         @* @Html.ValidationMessageFor(n => n.MountainW.DifficultyLevel, "") *@
 
                     </div>
-                    <div class="col-lg-12">
+                    <div class="col-lg-12 mb-3">
                         @Html.LabelFor(n => n.MountainW.MountainsPermitRequired)
-                        @Html.TextBoxFor(n => n.MountainW.MountainsPermitRequired, new { @class = "form-control-custom" })
+                        @Html.CheckBoxFor(n => n.MountainW.MountainsPermitRequired, new { @class = "form-check-input-custom" })
                         @* @Html.ValidationMessageFor(n => n.MountainW.MountainsPermitRequired, "") *@
 
                     </div>
-                    <div class="col-lg-12">
+                    <div class="col-lg-12 mb-3">
                         @Html.LabelFor(n => n.MountainW.NationalParkPermitRequired)
-                        @Html.TextBoxFor(n => n.MountainW.NationalParkPermitRequired, new { @class = "form-control-custom" })
+                        @Html.CheckBoxFor(n => n.MountainW.NationalParkPermitRequired, new { @class = "form-check-input-custom" })
                         @* @Html.ValidationMessageFor(n => n.MountainW.NationalParkPermitRequired, "") *@
 
                     </div>

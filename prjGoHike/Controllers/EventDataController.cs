@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using prjGoHike.EventDataViewModel;
 using prjGoHike.Models;
 
@@ -14,9 +15,14 @@ namespace prjGoHike.Controllers
         }
         public IActionResult ManageEventData()
         {
-            List<CEventDataWarp> eventList = _db.EventData.Select(eve => new CEventDataWarp
+            List<CEventDataWarp> eventList = _db.EventData.Include(eve =>eve.Mountain).Select(eve => new CEventDataWarp
             {
-                EventData = eve
+
+                EventData = eve,
+                MountainName = eve.Mountain.MountainName,
+                DifficultyLevel = eve.Mountain.DifficultyLevel,
+                MountainsPermitRequired = eve.Mountain.MountainsPermitRequired,
+                NationalParkPermitRequired = eve.Mountain.NationalParkPermitRequired
             }).ToList();
 
             CEventDataVM ce = new CEventDataVM
@@ -29,7 +35,7 @@ namespace prjGoHike.Controllers
         [HttpGet]
         public IActionResult EditManageEvent(int? id)
         {
-            var cEventDataWarp = _db.EventData.FirstOrDefault(e => e.EventId == id);
+            var cEventDataWarp = _db.EventData.Include(e =>e.Mountain).FirstOrDefault(e => e.EventId == id);
 
             if (cEventDataWarp == null)
             {
@@ -44,14 +50,20 @@ namespace prjGoHike.Controllers
                     {
                         eventId = cEventDataWarp.EventId,
                         mountainId = cEventDataWarp.MountainId,
+                        mountainName = cEventDataWarp.Mountain.MountainName,
+                        difficultyLevel = cEventDataWarp.Mountain.DifficultyLevel,
                         eventName = cEventDataWarp.EventName,
                         maximumNumber = cEventDataWarp.MaximumNumber,
+                        eventStartTime = cEventDataWarp.EventStartTime,
+                        eventEndTime = cEventDataWarp.EventEndTime,
                         activityStatus = cEventDataWarp.ActivityStatus,
                         activityPhoto = cEventDataWarp.ActivityPhoto,
                         description = cEventDataWarp.Description,
-                        eventDate = cEventDataWarp.EventDate,
-                        reviewRequired = cEventDataWarp.ReviewRequired,
-                        reviewStatus = cEventDataWarp.ReviewStatus,
+                        mountainsPermitRequired = cEventDataWarp.Mountain.MountainsPermitRequired,
+                        nationalParkPermitRequired = cEventDataWarp.Mountain.NationalParkPermitRequired,
+                        //eventDate = cEventDataWarp.EventDate,
+                        //reviewRequired = cEventDataWarp.ReviewRequired,
+                        //reviewStatus = cEventDataWarp.ReviewStatus,
                         hasActiveReport = cEventDataWarp.HasActiveReport,
                         leaderUserId = cEventDataWarp.LeaderUserId
                     }
@@ -68,7 +80,7 @@ namespace prjGoHike.Controllers
         [HttpPost]
         public IActionResult EditManageEvent(CEventDataVM vm)
         {
-            var cEventDataWarp = _db.EventData.FirstOrDefault(e => e.EventId == vm.cEvent.EventId);
+            var cEventDataWarp = _db.EventData.Include(e => e.Mountain).FirstOrDefault(e => e.EventId == vm.cEvent.EventId);
             if (cEventDataWarp == null)
             {
                 return Json(new { success = false, message = "資料庫查詢無資料" });
@@ -77,14 +89,20 @@ namespace prjGoHike.Controllers
             {
                 cEventDataWarp.EventId = vm.cEvent.EventId;
                 cEventDataWarp.MountainId = vm.cEvent.MountainId;
+                cEventDataWarp.Mountain.MountainName = vm.cEvent.MountainName;
+                cEventDataWarp.Mountain.DifficultyLevel = vm.cEvent.DifficultyLevel;
                 cEventDataWarp.EventName = vm.cEvent.EventName;
                 cEventDataWarp.MaximumNumber = vm.cEvent.MaximumNumber;
+                cEventDataWarp.EventStartTime = vm.cEvent.EventStartTime;
+                cEventDataWarp.EventEndTime = vm.cEvent.EventEndTime;
                 cEventDataWarp.ActivityStatus = vm.cEvent.ActivityStatus;
                 cEventDataWarp.ActivityPhoto = vm.cEvent.ActivityPhoto;
                 cEventDataWarp.Description = vm.cEvent.Description;
-                cEventDataWarp.EventDate = vm.cEvent.EventDate;
-                cEventDataWarp.ReviewRequired = vm.cEvent.ReviewRequired;
-                cEventDataWarp.ReviewStatus = vm.cEvent.ReviewStatus;
+                cEventDataWarp.Mountain.MountainsPermitRequired = vm.cEvent.MountainsPermitRequired;
+                cEventDataWarp.Mountain.NationalParkPermitRequired = vm.cEvent.NationalParkPermitRequired;
+                //cEventDataWarp.EventDate = vm.cEvent.EventDate;
+                //cEventDataWarp.ReviewRequired = vm.cEvent.ReviewRequired;
+                //cEventDataWarp.ReviewStatus = vm.cEvent.ReviewStatus;
                 cEventDataWarp.HasActiveReport = vm.cEvent.HasActiveReport;
                 cEventDataWarp.LeaderUserId = vm.cEvent.LeaderUserId;
                 _db.SaveChanges();

@@ -33,11 +33,24 @@
                         <dt class="col-sm-3">@Html.DisplayNameFor(model => item.MountainId)</dt>
                         <dd class="col-sm-9">@Html.DisplayFor(modelItem => item.MountainId)</dd>
 
+                        <dt class="col-sm-3">@Html.DisplayNameFor(model => item.MountainName)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(modelItem => item.MountainName)</dd>
+
+                        <dt class="col-sm-3">@Html.DisplayNameFor(model => item.DifficultyLevel)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(modelItem => item.DifficultyLevel)</dd>
+
+
                         <dt class="col-sm-3">@Html.DisplayNameFor(model => item.EventName)</dt>
                         <dd class="col-sm-9">@Html.DisplayFor(modelItem => item.EventName)</dd>
 
                         <dt class="col-sm-3">@Html.DisplayNameFor(model => item.MaximumNumber)</dt>
                         <dd class="col-sm-9">@Html.DisplayFor(modelItem => item.MaximumNumber)</dd>
+
+                        <dt class="col-sm-3">@Html.DisplayNameFor(model => item.EventStartTime)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(modelItem => item.EventStartTime)</dd>
+
+                        <dt class="col-sm-3">@Html.DisplayNameFor(model => item.EventEndTime)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(modelItem => item.EventEndTime)</dd>
 
                         <dt class="col-sm-3">@Html.DisplayNameFor(model => item.ActivityStatus)</dt>
                         <dd class="col-sm-9">@Html.DisplayFor(modelItem => item.ActivityStatus)</dd>
@@ -48,14 +61,21 @@
                         <dt class="col-sm-3">@Html.DisplayNameFor(model => item.Description)</dt>
                         <dd class="col-sm-9">@Html.DisplayFor(modelItem => item.Description)</dd>
 
-                        <dt class="col-sm-3">@Html.DisplayNameFor(model => item.EventDate)</dt>
-                        <dd class="col-sm-9">@Html.DisplayFor(modelItem => item.EventDate)</dd>
+                        @* <dt class="col-sm-3">@Html.DisplayNameFor(model => item.EventDate)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(modelItem => item.EventDate)</dd> *@
 
-                        <dt class="col-sm-3">@Html.DisplayNameFor(model => item.ReviewRequired)</dt>
-                        <dd class="col-sm-9">@Html.DisplayFor(modelItem => item.ReviewRequired)</dd>
+                        @* <dt class="col-sm-3">@Html.DisplayNameFor(model => item.ReviewRequired)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(modelItem => item.ReviewRequired)</dd> *@
 
-                        <dt class="col-sm-3">@Html.DisplayNameFor(model => item.ReviewStatus)</dt>
-                        <dd class="col-sm-9">@Html.DisplayFor(modelItem => item.ReviewStatus)</dd>
+                        <dt class="col-sm-3">@Html.DisplayNameFor(model => item.MountainsPermitRequired)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(modelItem => item.MountainsPermitRequired)</dd>
+
+                        <dt class="col-sm-3">@Html.DisplayNameFor(model => item.NationalParkPermitRequired)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(modelItem => item.NationalParkPermitRequired)</dd>
+
+
+                        @* <dt class="col-sm-3">@Html.DisplayNameFor(model => item.ReviewStatus)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(modelItem => item.ReviewStatus)</dd> *@
 
                         <dt class="col-sm-3">@Html.DisplayNameFor(model => item.HasActiveReport)</dt>
                         <dd class="col-sm-9">@Html.DisplayFor(modelItem => item.HasActiveReport)</dd>
@@ -93,12 +113,28 @@
                         @Html.TextBoxFor(e => e.cEvent.MountainId, new { @class = "form-control-custom" })
                     </div>
                     <div>
+                        @Html.LabelFor(e => e.cEvent.MountainName)
+                        @Html.TextBoxFor(e => e.cEvent.MountainName, new { @class = "form-control-custom" })
+                    </div>
+                    <div>
+                        @Html.LabelFor(e => e.cEvent.DifficultyLevel)
+                        @Html.TextBoxFor(e => e.cEvent.DifficultyLevel, new { @class = "form-control-custom" })
+                    </div>
+                    <div>
                         @Html.LabelFor(e => e.cEvent.EventName)
                         @Html.TextBoxFor(e => e.cEvent.EventName, new { @class = "form-control-custom" })
                     </div>
                     <div>
                         @Html.LabelFor(e => e.cEvent.MaximumNumber)
                         @Html.TextBoxFor(e => e.cEvent.MaximumNumber, new { @class = "form-control-custom" })
+                    </div>
+                    <div>
+                        @Html.LabelFor(e => e.cEvent.EventStartTime)
+                        @Html.TextBoxFor(e => e.cEvent.EventStartTime, new { @class = "form-control-custom" })
+                    </div>
+                    <div>
+                        @Html.LabelFor(e => e.cEvent.EventEndTime)
+                        @Html.TextBoxFor(e => e.cEvent.EventEndTime, new { @class = "form-control-custom" })
                     </div>
                     <div>
                         @Html.LabelFor(e => e.cEvent.ActivityStatus)
@@ -112,18 +148,26 @@
                         @Html.LabelFor(e => e.cEvent.Description)
                         @Html.TextBoxFor(e => e.cEvent.Description, new { @class = "form-control-custom" })
                     </div>
-                    <div>
+                    @* <div>
                         @Html.LabelFor(e => e.cEvent.EventDate)
                         @Html.TextBoxFor(e => e.cEvent.EventDate, new { @class = "form-control-custom" })
                     </div>
                     <div class="my-3">
                         @Html.LabelFor(e => e.cEvent.ReviewRequired)
                         @Html.CheckBoxFor(e => e.cEvent.ReviewRequired, new { @class = "form-check-input-custom" })
+                    </div> *@
+                    <div class="my-3">
+                        @Html.LabelFor(e => e.cEvent.MountainsPermitRequired)
+                        @Html.CheckBoxFor(e => e.cEvent.MountainsPermitRequired, new { @class = "form-check-input-custom" })
                     </div>
-                    <div>
+                    <div class="my-3">
+                        @Html.LabelFor(e => e.cEvent.NationalParkPermitRequired)
+                        @Html.CheckBoxFor(e => e.cEvent.NationalParkPermitRequired, new { @class = "form-check-input-custom" })
+                    </div>
+                    @* <div>
                         @Html.LabelFor(e => e.cEvent.ReviewStatus)
                         @Html.TextBoxFor(e => e.cEvent.ReviewStatus, new { @class = "form-control-custom" })
-                    </div>
+                    </div> *@
                     <div class="my-3">
                         @Html.LabelFor(e => e.cEvent.HasActiveReport)
                         @Html.CheckBoxFor(e => e.cEvent.HasActiveReport, new { @class = "form-check-input-custom" })
@@ -187,21 +231,27 @@
                     if (response.success) {
                         $("#EditModal [name = 'cEvent.EventId']").val(response.data.eventId);
                         $("#EditModal [name = 'cEvent.MountainId']").val(response.data.mountainId);
+                        $("#EditModal [name = 'cEvent.MountainName']").val(response.data.mountainName);
+                        $("#EditModal [name = 'cEvent.DifficultyLevel']").val(response.data.difficultyLevel);
                         $("#EditModal [name = 'cEvent.EventName']").val(response.data.eventName);
                         $("#EditModal [name = 'cEvent.MaximumNumber']").val(response.data.maximumNumber);
+                        $("#EditModal [name = 'cEvent.EventStartTime']").val(response.data.eventStartTime);
+                        $("#EditModal [name = 'cEvent.EventEndTime']").val(response.data.eventEndTime);
                         $("#EditModal [name = 'cEvent.ActivityStatus']").val(response.data.activityStatus);
                         $("#EditModal [name = 'cEvent.ActivityPhoto']").val(response.data.activityPhoto);
                         $("#EditModal [name = 'cEvent.Description']").val(response.data.description);
-                        $("#EditModal [name = 'cEvent.EventDate']").val(response.data.eventDate);
-                        // $("#EditModal [name = 'cEvent.ReviewRequired']").val(response.data.reviewRequired);
-                        $("#EditModal [name = 'cEvent.ReviewStatus']").val(response.data.reviewStatus);
-                        // $("#EditModal [name = 'cEvent.HasActiveReport']").val(response.data.hasActiveReport);
-                        $("#EditModal [name = 'cEvent.LeaderUserId']").val(response.data.leaderUserId);
 
-                        $("#EditModal input[name='cEvent.ReviewRequired'][type='checkbox']").prop("checked", response.data.reviewRequired);
+                        $("#EditModal input[name='cEvent.MountainsPermitRequired'][type='checkbox']").prop("checked", response.data.mountainsPermitRequired);
+                        $("#EditModal input[name='cEvent.NationalParkPermitRequired'][type='checkbox']").prop("checked", response.data.nationalParkPermitRequired);
+
+                        //$("#EditModal [name = 'cEvent.EventDate']").val(response.data.eventDate);
+                        //$("#EditModal [name = 'cEvent.ReviewStatus']").val(response.data.reviewStatus);
+                        // $("#EditModal [name = 'cEvent.LeaderUserId']").val(response.data.leaderUserId);
+
+                        // $("#EditModal input[name='cEvent.ReviewRequired'][type='checkbox']").prop("checked", response.data.reviewRequired);
                         $("#EditModal input[name='cEvent.HasActiveReport'][type='checkbox']").prop("checked", response.data.hasActiveReport);
 
-                        $("#EditModal [name = 'cEvent.ReviewStatus']").val(response.data.reviewStatus);
+                        //$("#EditModal [name = 'cEvent.ReviewStatus']").val(response.data.reviewStatus);
                         $("#EditModal [name = 'cEvent.LeaderUserId']").val(response.data.leaderUserId);
 
                         var editModalEl = document.getElementById('EditManageEvent');
