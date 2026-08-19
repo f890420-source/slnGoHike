@@ -21,7 +21,7 @@ public class AdminTrailsController : Controller
     // GET: AdminTrails
     public async Task<IActionResult> Index()
     {
-        var trails = await _context.Trails.ToListAsync();
+        var trails = await _context.Trails.AsNoTracking().ToListAsync();
         var twList = trails.Select(t => new CTrailWrap(t)).ToList();
         return View(twList);
     }
@@ -35,6 +35,7 @@ public class AdminTrailsController : Controller
         }
 
         var trail = await _context.Trails
+            .AsNoTracking()
             .FirstOrDefaultAsync(m => m.TrailId == id);
         if (trail == null)
         {
@@ -42,6 +43,7 @@ public class AdminTrailsController : Controller
         }
 
         var segments = await _context.TrailSegments
+                            .AsNoTracking()
                             .Where(s => s.TrailId == id)
                             .ToListAsync();
 
@@ -137,6 +139,7 @@ public class AdminTrailsController : Controller
         }
 
         var traildb = await _context.Trails
+            .AsNoTracking()
             .Include(t => t.TrailSegments)
             .FirstOrDefaultAsync(t => t.TrailId == id);
         if (traildb == null)
@@ -271,6 +274,7 @@ public class AdminTrailsController : Controller
         }
 
         var traildb = await _context.Trails
+            .AsNoTracking()
             .FirstOrDefaultAsync(m => m.TrailId == id);
         if (traildb == null)
         {
