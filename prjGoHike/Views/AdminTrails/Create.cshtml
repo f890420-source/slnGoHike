@@ -1,4 +1,4 @@
-@model prjGoHike.ViewModels.CTrailWrap
+@model prjGoHike.ViewModels.TrailCreateViewModel
 
 @{
     ViewData["Title"] = "新增步道";
@@ -74,9 +74,7 @@
                        name="geoJsonFile"
                        class="form-control"
                        accept=".geojson,application/geo+json,application/json" />
-                @* <div class="form-text">
-                    僅接受單一 Feature 的 GeoJSON
-                </div> *@
+                <span asp-validation-for="GeoJsonFile" class="text-danger"></span>
             </div>
 
             <div id="trailMap" style="height: 500px;"></div>
