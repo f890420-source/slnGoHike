@@ -80,7 +80,7 @@ namespace prjGoHike.Controllers
         [HttpPost]
         public IActionResult EditManageEvent(CEventDataVM vm)
         {
-            var cEventDataWarp = _db.EventData.Include(e => e.Mountain).FirstOrDefault(e => e.EventId == vm.cEvent.EventId);
+            var cEventDataWarp = _db.EventData.FirstOrDefault(e => e.EventId == vm.cEvent.EventId);
             if (cEventDataWarp == null)
             {
                 return Json(new { success = false, message = "資料庫查詢無資料" });

@@ -112,10 +112,10 @@ namespace prjGoHike.Models
         [DisplayName("山岳難度")]
         public int DifficultyLevel { get; set; }
 
-        [DisplayName("入山證")]
+        [DisplayName("需要入山證嗎")]
         public bool MountainsPermitRequired { get; set; }
 
-        [DisplayName("入園證")]
+        [DisplayName("需要入園證嗎")]
         public bool NationalParkPermitRequired { get; set; }
 
         [DisplayName("活動創立時間")]
