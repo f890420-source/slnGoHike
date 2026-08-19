@@ -18,14 +18,24 @@
             <textarea asp-for="Bio" class="form-control"></textarea>
         </div>
 
-        <div class="form-group">
-            <label asp-for="RegionPreference"></label>
-            <input asp-for="RegionPreference" class="form-control" />
+        <div class="mb-3">
+            <label asp-for="RegionPreference" class="form-label fw-bold">地區偏好（選填）</label>
+            <select asp-for="RegionPreference" class="form-select form-select-lg">
+                <option value="">-- 請選擇偏好地區 --</option>
+                <option value="北部">北部</option>
+                <option value="中部">中部</option>
+                <option value="南部">南部</option>
+                <option value="東部">東部</option>
+            </select>
         </div>
-
-        <div class="form-group">
-            <label asp-for="DifficultyPreference"></label>
-            <input asp-for="DifficultyPreference" class="form-control" />
+        <div class="mb-4">
+            <label asp-for="DifficultyPreference" class="form-label fw-bold">難度偏好（選填）</label>
+            <select asp-for="DifficultyPreference" class="form-select form-select-lg">
+                <option value="">-- 請選擇偏好難度 --</option>
+                <option value="新手">新手</option>
+                <option value="中級">中級</option>
+                <option value="挑戰">挑戰</option>
+            </select>
         </div>
 
         <button type="submit" class="btn btn-primary">更新資料</button>

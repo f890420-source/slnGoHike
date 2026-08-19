@@ -217,8 +217,11 @@ namespace GoHike.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"註冊過程發生錯誤：{ex.Message}");
-                model.ErrorMessage = "註冊過程發生錯誤，請稍後再試";
+                //_logger.LogError($"註冊過程發生錯誤：{ex.Message}");
+                //model.ErrorMessage = "註冊過程發生錯誤，請稍後再試";
+                //return View(model);
+                var innerMsg = ex.InnerException != null ? ex.InnerException.Message : "";
+                model.ErrorMessage = $"註冊失敗：{ex.Message} | 內層細節：{innerMsg}";
                 return View(model);
             }
         }
