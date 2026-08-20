@@ -37,27 +37,22 @@
                 <span asp-validation-for="DistanceKm" class="text-danger"></span>
             </div>
 
-            @* <div class="form-group">
-                <label asp-for="EstimatedHours" class="control-label"></label>
-                <input asp-for="EstimatedHours" class="form-control" />
-                <span asp-validation-for="EstimatedHours" class="text-danger"></span>
-            </div> *@
 
-            <div class="form-group">
-                <label asp-for="PermitRequired" class="control-label"></label>
-                <input asp-for="PermitRequired" class="form-check-input" />
+            <div class="form-switch-custom">
+                <input asp-for="PermitRequired" class="form-switch-input-custom">
+                <label asp-for="PermitRequired" class="form-switch-label"></label>
                 <span asp-validation-for="PermitRequired" class="text-danger"></span>
             </div>
 
-            <div class="form-group">
-                <label asp-for="GuideRequired" class="control-label"></label>
-                <input asp-for="GuideRequired" class="form-check-input" />
+            <div class="form-switch-custom">
+                <input asp-for="GuideRequired" class="form-switch-input-custom">
+                <label asp-for="GuideRequired" class="form-switch-label"></label>
                 <span asp-validation-for="GuideRequired" class="text-danger"></span>
             </div>
-
-            <div class="form-group">
-                <label asp-for="IsPublished" class="control-label"></label>
-                <input asp-for="IsPublished" class="form-check-input" />
+ 
+            <div class="form-switch-custom">
+                <input asp-for="IsPublished" class="form-switch-input-custom">
+                <label asp-for="IsPublished" class="form-switch-label"></label>
                 <span asp-validation-for="IsPublished" class="text-danger"></span>
             </div>
 

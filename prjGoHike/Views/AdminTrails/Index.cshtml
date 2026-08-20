@@ -6,7 +6,11 @@
 
 <style>
     .trail-badge {
-        font-size: 1.2rem;
+        font-size: 0.9rem;
+    }
+
+    .table-custom th {
+        font-size: 1rem;
     }
 </style>
 
@@ -24,7 +28,7 @@
 
 <div class="table-responsive">
     <table class="table-custom align-middle">
-        <thead>
+        <thead class="">
             <tr>
                 <th>
                     @Html.DisplayNameFor(model => model.TrailName)
@@ -75,33 +79,33 @@
                     <td>
                         @if (item.PermitRequired)
                         {
-                            <span class="badge-table success">需要申請</span>
+                            <span class="badge-table failed trail-badge">需要申請</span>
                         }
                         else
                         {
-                            <span class="badge-table pending">免申請</span>
+                            <span class="badge-table success trail-badge">免申請</span>
                         }
                     </td>
 
                     <td>
                         @if (item.GuideRequired)
                         {
-                            <span class="badge-table success">需要嚮導</span>
+                            <span class="badge-table failed trail-badge">需要嚮導</span>
                         }
                         else
                         {
-                            <span class="badge-table pending">不需嚮導</span>
+                            <span class="badge-table success trail-badge">不需嚮導</span>
                         }
                     </td>
 
                     <td>
                         @if (item.IsPublished)
                         {
-                            <span class="badge-table success">已發布</span>
+                            <span class="badge-table success trail-badge">已發布</span>
                         }
                         else
                         {
-                            <span class="badge-table pending">未發布</span>
+                            <span class="badge-table pending trail-badge">未發布</span>
                         }
                     </td>
                     <td>
