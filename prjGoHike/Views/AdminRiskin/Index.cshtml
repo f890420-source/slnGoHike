@@ -4,6 +4,17 @@
     ViewData["Title"] = "指標圖資管理";
 }
 
+<style>
+    .trail-badge {
+        font-size: 1rem;
+        font-weight: 1000;
+    }
+
+    .table-custom th {
+        font-size: 1rem;
+    }
+</style>
+
 <h1>指標圖資管理</h1>
 
 <p>
@@ -71,7 +82,14 @@
                     @Html.DisplayFor(model => item.DataSource)
                 </td>
                 <td>
-                    @Html.DisplayFor(model => item.IsActive)
+                    @if (item.IsActive)
+                    {
+                        <span class="badge-table success trail-badge">已啟用</span>
+                    }
+                    else
+                    {
+                        <span class="badge-table pending trail-badge">未啟用</span>
+                    }
                 </td>
                 <td>
                     <a asp-action="Edit" asp-route-id="@item.RiskIndicatorId" class="table-btn-action" title="編輯">

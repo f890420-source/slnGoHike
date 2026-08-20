@@ -41,6 +41,7 @@ namespace prjGoHike.ViewModels
         public double[][] CurrentRouteCoordinates { get; set; }
         = Array.Empty<double[]>();
 
+        [DisplayName("是否已發布")]
         public bool IsPublished { get; set; }
     }
 }
