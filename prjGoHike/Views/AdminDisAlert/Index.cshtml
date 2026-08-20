@@ -6,7 +6,8 @@
 
 <style>
     .trail-badge {
-        font-size: 0.9rem;
+        font-size: 1rem;
+        font-weight: 100;
     }
 
     .table-custom th {
@@ -80,7 +81,14 @@
                 @Html.DisplayFor(model => item.SourceUrl)
             </td>
             <td>
-                @Html.DisplayFor(model => item.IsActive)
+                @if (item.IsActive)
+                {
+                    <span class="badge-table failed trail-badge">已啟用</span>
+                }
+                else
+                {
+                    <span class="badge-table pending trail-badge">未啟用</span>
+                }
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.AlertId" class="table-btn-action" title="編輯">
