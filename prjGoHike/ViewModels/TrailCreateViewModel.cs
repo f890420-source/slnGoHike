@@ -36,6 +36,7 @@ namespace prjGoHike.ViewModels
         [DisplayName("步道路線 GeoJSON")]
         public IFormFile? GeoJsonFile { get; set; }
 
+        [DisplayName("是否已發布")]
         public bool IsPublished { get; set; }
     }
 }

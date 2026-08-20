@@ -54,7 +54,7 @@ public partial class CTrailWrap
         set { _trail.DifficultyLevel = value; }
     }
 
-    [DisplayName("路線距離(公里)")]
+    [DisplayName("長度(公里)")]
     public decimal? DistanceKm
     {
         get { return _trail.DistanceKm; }
@@ -70,7 +70,7 @@ public partial class CTrailWrap
     }
 
     [ScaffoldColumn(false)]
-    [DisplayName("是否需要申請許可")]
+    [DisplayName("申請許可?")]
     public bool PermitRequired
     {
         get { return _trail.PermitRequired; }
@@ -78,7 +78,7 @@ public partial class CTrailWrap
     }
 
     [ScaffoldColumn(false)]
-    [DisplayName("是否需要嚮導")]
+    [DisplayName("需要嚮導?")]
     public bool GuideRequired
     {
         get { return _trail.GuideRequired; }
@@ -101,7 +101,7 @@ public partial class CTrailWrap
     }
 
     [ScaffoldColumn(false)]
-    [DisplayName("是否發布")]
+    [DisplayName("是否已發布")]
     public bool IsPublished
     {
         get { return _trail.IsPublished; }
