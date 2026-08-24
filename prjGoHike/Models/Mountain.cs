@@ -17,9 +17,9 @@ public partial class Mountain
 
     public int DifficultyLevel { get; set; }
 
-    public int? MountainsPermitRequired { get; set; }
+    public bool MountainsPermitRequired { get; set; }
 
-    public int? NationalParkPermitRequired { get; set; }
+    public bool NationalParkPermitRequired { get; set; }
 
     public virtual ICollection<EventData> EventData { get; set; } = new List<EventData>();
 

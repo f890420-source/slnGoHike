@@ -29,6 +29,9 @@ public partial class EventData
 
     public long LeaderUserId { get; set; }
 
+    public DateTime? EventStartTime {  get; set; }
+    public DateTime? EventEndTime {  get; set; }
+
     public virtual ICollection<EventLeaderRating> EventLeaderRatings { get; set; } = new List<EventLeaderRating>();
 
     public virtual ICollection<EventRegistrationAndMemberList> EventRegistrationAndMemberLists { get; set; } = new List<EventRegistrationAndMemberList>();

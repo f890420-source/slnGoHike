@@ -3,6 +3,7 @@ using Microsoft.Identity.Client;
 using NetTopologySuite.Geometries;
 using prjGoHike.Models;
 using prjGoHike.MountainViewModel;
+using System.Text.RegularExpressions;
 
 namespace prjGoHike.Controllers
 {
@@ -37,7 +38,7 @@ namespace prjGoHike.Controllers
         }
 
         [HttpPost]
-        public IActionResult CreateNewEvent(CMountainVM cMountainVM)
+        public IActionResult CreateNewMountain(CMountainVM cMountainVM)
         {
             if (!ModelState.IsValid)
             {
@@ -46,20 +47,25 @@ namespace prjGoHike.Controllers
             }
             try
             {
-                Mountain newMountain = new Mountain
+                Mountain newMountain = new Mountain();
+                bool isNameExists = _db.Mountains.Any(m => m.MountainName == cMountainVM.MountainW.MountainName);
+                if (isNameExists)
                 {
-                    MountainName = cMountainVM.MountainW.MountainName,
-                    Location = cMountainVM.MountainW.Location,
-                    Altitude = cMountainVM.MountainW.Altitude,
-                    DifficultyLevel = cMountainVM.MountainW.DifficultyLevel,
-                    MountainsPermitRequired = cMountainVM.MountainW.MountainsPermitRequired,
-                    NationalParkPermitRequired = cMountainVM.MountainW.NationalParkPermitRequired
-                };
+                    return Json(new { success = false, message = "山岳名字不可重複" });
+                }
+                else
+                {
+                    newMountain.MountainName = cMountainVM.MountainW.MountainName;
+                    newMountain.Location = cMountainVM.MountainW.Location;
+                    newMountain.Altitude = cMountainVM.MountainW.Altitude;
+                    newMountain.DifficultyLevel = cMountainVM.MountainW.DifficultyLevel;
+                    newMountain.MountainsPermitRequired = cMountainVM.MountainW.MountainsPermitRequired;
+                    newMountain.NationalParkPermitRequired = cMountainVM.MountainW.NationalParkPermitRequired;
+                    _db.Mountains.Add(newMountain);
+                    _db.SaveChanges();
 
-                _db.Mountains.Add(newMountain);
-                _db.SaveChanges();
-
-                return Json(new { success = true, message = "資料建立成功！" });
+                    return Json(new { success = true, message = "資料建立成功！" });
+                }            
             }
             catch (Exception ex)
             {
@@ -67,7 +73,7 @@ namespace prjGoHike.Controllers
             }
         }
         [HttpGet]
-        public IActionResult EditEvent(int id)
+        public IActionResult EditMountain(int id)
         {
             
             var moun = _db.Mountains.FirstOrDefault(m => m.MountainId == id);
@@ -99,7 +105,7 @@ namespace prjGoHike.Controllers
         }
         
         [HttpPost]
-        public IActionResult EditEvent(CMountainVM cMountainVM)
+        public IActionResult EditMountain(CMountainVM cMountainVM)
         {
             try
             {
@@ -126,7 +132,7 @@ namespace prjGoHike.Controllers
             }
         }
         [HttpPost]
-        public IActionResult DeleteEvent(int? id)
+        public IActionResult DeleteMountain(int? id)
         {
             try
             {
@@ -136,16 +142,17 @@ namespace prjGoHike.Controllers
                     
                     _db.Remove(moun);
                     _db.SaveChanges();
+                    return Json(new { success = true, message = "資料刪除成功" });
                 }
-
+                else if (moun == null)
+                {
+                    return Json(new { success = false, message = "找不到資料庫資料" });
+                }
                 else
                 {
                     return Json(new { success = false, message = "無資料" });
                 }
-                if(moun == null)
-                {
-                    return Json(new { success = false, message = "找不到資料庫資料" });
-                }
+                
             }
 
 
@@ -153,7 +160,7 @@ namespace prjGoHike.Controllers
             {
                 return Json(new { success = false, message = ex.Message });
             }
-            return Json(new { success = false, message = "資料刪除成功" });
+            
         }
     }   
 }

@@ -1,6 +1,7 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
+using static prjGoHike.Models.UserPermissions;
 
 namespace prjGoHike.Models;
 
@@ -18,6 +19,8 @@ public partial class GoHikeDataContext : DbContext
     public virtual DbSet<Achievement> Achievements { get; set; }
 
     public virtual DbSet<AlertsTrail> AlertsTrails { get; set; }
+
+    public virtual DbSet<Announcement> Announcements { get; set; }
 
     public virtual DbSet<Article> Articles { get; set; }
 
@@ -92,17 +95,19 @@ public partial class GoHikeDataContext : DbContext
     public virtual DbSet<UserSkillTag> UserSkillTags { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-
-        #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        optionsBuilder.UseSqlServer("Data Source=.;Initial Catalog=GoHikeData;Integrated Security=True;Trust Server Certificate=True", x => x.UseNetTopologySuite());
-
-    }
-
-        
+        => optionsBuilder.UseSqlServer("Name=ConnectionStrings:GoHikeDataContext", x => x.UseNetTopologySuite());
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
+        // TPH 繼承設定:用 Role 欄位的值決定要 new 成哪個子類
+        modelBuilder.Entity<User>()
+            .HasDiscriminator<string>("Role")
+            .HasValue<Member>("一般會員")
+            .HasValue<EventLeader>("團主")
+            .HasValue<Admin>("管理員");
+
         modelBuilder.Entity<Achievement>(entity =>
         {
             entity.ToTable("achievements");
@@ -150,6 +155,21 @@ public partial class GoHikeDataContext : DbContext
                 .HasForeignKey(d => d.TrailId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_AlertsTrails_Trail_Id");
+        });
+
+        modelBuilder.Entity<Announcement>(entity =>
+        {
+            entity.HasKey(e => e.AnnouncementId).HasName("PK__Announce__853AB7CFB653CA76");
+
+            entity.ToTable("Announcement");
+
+            entity.Property(e => e.AnnouncementId).HasColumnName("Announcement_ID");
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Status).HasDefaultValue((byte)1);
+            entity.Property(e => e.Title).HasMaxLength(100);
+            entity.Property(e => e.UpdateDate).HasColumnType("datetime");
         });
 
         modelBuilder.Entity<Article>(entity =>
@@ -339,6 +359,15 @@ public partial class GoHikeDataContext : DbContext
             entity.Property(e => e.EventDate)
                 .HasColumnType("datetime")
                 .HasColumnName("Event_Date");
+
+            entity.Property(e => e.EventStartTime)
+                .HasColumnType("datetime")
+                .HasColumnName("Event_Start_Time");
+
+            entity.Property(e => e.EventEndTime)
+                .HasColumnType("datetime")
+                .HasColumnName("Event_End_Time");
+
             entity.Property(e => e.EventName)
                 .HasMaxLength(50)
                 .HasColumnName("Event_Name");
@@ -917,7 +946,7 @@ public partial class GoHikeDataContext : DbContext
         {
             entity.ToTable("users");
 
-            entity.HasIndex(e => e.Email, "UQ__users__AB6E61647FC11310").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__users__AB6E616496713F0A").IsUnique();
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.AccountStatus)
@@ -1011,7 +1040,7 @@ public partial class GoHikeDataContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("source");
 
-            entity.HasOne(d => d.Tag).WithMany(p => p.UserSkillTags)
+            entity.HasOne(d => d.SkillTag).WithMany(p => p.UserSkillTags)
                 .HasForeignKey(d => d.TagId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_user_skill_tags_tag_id");

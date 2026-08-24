@@ -1,0 +1,387 @@
+﻿@model prjGoHike.ViewModels.CEquipmentEditViewModel
+
+@{
+    Layout = null;
+    ViewData["Title"] = "編輯個人裝備清單";
+}
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1" />
+
+    <title>@ViewData["Title"]</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet" />
+</head>
+
+<body class="bg-light">
+
+    <div class="container py-5">
+
+        <div class="mb-4">
+            <div class="text-success">STEP 03</div>
+
+            <h2>編輯我的裝備清單</h2>
+
+            <p class="text-muted">
+                調整裝備數量與單件重量，也可以加入自訂裝備。
+            </p>
+        </div>
+
+        <div class="alert alert-info">
+            <strong>@Model.Condition.ListName</strong>
+            ／ @Model.MountainName
+            ／ @Model.Condition.HikingDays 天
+            ／ @Model.Condition.Season
+            ／ @Model.Condition.IntensityLevel
+            ／ @Model.Condition.ExperienceLevel
+        </div>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger">
+                @TempData["ErrorMessage"]
+            </div>
+        }
+
+        <form asp-action="EditItems"
+              method="post">
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between
+                        align-items-center mb-3">
+
+                        <h5 class="mb-0">
+                            我的裝備清單
+                        </h5>
+
+                        <button type="button"
+                                class="btn btn-outline-success"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#customEquipmentArea">
+                            ＋新增自訂裝備
+                        </button>
+                    </div>
+
+                    <div class="collapse mb-4"
+                         id="customEquipmentArea">
+
+                        <div class="card card-body bg-light">
+
+                            <h6 class="mb-3">
+                                新增自訂裝備
+                            </h6>
+
+                            <div class="row g-3 align-items-end">
+
+                                <div class="col-md-5">
+
+                                    <label asp-for="NewCustomEquipmentName"
+                                           class="form-label">
+                                    </label>
+
+                                    <input asp-for="NewCustomEquipmentName"
+                                           class="form-control"
+                                           placeholder="例如：行動電源" />
+
+                                </div>
+
+                                <div class="col-md-2">
+
+                                    <label asp-for="NewCustomQuantity"
+                                           class="form-label">
+                                    </label>
+
+                                    <input asp-for="NewCustomQuantity"
+                                           class="form-control"
+                                           min="1"
+                                           max="20" />
+
+                                </div>
+
+                                <div class="col-md-3">
+
+                                    <label asp-for="NewCustomUnitWeightGram"
+                                           class="form-label">
+                                    </label>
+
+                                    <div class="input-group">
+
+                                        <input asp-for="NewCustomUnitWeightGram"
+                                               class="form-control"
+                                               min="0"
+                                               max="50000" />
+
+                                        <span class="input-group-text">
+                                            g
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                                <div class="col-md-2">
+
+                                    <button type="submit"
+                                            name="submitMode"
+                                            value="addCustom"
+                                            class="btn btn-success w-100">
+                                        新增
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="table-responsive">
+
+                        <table class="table align-middle">
+
+                            <thead class="table-light">
+                                <tr>
+                                    <th>裝備名稱</th>
+                                    <th style="width: 130px;">
+                                        數量
+                                    </th>
+                                    <th style="width: 180px;">
+                                        單件重量
+                                    </th>
+                                    <th>類型</th>
+                                    <th>小計</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                @for (int i = 0;
+                                    i < Model.Items.Count;
+                                    i++)
+                                {
+                                    <tr class="equipment-row">
+
+                                        <td>
+                                            <input asp-for="Items[i].EquipmentId"
+                                                   type="hidden" />
+
+                                            <input asp-for="Items[i].EquipmentName"
+                                                   type="hidden" />
+
+                                            <input asp-for="Items[i].RequirementLevel"
+                                                   type="hidden" />
+
+                                            <input asp-for="Items[i].Notes"
+                                                   type="hidden" />
+
+                                            <strong>
+                                                @(Model.Items[i].EquipmentName)
+                                            </strong>
+
+                                            @if (!string.IsNullOrEmpty(
+                                                Model.Items[i].Notes))
+                                            {
+                                                <div class="small text-muted">
+                                                    @(Model.Items[i].Notes)
+                                                </div>
+                                            }
+                                        </td>
+
+                                        <td>
+                                            <input asp-for="Items[i].Quantity"
+                                                   class="form-control quantity-input"
+                                                   min="1"
+                                                   max="20" />
+
+                                            <span asp-validation-for="Items[i].Quantity"
+                                                  class="text-danger">
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            <div class="input-group">
+
+                                                <input asp-for="Items[i].UnitWeightGram"
+                                                       class="form-control weight-input"
+                                                       min="0"
+                                                       max="50000" />
+
+                                                <span class="input-group-text">
+                                                    g
+                                                </span>
+
+                                            </div>
+
+                                            <span asp-validation-for="Items[i].UnitWeightGram"
+                                                  class="text-danger">
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            @if (Model.Items[i].RequirementLevel == "必備")
+                                            {
+                                                <span class="badge bg-danger">
+                                                    必備
+                                                </span>
+                                            }
+                                            else if (Model.Items[i].RequirementLevel == "建議")
+                                            {
+                                                <span class="badge bg-info text-dark">
+                                                    建議
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">
+                                                    自訂
+                                                </span>
+                                            }
+                                        </td>
+
+                                        <td>
+                                            <span class="subtotal">
+                                                @(Model.Items[i].TotalWeightGram)
+                                            </span>
+                                            g
+                                        </td>
+
+                                        <td>
+                                            <button type="submit"
+                                                    name="deleteIndex"
+                                                    value="@i"
+                                                    class="btn btn-sm btn-outline-danger"
+                                                    onclick="return confirm('確定要刪除這項裝備嗎？');">
+                                                刪除
+                                            </button>
+                                        </td>
+
+                                    </tr>
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    <div class="alert alert-success mt-3 mb-0">
+
+                        目前裝備總重量：
+
+                        <strong>
+                            <span id="totalWeight">
+                                @Model.TotalWeightKg.ToString("0.00")
+                            </span>
+                            kg
+                        </strong>
+
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between mt-3">
+
+                <a asp-action="Suggestion"
+                   class="btn btn-outline-secondary">
+                    上一步
+                </a>
+
+                <div>
+                    <button type="submit"
+                            class="btn btn-outline-success">
+                        儲存修改
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-success"
+                            disabled>
+                        下一步：計算重量
+                    </button>
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+    <script>
+            const rows =
+                document.querySelectorAll(".equipment-row");
+
+            function calculateWeight() {
+
+                let totalGram = 0;
+
+                rows.forEach(function (row) {
+
+                    const quantityInput =
+                        row.querySelector(".quantity-input");
+
+                    const weightInput =
+                        row.querySelector(".weight-input");
+
+                    const subtotalElement =
+                        row.querySelector(".subtotal");
+
+                    const quantity =
+                        Number(quantityInput.value) || 0;
+
+                    const unitWeight =
+                        Number(weightInput.value) || 0;
+
+                    const subtotal =
+                        quantity * unitWeight;
+
+                    subtotalElement.textContent =
+                        subtotal;
+
+                    totalGram += subtotal;
+                });
+
+                document.getElementById(
+                    "totalWeight"
+                ).textContent =
+                    (totalGram / 1000).toFixed(2);
+            }
+
+            rows.forEach(function (row) {
+
+                row.querySelector(
+                    ".quantity-input"
+                ).addEventListener(
+                    "input",
+                    calculateWeight
+                );
+
+                row.querySelector(
+                    ".weight-input"
+                ).addEventListener(
+                    "input",
+                    calculateWeight
+                );
+            });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+    </script>
+
+</body>
+</html>

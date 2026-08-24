@@ -1,0 +1,16 @@
+# 如果要從更高的目錄繼承 .editorconfig 設定，請移除以下行
+root = true
+
+# C# 檔案
+[*.cs]
+
+#### 核心 EditorConfig 選項 ####
+
+# 縮排和間距
+indent_size = 4
+indent_style = space
+tab_width = 4
+
+# 新行喜好設定
+end_of_line = crlf
+insert_final_newline = true

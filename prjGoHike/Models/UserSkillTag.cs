@@ -11,7 +11,7 @@ public partial class UserSkillTag
 
     public string Source { get; set; } = null!;
 
-    public virtual SkillTag Tag { get; set; } = null!;
+    public virtual SkillTag SkillTag { get; set; } = null!;
 
     public virtual User User { get; set; } = null!;
 }
