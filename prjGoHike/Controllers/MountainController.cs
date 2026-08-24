@@ -16,24 +16,26 @@ namespace prjGoHike.Controllers
         {
             _db = db;
         }
-
-        public IActionResult CreatMountainData()
+        
+        public IActionResult CreatMountainData(int page = 1)
         {
+            
+            int totalDataCount = _db.Mountains.Count();
+            List<CMountainWarp> mountainList = new List<CMountainWarp>();
+            CMountainVM viewModel = new CMountainVM();
 
-
-
-            List<CMountainWarp> mountainList = _db.Mountains.Select(mountain => new CMountainWarp
+                mountainList = _db.Mountains.Select(mountain => new CMountainWarp
                 {
                     Mountains = mountain
-                })
-                .ToList();
+                }).Skip((page - 1) * 10).Take(10).ToList();
+
+
+            viewModel.PageCount = page;
+            viewModel.MountainWrapList = mountainList;
+            viewModel.TotalDataCount = totalDataCount;
 
             
-            CMountainVM viewModel = new CMountainVM
-            {
-                MountainWrapList = mountainList
-            };
-
+            
             return View(viewModel);
         }
 

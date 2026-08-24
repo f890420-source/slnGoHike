@@ -18,6 +18,11 @@
                 <h5 class="modal-title">創建新資料</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+            <div>
+                <div>
+
+                </div>
+            </div>
             <form id="NewMountain" method="post">
                 <div class="modal-body">
                     <div class="ErrorMessage">
@@ -291,8 +296,8 @@
         </div>
     </div>
 </div>
-           
-<table class="table">
+<div class="d-flex flex-column justify-content-between" style="min-height: 900px">
+    <table class="table">
     <thead>
         <tr>
             <th>
@@ -318,14 +323,17 @@
             </th>
             
         </tr>
+
     </thead>
+    
     <tbody>
         @{
-            int count = 0;
+            int count = (Model.PageCount - 1) * 10;
             @foreach (var item in Model.MountainWrapList)
             {
-                count++;
+                    count++;
                 <tr>
+                    
                     <td>
                         @count
                     </td>
@@ -364,7 +372,67 @@
                     </td>
                 </tr>
             }
+
         }
 
     </tbody>
+    <tfoot>
+
+    </tfoot>
 </table>
+
+@{
+    int totalPage = (int)Math.Ceiling((double)Model.TotalDataCount / 10);
+    <div>
+    <div class="my-2 d-flex justify-content-center">
+        <div>
+                <ul class="pagination pagination-rounded mb-0">
+                @if(Model.PageCount == 1)
+                {
+                    <li class="page-item active disabled">
+                        <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
+                    </li>
+                }
+                else
+                {
+                    <li class="page-item active">
+                        <a class="page-link" href="@Url.Action("CreatMountainData", new { page = Model.PageCount - 1 })"><i class="bi bi-chevron-left"></i></a>
+                    </li>
+                }
+
+                @for (int i = 1; i <= totalPage; i++)
+                {
+                    if(i == Model.PageCount)
+                    {
+                        <li class="page-item active">
+                            <a class="page-link" href="@Url.Action("CreatMountainData", new { page = i })">@i</a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="page-item"><a class="page-link" href="@Url.Action("CreatMountainData", new { page = i })">@i</a></li>
+
+                    }
+
+                }
+                @if (Model.PageCount == totalPage)
+                {
+                    <li class="page-item active disabled">
+                        <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
+                    </li>
+                }
+                else
+                {
+                    <li class="page-item active">
+                        <a class="page-link" href="@Url.Action("CreatMountainData", new { page = Model.PageCount + 1 })"><i class="bi bi-chevron-right"></i></a>
+                    </li>
+                }
+                
+            </ul>
+        </div>
+    </div>
+    </div>
+
+}
+</div>
+
