@@ -16,6 +16,7 @@ public partial class EventReportComplaint
     public string EvidenceUrl { get; set; } = null!;
 
     public string ReportStatus { get; set; } = null!;
+    public string ReportTitle { get; set; } = null!;
 
     public DateTime CreatedAt { get; set; }
 

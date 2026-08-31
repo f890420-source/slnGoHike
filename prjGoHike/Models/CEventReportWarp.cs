@@ -13,6 +13,8 @@
         get { return _eventReport; }
             set { _eventReport = value; }
         }
+        //因為是前端完成活動後或是活動期間有檢舉功能 所以應該要設計成傳回
+        //活動id
         public long ReportEventId
         {
             get { return _eventReport.ReportEventId; }
@@ -42,6 +44,11 @@
         {
             get { return _eventReport.CreatedAt; }
             set { _eventReport.CreatedAt = value; }
+        }
+        public string ReportTitle
+        {
+            get { return _eventReport.ReportTitle; }
+            set { _eventReport.ReportTitle = value; }
         }
     }
 }

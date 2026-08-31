@@ -469,6 +469,10 @@ public partial class GoHikeDataContext : DbContext
                 .HasMaxLength(10)
                 .HasColumnName("Report_Status");
             entity.Property(e => e.UserId).HasColumnName("User_Id");
+            entity.Property(e => e.ReportTitle)
+    .HasMaxLength(100)
+    .HasColumnName("Report_Title");
+
 
             entity.HasOne(d => d.Event).WithMany(p => p.EventReportComplaints)
                 .HasForeignKey(d => d.EventId)
