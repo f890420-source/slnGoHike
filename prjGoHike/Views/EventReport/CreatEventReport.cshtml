@@ -78,136 +78,127 @@
 @section Scripts {
     <script>
         $(function() {
-            $("#NewMountain").on("submit", function(event) {
-                event.preventDefault();
-                if (!$("#NewMountain").valid()) {
 
-                    return alert("有欄位未填");
+            function updateEvidencePreview(url) {
+                var $img = $("#evidencePreview");
+                var $noImage = $("#evidenceNoImage");
+
+                if (!url) {
+                    $img.hide();
+                    $noImage.hide();
+                    return;
                 }
 
-                
-                var formData = $(this).serialize();
+                $img.attr("src", url).show();
+                $noImage.hide();
+            }
 
-                
-                $.ajax({
-                    url: '@Url.Action("CreateNewMountain", "Mountain")',
-                    type: 'POST',
-                    data: formData,
-                    success: function(response) {
-                        if (response.success) {
-                            alert(response.message);
-
-                            
-                            var modalElement = document.getElementById('CreateNewMountain');
-                            var modal = bootstrap.Modal.getInstance(modalElement);
-                            if (modal) {
-                                modal.hide();
-                            }
-                            location.reload();
-                        } else {
-                            alert("建立失敗：" + response.message);
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error("傳送失敗：", error);
-                        alert("系統發生錯誤，無法傳送資料。");
-                    }
-                });
+            $(document).on("input", "#evidenceUrlInput", function() {
+                updateEvidencePreview($(this).val());
             });
-            $(document).on("click", ".Btn-Edit", function(event) {
 
+            $(document).on("error", "#evidencePreview", function() {
+                $(this).hide();
+                $("#evidenceNoImage").show();
+            });
+
+            $(document).on("click", ".Btn-Edit", async function(event) {
                 event.preventDefault();
-
-                
                 var id = $(this).data("id");
 
-                
-                $.ajax({
-                    url: '@Url.Action("EditMountain", "Mountain")',
-                    type: 'GET',
-                    data: { id: id },
+                try {
+                    const response = await $.ajax({
+                        url: '@Url.Action("EditEventReport", "EventReport")',
+                        type: 'GET',
+                        data: { id: id }
+                    });
 
-                     
-                    success: function(response) {
-                        if (response.success) {
-                            $("#EditModal [name='MountainW.MountainId']").val(response.data.mountainId);
-                            $("#EditModal [name='MountainW.MountainName']").val(response.data.mountainName);
-                            $("#EditModal [name='MountainW.Location']").val(response.data.location);
-                            $("#EditModal [name='MountainW.Altitude']").val(response.data.altitude);
-                            $("#EditModal [name='MountainW.DifficultyLevel']").val(response.data.difficultyLevel);
-                            $("#EditModal [name='MountainW.MountainsPermitRequired'][type='checkbox']").prop("checked", response.data.mountainsPermitRequired);
-                            $("#EditModal [name='MountainW.NationalParkPermitRequired'][type='checkbox']").prop("checked", response.data.nationalParkPermitRequired);
-
-                            var editModalEl = document.getElementById('EditMountain');
-                            var editModal = bootstrap.Modal.getOrCreateInstance(editModalEl);
-                            editModal.show();
-                        } else {
-                            alert("建立失敗：" + response.message);
-                        }
+                    if (response.success) {
+                        $("#EditModal [name='cEventReportWarp.ReportEventId']").val(response.data.reportEventId);
+                        $("#EditModal [name='cEventReportWarp.ReportTitle']").val(response.data.reportTitle);
+                        $("#EditModal [name='cEventReportWarp.ReportReason']").val(response.data.reportReason);
+                        $("#EditModal [name='cEventReportWarp.EvidenceUrl']").val(response.data.evidenceUrl);
+                        updateEvidencePreview(response.data.evidenceUrl);
+                        $("#EditModal [name='cEventReportWarp.ReportStatus']").val(response.data.reportStatus);
+                        $("#EditModal [name='cEventReportWarp.CreatedAt']").val(response.data.createdAt);
+                        
+                        
+                        var editModalEl = document.getElementById('EditEventReport');
+                        var editModal = bootstrap.Modal.getOrCreateInstance(editModalEl);
+                        editModal.show();
+                    } else {
+                        alert("建立失敗：" + response.message);
                     }
-                });
+                } catch (error) {
+                    console.error("傳送失敗：", error);
+                    alert("系統發生錯誤，無法取得資料。");
+                }
             });
 
-                
-            $("#EditModal").on("submit", function(event) {
+            $("#EditModal").on("submit", async function(event) {
                 event.preventDefault();
                 var dataform = $(this).serialize();
-                $.ajax({
-                    url: '@Url.Action("EditMountain", "Mountain")',
-                    type: 'POST',
-                    data: dataform,
 
-                    success: function(response) {
-                        if (response.success) {
-                            alert(response.message);
-                            var modalElement = document.getElementById('EditMountain');
-                            var modal = bootstrap.Modal.getInstance(modalElement);
+                try {
+                    const response = await $.ajax({
+                        url: '@Url.Action("EditEventReport", "EventReport")',
+                        type: 'POST',
+                        data: dataform
+                    });
 
-                            if (modal) {
-                                modal.hide()
-                                location.reload();
-                            }
-
-                        }
-                        else {
-                            alert(response.message)
-                        }
-                    }
-                })
-            })
-
-            $(document).on("click", ".Btn-Delete", function(event) {
-
-                var id = $(this).data("id");
-                $("#deleteMountainId").val(id);
-
-            })
-            $("#DeleteForm").on("submit", function(event) {
-                event.preventDefault();
-                var id = $("#deleteMountainId").val();
-
-                $.ajax({
-                    url: '@Url.Action("DeleteMountain", "Mountain")',
-                    type: "POST",
-                    data: { id: id },
-                    success: function(response) {
-                        var modalElement = document.getElementById('DeleteMountain');
+                    if (response.success) {
+                        alert(response.message);
+                        var modalElement = document.getElementById('EditEventReport');
                         var modal = bootstrap.Modal.getInstance(modalElement);
-
                         if (modal) {
-                            modal.hide()
+                            modal.hide();
                             location.reload();
                         }
+                    } else {
+                        alert(response.message);
                     }
+                } catch (error) {
+                    console.error("傳送失敗：", error);
+                    alert("系統發生錯誤，無法儲存資料。");
+                }
+            });
 
-                })
-            })
+            $(document).on("click", ".Btn-Delete", function(event) {
+                var id = $(this).data("id");
+                $("#deleteEventReportId").val(id);
+            });
+
+            $("#DeleteForm").on("submit", async function(event) {
+                event.preventDefault();
+                var id = $("#deleteEventReportId").val();
+
+                try {
+                    const response = await $.ajax({
+                        url: '@Url.Action("DeleteEventReport", "EventReport")',
+                        type: "POST",
+                        data: { id: id }
+                    });
+
+                    if (response.success) {
+                        var modalElement = document.getElementById('DeleteEventReport');
+                        var modal = bootstrap.Modal.getInstance(modalElement);
+                        if (modal) {
+                            modal.hide();
+                            location.reload();
+                        }
+                    } else {
+                        alert(response.message);
+                    }
+                } catch (error) {
+                    console.error("刪除失敗：", error);
+                    alert("系統發生錯誤，無法刪除資料。");
+                }
+            });
         });
-
     </script>
 }
 
-<div class="modal fade" id="EditMountain" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="EditEventReport" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -219,42 +210,41 @@
                     <div class="ErrorMessage">
                     </div>
                     <div>
-                        @Html.HiddenFor(n => n.MountainW.MountainId)
+                        @Html.HiddenFor(n => n.cEventReportWarp.ReportEventId)
                     </div>
                     <div class="col-lg-12 ">
-                        @Html.LabelFor(n => n.MountainW.MountainName)
-                        @Html.TextBoxFor(n => n.MountainW.MountainName, new { @class = "form-control-custom" })
-                        @* @Html.ValidationMessageFor(n => n.MountainW.MountainName, "") *@
+                        @Html.LabelFor(n => n.cEventReportWarp.ReportTitle)
+                        @Html.TextBoxFor(n => n.cEventReportWarp.ReportTitle, new { @class = "form-control-custom" })
+                        
 
                     </div>
                     <div class="col-lg-12">
-                        @Html.LabelFor(n => n.MountainW.Location)
-                        @Html.TextBoxFor(n => n.MountainW.Location, new { @class = "form-control-custom" })
-                        @* @Html.ValidationMessageFor(n => n.MountainW.Location, "") *@
-
-                    </div>
-                    <div class="col-lg-12">
-                        @Html.LabelFor(n => n.MountainW.Altitude)
-                        @Html.TextBoxFor(n => n.MountainW.Altitude, new { @class = "form-control-custom" })
-                        @* @Html.ValidationMessageFor(n => n.MountainW.Altitude, "") *@
-
-                    </div>
-                    <div class="col-lg-12">
-                        @Html.LabelFor(n => n.MountainW.DifficultyLevel)
-                        @Html.TextBoxFor(n => n.MountainW.DifficultyLevel, new { @class = "form-control-custom" })
-                        @* @Html.ValidationMessageFor(n => n.MountainW.DifficultyLevel, "") *@
+                        @Html.LabelFor(n => n.cEventReportWarp.ReportReason)
+                        @Html.TextBoxFor(n => n.cEventReportWarp.ReportReason, new { @class = "form-control-custom" })
+                        
 
                     </div>
                     <div class="col-lg-12 mb-3">
-                        @Html.LabelFor(n => n.MountainW.MountainsPermitRequired)
-                        @Html.CheckBoxFor(n => n.MountainW.MountainsPermitRequired, new { @class = "form-check-input-custom" })
+                        <img id="evidencePreview" src="" alt="證據預覽圖" style="max-width: 100%; max-height: 300px; display: none; object-fit: contain;" />
+                        <p id="evidenceNoImage" style="display: none; color: gray;">無法載入圖片，請確認網址是否正確</p>
+                    </div>
+                    <div class="col-lg-12 mb-3">
+                        @Html.LabelFor(n => n.cEventReportWarp.ReportStatus)
+                        @Html.DropDownListFor(
+                            n => n.cEventReportWarp.ReportStatus,
+                            new List<SelectListItem>
+                            {
+                                new SelectListItem { Text = "待處理", Value = "待處理" },
+                                new SelectListItem { Text = "需停權", Value = "需停權" },
+                                new SelectListItem { Text = "已完成", Value = "已完成" }
+                            },
+                            new { @class = "form-select-custom" }
+                        )
+                    </div>
+                    <div class="col-lg-12 mb-3">
+                        @Html.LabelFor(n => n.cEventReportWarp.CreatedAt)
+                        @Html.TextBoxFor(n => n.cEventReportWarp.CreatedAt, new { @class = "form-control-custom", @readonly = "readonly" })
                         @* @Html.ValidationMessageFor(n => n.MountainW.MountainsPermitRequired, "") *@
-
-                    </div>
-                    <div class="col-lg-12 mb-3">
-                        @Html.LabelFor(n => n.MountainW.NationalParkPermitRequired)
-                        @Html.CheckBoxFor(n => n.MountainW.NationalParkPermitRequired, new { @class = "form-check-input-custom" })
-                        @* @Html.ValidationMessageFor(n => n.MountainW.NationalParkPermitRequired, "") *@
 
                     </div>
                 </div>
@@ -269,7 +259,7 @@
         </div>
     </div>
 </div>
-<div class="modal fade" id="DeleteMountain" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="DeleteEventReport" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -285,7 +275,7 @@
                     <button type="button" class="btn-custom btn-custom-light" data-bs-dismiss="modal" aria-label="取消">取消</button>
                 </div>
                 <form id="DeleteForm" method="post">
-                    <input type="hidden" name="id" id="deleteMountainId" />
+                    <input type="hidden" name="id" id="deleteEventReportId" />
                     <div>
                         <button type="submit" class="delete-save btn-custom btn-custom-danger" data-bs-dismiss="modal" aria-label="刪除">刪除</button>
                     </div>
@@ -304,22 +294,19 @@
                     序號
                 </th>
                 <th>
-                    @Html.DisplayNameFor(model => model.cEventReportWarp.)
+                    @Html.DisplayNameFor(model => model.cEventReportWarp.ReportTitle)
                 </th>
                 <th>
-                    @Html.DisplayNameFor(model => model.MountainW.Location)
+                    @Html.DisplayNameFor(model => model.cEventReportWarp.ReportReason)
                 </th>
                 <th>
-                    @Html.DisplayNameFor(model => model.MountainW.Altitude)
+                    @Html.DisplayNameFor(model => model.cEventReportWarp.EvidenceUrl)
                 </th>
                 <th>
-                    @Html.DisplayNameFor(model => model.MountainW.DifficultyLevel)
+                    @Html.DisplayNameFor(model => model.cEventReportWarp.ReportStatus)
                 </th>
                 <th>
-                    @Html.DisplayNameFor(model => model.MountainW.MountainsPermitRequired)
-                </th>
-                <th>
-                    @Html.DisplayNameFor(model => model.MountainW.NationalParkPermitRequired)
+                    @Html.DisplayNameFor(model => model.cEventReportWarp.CreatedAt)
                 </th>
 
             </tr>
@@ -329,7 +316,7 @@
         <tbody>
             @{
                 int count = (Model.PageCount - 1) * 10;
-                @foreach (var item in Model.MountainWrapList)
+                @foreach (var item in Model.cEventReportsList)
                 {
                     count++;
                     <tr>
@@ -338,34 +325,31 @@
                             @count
                         </td>
                         <td>
-                            @Html.DisplayFor(model => item.MountainName)
+                            @Html.DisplayFor(model => item.ReportTitle)
                         </td>
                         <td>
-                            @Html.DisplayFor(model => item.Location)
+                            @Html.DisplayFor(model => item.ReportReason)
                         </td>
                         <td>
-                            @Html.DisplayFor(model => item.Altitude)
+                            @Html.DisplayFor(model => item.EvidenceUrl)
                         </td>
                         <td>
-                            @Html.DisplayFor(model => item.DifficultyLevel)
+                            @Html.DisplayFor(model => item.ReportStatus)
                         </td>
                         <td>
-                            @Html.DisplayFor(model => item.MountainsPermitRequired)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(model => item.NationalParkPermitRequired)
+                            @Html.DisplayFor(model => item.CreatedAt)
                         </td>
                         <td>
                             <p class="d-flex justify-content-end">
-                                <button type="button" data-id="@item.MountainId" class="Btn-Edit btn-custom btn-custom-outline-secondary">
-                                    修改山岳資料
+                                <button type="button" data-id="@item.ReportEventId" class="Btn-Edit btn-custom btn-custom-outline-secondary">
+                                    修改檢舉資料
                                 </button>
                             </p>
                         </td>
                         <td>
                             <p class="d-flex justify-content-end">
-                                <button type="button" data-id="@item.MountainId" class="Btn-Delete btn-custom btn-custom-outline-secondary"
-                                        data-bs-toggle="modal" data-bs-target="#DeleteMountain">
+                                <button type="button" data-id="@item.ReportEventId" class="Btn-Delete btn-custom btn-custom-outline-secondary"
+                                        data-bs-toggle="modal" data-bs-target="#DeleteEventReport">
                                     刪除資料
                                 </button>
                             </p>
@@ -395,7 +379,7 @@
                         else
                         {
                             <li class="page-item active">
-                                <a class="page-link" href="@Url.Action("CreatMountainData", new { page = Model.PageCount - 1 })"><i class="bi bi-chevron-left"></i></a>
+                                <a class="page-link" href="@Url.Action("CreatEventReport", new { page = Model.PageCount - 1 })"><i class="bi bi-chevron-left"></i></a>
                             </li>
                         }
 
@@ -404,12 +388,12 @@
                             if (i == Model.PageCount)
                             {
                                 <li class="page-item active">
-                                    <a class="page-link" href="@Url.Action("CreatMountainData", new { page = i })">@i</a>
+                                    <a class="page-link" href="@Url.Action("CreatEventReport", new { page = i })">@i</a>
                                 </li>
                             }
                             else
                             {
-                                <li class="page-item"><a class="page-link" href="@Url.Action("CreatMountainData", new { page = i })">@i</a></li>
+                                <li class="page-item"><a class="page-link" href="@Url.Action("CreatEventReport", new { page = i })">@i</a></li>
 
                             }
 
@@ -423,7 +407,7 @@
                         else
                         {
                             <li class="page-item active">
-                                <a class="page-link" href="@Url.Action("CreatMountainData", new { page = Model.PageCount + 1 })"><i class="bi bi-chevron-right"></i></a>
+                                <a class="page-link" href="@Url.Action("CreatEventReport", new { page = Model.PageCount + 1 })"><i class="bi bi-chevron-right"></i></a>
                             </li>
                         }
 
