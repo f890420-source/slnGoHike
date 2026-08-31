@@ -17,11 +17,11 @@ public partial class User
 
     public string AccountStatus { get; set; } = null!;
 
-    public string AvatarUrl { get; set; } = null!;
+    public string? AvatarUrl { get; set; } 
 
-    public string AvatarBlurState { get; set; } = null!;
+    public string? AvatarBlurState { get; set; } 
 
-    public string Bio { get; set; } = null!;
+    public string? Bio { get; set; } 
 
     public long CurrentLevelId { get; set; }
 

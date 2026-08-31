@@ -4,15 +4,32 @@
     ViewData["Title"] = "步道管理";
 }
 
+<style>
+    .trail-badge {
+        font-size: 1rem;
+        font-weight: 1000;
+    }
+
+    .table-custom th {
+        font-size: 1rem;
+    }
+</style>
 
 <h2>步道管理</h2>
 
-<p>
+<div class="d-flex align-items-center gap-3 m-3">
     <a asp-action="Create" class="btn-custom btn-custom-outline-primary">新增步道</a>
-</p>
+    <form class="navbar-search-wrapper" method="post">
+        <input name="txtKeyword" type="text" class="navbar-search-input" placeholder="搜尋步道">
+        <button type="submit" class="navbar-search-btn" aria-label="Search">
+            <i class="bi bi-search"></i>
+        </button>
+    </form>
+</div>
+
 <div class="table-responsive">
     <table class="table-custom align-middle">
-        <thead>
+        <thead class="">
             <tr>
                 <th>
                     @Html.DisplayNameFor(model => model.TrailName)
@@ -27,16 +44,13 @@
                     @Html.DisplayNameFor(model => model.DistanceKm)
                 </th>
                 @* <th>
-                    @Html.DisplayNameFor(model => model.EstimatedHours)
-                </th> *@
+                        @Html.DisplayNameFor(model => model.EstimatedHours)
+                    </th> *@
                 <th>
                     @Html.DisplayNameFor(model => model.PermitRequired)
                 </th>
                 <th>
                     @Html.DisplayNameFor(model => model.GuideRequired)
-                </th>
-                <th>
-                    @Html.DisplayNameFor(model => model.RegulationNote)
                 </th>
                 <th>
                     @Html.DisplayNameFor(model => model.IsPublished)
@@ -61,21 +75,44 @@
                         @Html.DisplayFor(model => item.DistanceKm)
                     </td>
                     @* <td>
-                        @Html.DisplayFor(model => item.EstimatedHours)
-                    </td> *@
+                            @Html.DisplayFor(model => item.EstimatedHours)
+                        </td> *@
                     <td>
-                        @Html.DisplayFor(model => item.PermitRequired)
+                        @if (item.PermitRequired)
+                        {
+                            <span class="badge-table failed trail-badge">需要申請</span>
+                        }
+                        else
+                        {
+                            <span class="badge-table success trail-badge">免申請</span>
+                        }
+                    </td>
+
+                    <td>
+                        @if (item.GuideRequired)
+                        {
+                            <span class="badge-table failed trail-badge">需要嚮導</span>
+                        }
+                        else
+                        {
+                            <span class="badge-table success trail-badge">不需嚮導</span>
+                        }
+                    </td>
+
+                    <td>
+                        @if (item.IsPublished)
+                        {
+                            <span class="badge-table success trail-badge">已發布</span>
+                        }
+                        else
+                        {
+                            <span class="badge-table pending trail-badge">未發布</span>
+                        }
                     </td>
                     <td>
-                        @Html.DisplayFor(model => item.GuideRequired)
-                    </td>
-                    @* <td>
-                        @Html.DisplayFor(model => item.RegulationNote)
-                    </td> *@
-                    <td>
-                        @Html.DisplayFor(model => item.IsPublished)
-                    </td>
-                    <td>
+                        <a asp-action="Map" asp-route-id="@item.TrailId" class="table-btn-action" title="查看地圖">
+                            <i class="bi bi-map"></i>
+                        </a>
                         <a asp-action="Edit" asp-route-id="@item.TrailId" class="table-btn-action" title="編輯">
                             <i class="bi bi-pencil"></i>
                         </a>

@@ -9,7 +9,7 @@ namespace prjGoHike.Controllers
     [Authorize]
     public class MemberController : Controller
     {
-   
+
         private readonly GoHikeDataContext _context;
         private readonly ILogger<MemberController> _logger;
         //內建的日誌介面
@@ -82,7 +82,28 @@ namespace prjGoHike.Controllers
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userid);
                 if (user == null)
                     return NotFound("使用者不存在");
+                if (model.AvatarFile != null && model.AvatarFile.Length > 0)
+                {
+                    // 1. 設定圖片儲存路徑 (wwwroot/uploads/avatars)
+                    string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "avatars");
+                    if (!Directory.Exists(uploadsFolder))
+                    {
+                        Directory.CreateDirectory(uploadsFolder);
+                    }
 
+                    // 2. 產生獨一無二的檔名（避免不同人上傳同檔名被覆蓋）
+                    string uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileName(model.AvatarFile.FileName)}";
+                    string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                    // 3. 將檔案寫入伺服器硬碟
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await model.AvatarFile.CopyToAsync(fileStream);
+                    }
+
+                    // 4. 把產生好的新網址寫入 user.AvatarUrl
+                    user.AvatarUrl = "/uploads/avatars/" + uniqueFileName;
+                }
                 // 只允許修改特定欄位
                 user.Nickname = model.Nickname;
                 user.Bio = model.Bio ?? "";
@@ -245,6 +266,46 @@ namespace prjGoHike.Controllers
                 _logger.LogError(ex, "360度總覽頁出錯");
                 return StatusCode(500, "系統錯誤");
             }
+        }
+        /// <summary>
+        /// 發放經驗值並自動檢查/更新會員等級
+        /// </summary>
+        /// <param name="userId">會員 ID</param>
+        /// <param name="xpEarned">本次獲得的經驗值</param>
+        /// <returns>是否成功升級</returns>
+        public async Task<bool> AddXpAndCheckLevelUpAsync(long userId, int xpEarned)
+        {
+            // 1. 抓取會員資料
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.UserId == userId);
+
+            if (user == null)
+                return false;
+
+            // 記下原本的等級 ID，用來比對有沒有升級
+            long oldLevelId = user.CurrentLevelId;
+
+            // 2. 增加總經驗值
+            user.TotalXp += xpEarned;
+
+            // 3. 用新的 TotalXp 去 levels 表找出符合 MinXp ~ MaxXp 的等級
+            var matchedLevel = await _context.Levels
+                .FirstOrDefaultAsync(l => user.TotalXp >= l.MinXp && user.TotalXp <= l.MaxXp);
+
+            bool isLeveledUp = false;
+
+            // 4. 如果找到對應等級，且與原本等級不同，代表升級了
+            if (matchedLevel != null && user.CurrentLevelId != matchedLevel.LevelId)
+            {
+                user.CurrentLevelId = matchedLevel.LevelId;
+                isLeveledUp = true;
+            }
+
+            // 5. 儲存變更至資料庫
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+
+            return isLeveledUp;
         }
     }
 }

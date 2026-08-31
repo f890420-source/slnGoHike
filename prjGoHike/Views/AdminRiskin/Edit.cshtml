@@ -51,9 +51,9 @@
                 <input asp-for="DataSource" class="form-control" />
                 <span asp-validation-for="DataSource" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="IsActive" class="control-label"></label>
-                <input asp-for="IsActive" class="form-check-input" />
+            <div class="form-switch-custom">
+                <input asp-for="IsActive" class="form-switch-input-custom">
+                <label asp-for="IsActive" class="form-switch-label"></label>
                 <span asp-validation-for="IsActive" class="text-danger"></span>
             </div>
             <div class="form-group d-flex gap-2 p-2">

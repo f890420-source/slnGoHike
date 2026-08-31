@@ -84,18 +84,20 @@
 
 
                     <!-- 更新時間 -->
-                    <div class="col-md-6 mb-3">
+                   <div class="col-md-6 mb-3">
 
-                        <label class="form-label">
-                            最後更新時間
-                        </label>
+                      <label class="form-label">
+                          最後更新時間
+                      </label> 
 
-                        <input type="text"
-                               class="form-control"
-                               value="@Convert.ToDateTime(Model.UpdateDate).ToString("yyyy-MM-dd HH:mm:ss")"
-                               readonly />
+                       <input type="text"
+                        class="form-control"
+                         value="@(Model.UpdateDate.HasValue
+                          ? Model.UpdateDate.Value.ToString("yyyy-MM-dd HH:mm:ss")
+                           : "")"
+                            readonly />
 
-                    </div>
+                   </div>
 
                 </div>
 
