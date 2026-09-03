@@ -17,18 +17,79 @@ namespace prjGoHike.Controllers
             _db = db;
         }
         
-        public IActionResult CreatMountainData(int page = 1)
+        public IActionResult CreatMountainData(int page = 1, string Classification = "請選擇...", CMountainVM search = null)
         {
             
-            int totalDataCount = _db.Mountains.Count();
+            int totalDataCount = 0;
             List<CMountainWarp> mountainList = new List<CMountainWarp>();
             CMountainVM viewModel = new CMountainVM();
-
+            
+            if(!string.IsNullOrEmpty(search?.MountainW?.Location))
+            {
+                totalDataCount = _db.Mountains.Where(m=>m.Location.Contains(search.MountainW.Location)).Count();
+                mountainList = _db.Mountains.Where(m=>m.Location.Contains(search.MountainW.Location)).Skip((page - 1) * 10).Take(10)
+                    .Select(mountain => new CMountainWarp
+                    {
+                        Mountains = mountain
+                    }).ToList();
+            }
+            if(string.IsNullOrEmpty(search?.MountainW?.Location))
+            {
+                totalDataCount = _db.Mountains.Count();
                 mountainList = _db.Mountains.Select(mountain => new CMountainWarp
                 {
                     Mountains = mountain
                 }).Skip((page - 1) * 10).Take(10).ToList();
+            }
 
+            if(Classification == "請選擇...")
+            {
+                mountainList = _db.Mountains.Select(mountain => new CMountainWarp
+                {
+                    Mountains = mountain
+                }).Skip((page - 1) * 10).Take(10).ToList();
+            }
+            else if(Classification == "高度(高)")
+            {
+                mountainList = _db.Mountains.OrderByDescending(m => m.Altitude).Skip((page - 1) * 10).Take(10).ToList()
+                    .Select(mountain => new CMountainWarp
+                    {
+                        Mountains = mountain
+                    }).ToList();
+            }
+            else if(Classification == "高度(低)")
+            {
+                mountainList = _db.Mountains.OrderBy(m => m.Altitude).Skip((page - 1) * 10).Take(10).ToList()
+                    .Select(mountain => new CMountainWarp
+                    {
+                        Mountains = mountain
+                    }).ToList();
+            }
+            else if(Classification == "難度(高)")
+            {
+                mountainList = _db.Mountains.OrderByDescending(m => m.DifficultyLevel).Skip((page - 1) * 10).Take(10).ToList()
+                    .Select(mountain => new CMountainWarp
+                    {
+                        Mountains = mountain
+                    }).ToList();
+            }
+            else if(Classification == "難度(低)")
+            {
+                mountainList = _db.Mountains.OrderBy(m => m.DifficultyLevel).Skip((page - 1) * 10).Take(10).ToList()
+                    .Select(mountain => new CMountainWarp
+                    {
+                        Mountains = mountain
+                    }).ToList();
+            }
+
+            if(Classification == "")
+            {
+                totalDataCount = _db.Mountains.Count();
+                mountainList = _db.Mountains.Select(mountain => new CMountainWarp
+                {
+                    Mountains = mountain
+                }).Skip((page - 1) * 10).Take(10).ToList();
+            }
 
             viewModel.PageCount = page;
             viewModel.MountainWrapList = mountainList;

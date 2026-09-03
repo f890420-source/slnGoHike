@@ -5,12 +5,7 @@
 }
 
 <h1>山岳資料</h1>
-<p class="d-flex justify-content-end" >
-    <button type="button" class="btn-custom btn-custom-outline-secondary"
-            data-bs-toggle="modal" data-bs-target="#CreateNewMountain">
-        創建山岳資料
-    </button>
-</p>
+
 <div class="modal fade" id="CreateNewMountain" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -24,41 +19,42 @@
                 </div>
             </div>
             <form id="NewMountain" method="post">
+                
                 <div class="modal-body">
                     <div class="ErrorMessage">
                         
                     </div>
-                    <div class="col-lg-12 ">
+                    <div class="col-lg-12 my-2">
                         @Html.LabelFor(n => n.MountainW.MountainName)
-                        @Html.TextBoxFor(n => n.MountainW.MountainName, new { @class = "form-control-custom",  placeholder = "請輸入資料"})
+                        @Html.TextBoxFor(n => n.MountainW.MountainName, new { @class = "form-control-custom my-1",  placeholder = "請輸入資料"})
                         @Html.ValidationMessageFor(n => n.MountainW.MountainName, "")
                         @* 使用lamda *@
                     </div>
-                    <div class="col-lg-12">
+                    <div class="col-lg-12 my-2">
                         @Html.LabelFor(n => n.MountainW.Location)
-                        @Html.TextBoxFor(n => n.MountainW.Location, new { @class = "form-control-custom", placeholder = "請輸入資料" })
+                        @Html.TextBoxFor(n => n.MountainW.Location, new { @class = "form-control-custom my-1", placeholder = "請輸入資料" })
                         @Html.ValidationMessageFor(n => n.MountainW.Location, "")
 
                     </div>
-                    <div class="col-lg-12">
+                    <div class="col-lg-12 my-2">
                         @Html.LabelFor(n => n.MountainW.Altitude)
-                        @Html.TextBoxFor(n => n.MountainW.Altitude, new { @class = "form-control-custom", placeholder = "請輸入資料" })
+                        @Html.TextBoxFor(n => n.MountainW.Altitude, new { @class = "form-control-custom my-1", placeholder = "請輸入資料" })
                         @Html.ValidationMessageFor(n => n.MountainW.Altitude, "")
 
                     </div>
-                    <div class="col-lg-12">
+                    <div class="col-lg-12 my-2">
                         @Html.LabelFor(n => n.MountainW.DifficultyLevel)
-                        @Html.TextBoxFor(n => n.MountainW.DifficultyLevel, new { @class = "form-control-custom", placeholder = "請輸入資料" })
+                        @Html.TextBoxFor(n => n.MountainW.DifficultyLevel, new { @class = "form-control-custom my-1", placeholder = "請輸入資料" })
                         @Html.ValidationMessageFor(n => n.MountainW.DifficultyLevel, "")
 
                     </div>
-                    <div class="col-lg-12 mb-3">
+                    <div class="col-lg-12 mb-2">
                         @Html.LabelFor(n => n.MountainW.MountainsPermitRequired)
-                        @Html.CheckBoxFor(n => n.MountainW.MountainsPermitRequired, new { @class = "form-check-input-custom" })
+                        @Html.CheckBoxFor(n => n.MountainW.MountainsPermitRequired, new { @class = "form-check-input-custom my-1" })
                         @Html.ValidationMessageFor(n => n.MountainW.MountainsPermitRequired, "")
 
                     </div>
-                    <div class="col-lg-12 mb-3">
+                    <div class="col-lg-12 mb-2">
                         @Html.LabelFor(n => n.MountainW.NationalParkPermitRequired)
                         @Html.CheckBoxFor(n => n.MountainW.NationalParkPermitRequired, new { @class = "form-check-input-custom", })
                         @Html.ValidationMessageFor(n => n.MountainW.NationalParkPermitRequired, "")
@@ -72,6 +68,7 @@
 
                     </div>
                 </div>
+                
             </form>
             </div>
         </div>
@@ -222,39 +219,39 @@
                     <div>
                         @Html.HiddenFor(n => n.MountainW.MountainId)
                     </div>
-                    <div class="col-lg-12 ">
+                    <div class="col-lg-12 my-2">
                         @Html.LabelFor(n => n.MountainW.MountainName)
-                        @Html.TextBoxFor(n => n.MountainW.MountainName, new { @class = "form-control-custom" })
+                        @Html.TextBoxFor(n => n.MountainW.MountainName, new { @class = "form-control-custom my-1" })
                         @* @Html.ValidationMessageFor(n => n.MountainW.MountainName, "") *@
                         
                     </div>
-                    <div class="col-lg-12">
+                    <div class="col-lg-12 my-2">
                         @Html.LabelFor(n => n.MountainW.Location)
-                        @Html.TextBoxFor(n => n.MountainW.Location, new { @class = "form-control-custom" })
+                        @Html.TextBoxFor(n => n.MountainW.Location, new { @class = "form-control-custom my-1" })
                         @* @Html.ValidationMessageFor(n => n.MountainW.Location, "") *@
 
                     </div>
-                    <div class="col-lg-12">
+                    <div class="col-lg-12 my-2">
                         @Html.LabelFor(n => n.MountainW.Altitude)
-                        @Html.TextBoxFor(n => n.MountainW.Altitude, new { @class = "form-control-custom" })
+                        @Html.TextBoxFor(n => n.MountainW.Altitude, new { @class = "form-control-custom my-1" })
                         @* @Html.ValidationMessageFor(n => n.MountainW.Altitude, "") *@
 
                     </div>
-                    <div class="col-lg-12">
+                    <div class="col-lg-12 my-2">
                         @Html.LabelFor(n => n.MountainW.DifficultyLevel)
-                        @Html.TextBoxFor(n => n.MountainW.DifficultyLevel, new { @class = "form-control-custom" })
+                        @Html.TextBoxFor(n => n.MountainW.DifficultyLevel, new { @class = "form-control-custom my-1" })
                         @* @Html.ValidationMessageFor(n => n.MountainW.DifficultyLevel, "") *@
 
                     </div>
-                    <div class="col-lg-12 mb-3">
+                    <div class="col-lg-12 mb-2">
                         @Html.LabelFor(n => n.MountainW.MountainsPermitRequired)
-                        @Html.CheckBoxFor(n => n.MountainW.MountainsPermitRequired, new { @class = "form-check-input-custom" })
+                        @Html.CheckBoxFor(n => n.MountainW.MountainsPermitRequired, new { @class = "form-check-input-custom my-1" })
                         @* @Html.ValidationMessageFor(n => n.MountainW.MountainsPermitRequired, "") *@
 
                     </div>
-                    <div class="col-lg-12 mb-3">
+                    <div class="col-lg-12 mb-2">
                         @Html.LabelFor(n => n.MountainW.NationalParkPermitRequired)
-                        @Html.CheckBoxFor(n => n.MountainW.NationalParkPermitRequired, new { @class = "form-check-input-custom" })
+                        @Html.CheckBoxFor(n => n.MountainW.NationalParkPermitRequired, new { @class = "form-check-input-custom my-1" })
                         @* @Html.ValidationMessageFor(n => n.MountainW.NationalParkPermitRequired, "") *@
 
                     </div>
@@ -296,41 +293,76 @@
         </div>
     </div>
 </div>
-<div class="d-flex justify-content-center">
-    <div>
-        @Html.TextBoxFor(m =>m.MountainW.MountainName, new {@type = "search" } )
+
+<div class="table-header-control mt-3">
+    <div class="table-search-box">
+    <form asp-controller="Mountain" asp-action="CreatMountainData" method="get">
+            <input name="search.MountainW.Location" class="form-control" placeholder="請輸入地點" />
+            <button class="BtnSearch navbar-search-btn" type="submit">
+        <i class="bi bi-search"></i>
+        </button>
+    </form>
+    </div>
+    <div class="table-filter-group">
+        <div class="dropdown">
+            <button class="btn-table-action dropdown-toggle" type="button" id="dropdownFilterStatus" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-funnel"></i> 請選擇...
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="dropdownFilterStatus" style="">
+                <li><a class="dropdown-item" asp-controller="Mountain" asp-action="CreatMountainData" asp-route-Classification="請選擇...">請選擇...</a></li>
+                <li><a class="dropdown-item" asp-controller="Mountain" asp-action="CreatMountainData" asp-route-Classification="高度(高)">高度(高)</a></li>
+                <li><a class="dropdown-item" asp-controller="Mountain" asp-action="CreatMountainData" asp-route-Classification="高度(低)">高度(低)</a></li>
+                <li><a class="dropdown-item" asp-controller="Mountain" asp-action="CreatMountainData" asp-route-Classification="難度(高)">難度(高)</a></li>
+                <li><a class="dropdown-item" asp-controller="Mountain" asp-action="CreatMountainData" asp-route-Classification="難度(低)">難度(低)</a></li>
+            </ul>
+        </div>
+        
+            <button type="button" class="btn-custom btn-custom-outline-secondary"
+                    data-bs-toggle="modal" data-bs-target="#CreateNewMountain">
+                創建山岳資料
+            </button>
+        
     </div>
 </div>
+
 <div class="d-flex flex-column justify-content-between" style="min-height: 900px">
-    <table class="table">
-    <thead>
-        <tr>
-            <th>
+    <div class="table-card-custom">
+    <table class="table-custom" style="font-size: 16px">
+        
+            <thead>
+          <tr>
+                    <th style="font-size: 16px">
                 序號
             </th>
-            <th>
-                  @Html.DisplayNameFor(model => model.MountainW.MountainName)
-            </th>
-            <th>
+                    <th style="font-size: 16px">
+                        @Html.DisplayNameFor(model => model.MountainW.MountainName)
+                    </th>
+                    <th style="font-size: 16px">
                    @Html.DisplayNameFor(model => model.MountainW.Location)
             </th>
-            <th>
+                    <th style="font-size: 16px">
                 @Html.DisplayNameFor(model => model.MountainW.Altitude)
             </th>
-            <th>
+                    <th style="font-size: 16px">
                 @Html.DisplayNameFor(model => model.MountainW.DifficultyLevel)
             </th>
-            <th>
+                    <th style="font-size: 16px">
                   @Html.DisplayNameFor(model => model.MountainW.MountainsPermitRequired)
             </th>
-            <th>
+                    <th style="font-size: 16px">
                  @Html.DisplayNameFor(model => model.MountainW.NationalParkPermitRequired)
             </th>
-            
-        </tr>
 
+             <th >
+                 
+            </th>
+              <th >
+                 
+            </th>
+        </tr>
+                
     </thead>
-    
+           
     <tbody>
         @{
             int count = (Model.PageCount - 1) * 10;
@@ -385,13 +417,15 @@
 
     </tfoot>
 </table>
-
+    </div>
+    <div class="table-footer-control d-flex justify-content-center">
 @{
     int totalPage = (int)Math.Ceiling((double)Model.TotalDataCount / 10);
-    <div>
-    <div class="my-2 d-flex justify-content-center">
+            <div >
+    <div class="my-2">
         <div>
-                <ul class="pagination pagination-rounded mb-0">
+                        <nav aria-label="Page navigation">
+                        <ul class="pagination mb-0 gap-1">
                 @if(Model.PageCount == 1)
                 {
                     <li class="page-item active disabled">
@@ -434,10 +468,12 @@
                 }
                 
             </ul>
+                        </nav>
         </div>
     </div>
     </div>
 
 }
+</div>
 </div>
 

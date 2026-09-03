@@ -85,6 +85,10 @@ namespace prjGoHike.Controllers
                 EventReports = e
             }).ToList();
 
+            if(page == null)
+            {
+                page = 1;
+            }
             viewModel.PageCount = page;
             viewModel.cEventReportsList = eventReportList;
             viewModel.TotalDataCount = totalDataCount;
