@@ -40,10 +40,12 @@ namespace prjGoHike.Controllers
                 {
                     Mountains = mountain
                 }).Skip((page - 1) * 10).Take(10).ToList();
+                
             }
 
-            if(Classification == "請選擇...")
+            if(Classification == "請選擇..." && search == null)
             {
+                totalDataCount = _db.Mountains.Count();
                 mountainList = _db.Mountains.Select(mountain => new CMountainWarp
                 {
                     Mountains = mountain
@@ -51,6 +53,7 @@ namespace prjGoHike.Controllers
             }
             else if(Classification == "高度(高)")
             {
+                totalDataCount = _db.Mountains.Count();
                 mountainList = _db.Mountains.OrderByDescending(m => m.Altitude).Skip((page - 1) * 10).Take(10).ToList()
                     .Select(mountain => new CMountainWarp
                     {
@@ -59,6 +62,7 @@ namespace prjGoHike.Controllers
             }
             else if(Classification == "高度(低)")
             {
+                totalDataCount = _db.Mountains.Count();
                 mountainList = _db.Mountains.OrderBy(m => m.Altitude).Skip((page - 1) * 10).Take(10).ToList()
                     .Select(mountain => new CMountainWarp
                     {
@@ -67,6 +71,7 @@ namespace prjGoHike.Controllers
             }
             else if(Classification == "難度(高)")
             {
+                totalDataCount = _db.Mountains.Count();
                 mountainList = _db.Mountains.OrderByDescending(m => m.DifficultyLevel).Skip((page - 1) * 10).Take(10).ToList()
                     .Select(mountain => new CMountainWarp
                     {
@@ -75,6 +80,7 @@ namespace prjGoHike.Controllers
             }
             else if(Classification == "難度(低)")
             {
+                totalDataCount = _db.Mountains.Count();
                 mountainList = _db.Mountains.OrderBy(m => m.DifficultyLevel).Skip((page - 1) * 10).Take(10).ToList()
                     .Select(mountain => new CMountainWarp
                     {
