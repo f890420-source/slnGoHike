@@ -61,5 +61,6 @@ namespace prjGoHike.Models
             get { return _eventReport.ReportTitle; }
             set { _eventReport.ReportTitle = value; }
         }
+        
     }
 }

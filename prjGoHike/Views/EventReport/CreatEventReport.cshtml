@@ -4,7 +4,7 @@
     ViewData["Title"] = "Index";
 }
 
-<h1>活動檢舉管理</h1>
+<h1 class="mb-4">活動檢舉管理</h1>
 @* <p class="d-flex justify-content-end">
     <button type="button" class="btn-custom btn-custom-outline-secondary"
             data-bs-toggle="modal" data-bs-target="#CreateNewMountain">
@@ -285,10 +285,22 @@
         </div>
     </div>
 </div>
-
+<div class="dropdown d-flex justify-content-end">
+    <button class="btn-table-action dropdown-toggle" type="button" id="dropdownFilterStatus" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-funnel"></i> 請選擇...
+    </button>
+    <ul id="StatusSelect" class="dropdown-menu" aria-labelledby="dropdownFilterStatus">
+        <li><a class="dropdown-item" href="@Url.Action("CreatEventReport", new { status = "請選擇..." })">請選擇...</a></li>
+        <li><a class="dropdown-item" href="@Url.Action("CreatEventReport", new { status = "待處理" })">待處理</a></li>
+        <li><a class="dropdown-item" href="@Url.Action("CreatEventReport", new { status = "需停權" })">需停權</a></li>
+        <li><a class="dropdown-item" href="@Url.Action("CreatEventReport", new { status = "已完成" })">已完成</a></li>
+        <li><a class="dropdown-item" href="@Url.Action("CreatEventReport", new { status = "最新成立時間" })">最新成立時間</a></li>
+        <li><a class="dropdown-item" href="@Url.Action("CreatEventReport", new { status = "最舊成立時間" })">最舊成立時間</a></li>
+    </ul>
+</div>
 <div class="d-flex flex-column justify-content-between" style="min-height: 900px">
     <table class="table">
-        <thead>
+        <thead class="my-5">
             <tr>
                 <th>
                     序號
