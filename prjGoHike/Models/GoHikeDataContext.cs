@@ -7,6 +7,7 @@ namespace prjGoHike.Models;
 
 public partial class GoHikeDataContext : DbContext
 {
+    public DbSet<prjGoHike.Models.CEventDataWarp> CEventDataWarp { get; set; } = default!;
     public GoHikeDataContext()
     {
     }

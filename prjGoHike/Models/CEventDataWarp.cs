@@ -78,6 +78,7 @@ namespace prjGoHike.Models
         }
 
         [DisplayName("是否需要入園/入山證")]
+        //這個欄位暫時沒用到
         public bool ReviewRequired 
 {
             get { return _EventData.ReviewRequired; }
@@ -85,7 +86,7 @@ namespace prjGoHike.Models
         }
 
         [DisplayName("是否所有團員都有入山證/入園證")]
-        //之後需改成接收前端資料來自動判斷
+        //這個欄位暫時沒用到
         public string ReviewStatus
         {
             get { return _EventData.ReviewStatus; }
