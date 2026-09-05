@@ -110,6 +110,12 @@ public partial class GoHikeDataContext : DbContext
             .HasValue<EventLeader>("團主")
             .HasValue<Admin>("管理員");
 
+        modelBuilder.Entity<Level>().HasData(
+        new Level { LevelId = 1, LevelName = "新手山友", MinXp = 0, MaxXp = 99 },
+        new Level { LevelId = 2, LevelName = "初階登山客", MinXp = 100, MaxXp = 499 },
+        new Level { LevelId = 3, LevelName = "中階登山客", MinXp = 500, MaxXp = 999 },
+        new Level { LevelId = 4, LevelName = "高階登山客", MinXp = 1000, MaxXp = 99999 });
+
         modelBuilder.Entity<Achievement>(entity =>
         {
             entity.ToTable("achievements");
