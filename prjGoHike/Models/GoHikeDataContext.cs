@@ -96,6 +96,8 @@ public partial class GoHikeDataContext : DbContext
 
     public virtual DbSet<UserSkillTag> UserSkillTags { get; set; }
 
+    public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("Name=ConnectionStrings:GoHikeDataContext", x => x.UseNetTopologySuite());
 
@@ -115,6 +117,16 @@ public partial class GoHikeDataContext : DbContext
         new Level { LevelId = 2, LevelName = "初階登山客", MinXp = 100, MaxXp = 499 },
         new Level { LevelId = 3, LevelName = "中階登山客", MinXp = 500, MaxXp = 999 },
         new Level { LevelId = 4, LevelName = "高階登山客", MinXp = 1000, MaxXp = 99999 });
+
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasIndex(e => e.Token).IsUnique();
+
+            entity.HasOne(e => e.User)
+                .WithMany() // User.txt不用加collection屬性，單向關聯
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
 
         modelBuilder.Entity<Achievement>(entity =>
         {
