@@ -21,7 +21,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="DTO\" />
     <Folder Include="ViewModels_user\Admin\" />
     <Folder Include="ViewModels_user\Dto\" />
   </ItemGroup>
