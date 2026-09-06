@@ -6,8 +6,5 @@
         public string RefreshToken { get; set; } = null!;
         public DateTime ExpiresAt { get; set; }
 
-        public long UserId { get; set; }
-        public string Nickname { get; set; } = null!;
-        public string Role { get; set; } = null!;
     }
 }

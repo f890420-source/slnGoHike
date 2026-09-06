@@ -1,321 +1,167 @@
-﻿
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using prjGoHike.DTO.Auth;
 using prjGoHike.Models;
 using prjGoHike.Services;
-using prjGoHike.ViewModels_user.Member;
-using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using static prjGoHike.Models.UserPermissions;
 
-namespace GoHike.Controllers
+namespace GoHike.Controllers;
+
+[ApiController]
+[Route("api")]
+public class LoginController : ControllerBase
 {
-    public class LoginController : Controller
+    private readonly GoHikeDataContext _context;
+    private readonly ILogger<LoginController> _logger;
+    private readonly IPasswordHasher _passwordHasher;
+    private readonly IJwtTokenService _jwtTokenService;
+
+    public LoginController(
+        GoHikeDataContext context,
+        ILogger<LoginController> logger,
+        IPasswordHasher passwordHasher,
+        IJwtTokenService jwtTokenService)
     {
-        private readonly GoHikeDataContext _context;
-        private readonly ILogger<LoginController> _logger;
-        private readonly IPasswordHasher _passwordHasher;
+        _context = context;
+        _logger = logger;
+        _passwordHasher = passwordHasher;
+        _jwtTokenService = jwtTokenService;
+    }
 
-        public LoginController(GoHikeDataContext context, ILogger<LoginController> logger, IPasswordHasher passwordHasher)
+    [HttpPost("login")]
+    public async Task<ActionResult<AuthResponseDto>> Login(
+        LoginRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
+
+        if (user is null || !VerifyPassword(request.Password, user.PasswordHash))
         {
-            _context = context;
-            _logger = logger;
-            _passwordHasher = passwordHasher;
+            _logger.LogWarning("登入失敗：帳號或密碼錯誤");
+            return Unauthorized();
         }
 
-        #region 登入相關
-
-        /// <summary>
-        /// 顯示登入表單
-        /// </summary>
-        [HttpGet]
-        [Route("Login")]
-        [Route("Login/Index")]
-        public IActionResult Index()
+        if (user.AccountStatus != "正常")
         {
-            // 如果已登入，導向首頁
-            if (User.Identity.IsAuthenticated)
-                return RedirectToAction("Index", "Home");
-
-            return View(new LoginViewModel());
+            _logger.LogWarning("登入失敗：使用者 {UserId} 帳戶狀態異常", user.UserId);
+            return Unauthorized();
         }
 
-        /// <summary>
-        /// 處理登入（POST）
-        /// </summary>
-        [HttpPost]
-        [Route("Login")]
-        [Route("Login/Index")]
-        public async Task<IActionResult> Login(LoginViewModel model)
+        var now = DateTime.UtcNow;
+        var activeSuspension = await _context.SuspensionSchedules
+            .AnyAsync(s => s.UserId == user.UserId && s.SuspensionExpirationTime > DateTime.Now, cancellationToken);
+
+        if (activeSuspension)
         {
-            if (!ModelState.IsValid)
-            {
-                model.ErrorMessage = "請檢查輸入的資料";
-                return View("Index", model);
-            }
-
-            try
-            {
-                // 根據信箱查詢使用者
-                var user = await _context.Users
-                    .FirstOrDefaultAsync(u => u.Email == model.Email);
-
-                if (user == null)
-                {
-                    model.ErrorMessage = "信箱或密碼錯誤";
-                    _logger.LogWarning($"登入失敗：信箱 {model.Email} 不存在");
-                    return View("Index", model);
-                }
-            
-                // 驗證帳戶狀態
-                if (user.AccountStatus != "正常")
-                {
-                    model.ErrorMessage = $"帳戶已被停用，狀態：{user.AccountStatus}";
-                    _logger.LogWarning($"登入失敗：使用者 {user.UserId} 帳戶狀態異常");
-                    return View("Index", model);
-                }
-
-                // 檢查停權
-                var activeSuspension = await _context.SuspensionSchedules
-                    .FirstOrDefaultAsync(s =>
-                        s.UserId == user.UserId &&
-                        s.SuspensionExpirationTime > DateTime.Now);
-
-                if (activeSuspension != null)
-                {
-                    model.ErrorMessage = $"帳戶已被停權至 {activeSuspension.SuspensionExpirationTime:yyyy-MM-dd}，原因：{activeSuspension.Reason}";
-                    _logger.LogWarning($"登入失敗：使用者 {user.UserId} 處於停權狀態");
-                    return View("Index", model);
-                }
-
-                // 驗證密碼
-                if (!VerifyPassword(model.Password, user.PasswordHash))
-                {
-                    model.ErrorMessage = "信箱或密碼錯誤";
-                    _logger.LogWarning($"登入失敗：使用者 {user.UserId} 密碼驗證失敗");
-                    return View("Index", model);
-                }
-
-                // 相容既有 SHA-256／明碼資料；驗證成功後立即升級，不再產生舊格式。
-                if (!IsBcryptHash(user.PasswordHash))
-                {
-                    user.PasswordHash = _passwordHasher.Hash(model.Password);
-                    await _context.SaveChangesAsync();
-                }
-
-                // 登入成功 - 建立 Cookie
-                await SignInUser(user, model.RememberMe);
-
-                _logger.LogInformation($"使用者 ({user.Nickname}) 登入成功");
-
-                // 重定向到登入前的頁面，或首頁
-                var returnUrl = Request.Query["returnUrl"].ToString();
-                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-                    return Redirect(returnUrl);
-
-                return RedirectToAction("Dashboard", "Member");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"登入過程發生錯誤：{ex.Message}");
-                model.ErrorMessage = "登入過程發生錯誤，請稍後再試";
-                return View("Index", model);
-            }
+            _logger.LogWarning("登入失敗：使用者 {UserId} 處於停權狀態", user.UserId);
+            return Unauthorized();
         }
 
-        /// <summary>
-        /// 登出
-        /// </summary>
-        [HttpGet]
-        [Route("Login/Logout")]
-        public async Task<IActionResult> Logout()
+        // 只保留既有帳號的遷移路徑；所有新密碼皆使用 BCrypt。
+        if (!IsBcryptHash(user.PasswordHash))
+            user.PasswordHash = _passwordHasher.Hash(request.Password);
+
+        user.LastActiveAt = now;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var tokens = await _jwtTokenService.CreateTokenPairAsync(user, cancellationToken);
+        _logger.LogInformation("使用者 {UserId} 登入成功", user.UserId);
+
+        return Ok(ToAuthResponse(tokens));
+    }
+
+    [HttpPost("register")]
+    public async Task<ActionResult<AuthResponseDto>> Register(
+        RegisterRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        var exists = await _context.Users.AnyAsync(
+            user => user.Email == request.Email || user.Nickname == request.Nickname,
+            cancellationToken);
+
+        if (exists)
+            return Conflict(new { message = "電子郵件或暱稱已被使用。" });
+
+        var now = DateTime.UtcNow;
+        var user = new Member
         {
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            _logger.LogInformation($"使用者已登出");
-            return RedirectToAction(nameof(Index));
-        }
-
-        #endregion
-
-        #region 註冊相關
-
-        /// <summary>
-        /// 顯示註冊表單
-        /// </summary>
-        [HttpGet]
-        [Route("Register")]
-        [Route("Register/Index")]
-        public IActionResult RegisterIndex()
-        {
-            // 如果已登入，導向首頁
-            if (User.Identity.IsAuthenticated)
-                return RedirectToAction("Index", "Home");
-
-            return View(new RegisterViewModel());
-        }
-
-        /// <summary>
-        /// 處理註冊（POST）
-        /// </summary>
-        [HttpPost]
-        [Route("Register")]
-        [Route("Register/Index")]
-        public async Task<IActionResult> RegisterIndex(RegisterViewModel model)
-        {
-            if (!ModelState.IsValid)
-            {
-                model.ErrorMessage = "請檢查輸入的資料";
-                return View(model);
-            }
-
-            try
-            {
-                // 檢查信箱是否已被註冊
-                var existingUser = await _context.Users
-                    .FirstOrDefaultAsync(u => u.Email == model.Email);
-
-                if (existingUser != null)
-                {
-                    model.ErrorMessage = "此信箱已被註冊，請使用其他信箱";
-                    _logger.LogWarning($"註冊失敗：信箱 {model.Email} 已存在");
-                    return View(model);
-                }
-
-                // 檢查暱稱是否重複
-                var existingNickname = await _context.Users
-                    .FirstOrDefaultAsync(u => u.Nickname == model.Nickname);
-
-                if (existingNickname != null)
-                {
-                    model.ErrorMessage = "此暱稱已被使用，請更換";
-                    _logger.LogWarning($"註冊失敗：暱稱 {model.Nickname} 已存在");
-                    return View(model);
-                }
-
-                // ✅ 建立新會員
-                var newMember = new Member
-                {
-                    Nickname = model.Nickname,
-                    Email = model.Email,
-                    PasswordHash = _passwordHasher.Hash(model.Password),
-                    Role = "一般會員",
-                    AccountStatus = "正常",
-                    CurrentLevelId = 1,  // ⚠️ 確保 levels 表中 ID=1 存在
-                    TotalXp = 0,
-                    RegionPreference = model.RegionPreference ?? "",
-                    DifficultyPreference = model.DifficultyPreference ?? "",
-                    AvatarUrl = "",
-                    AvatarBlurState = "不模糊",
-                    Bio = "",
-                    CreatedAt = DateTime.Now,
-                    LastActiveAt = DateTime.Now
-                };
-
-                _context.Users.Add(newMember);
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation($"新會員註冊成功：{newMember.Nickname} ({newMember.UserId})");
-
-                
-                TempData["SuccessMessage"] = $"註冊成功！請使用新帳號密碼進行登入。";
-
-               
-                return RedirectToAction(nameof(Index));
-            }
-            catch (Exception ex)
-            {
-                //_logger.LogError($"註冊過程發生錯誤：{ex.Message}");
-                //model.ErrorMessage = "註冊過程發生錯誤，請稍後再試";
-                //return View(model);
-                var innerMsg = ex.InnerException != null ? ex.InnerException.Message : "";
-                model.ErrorMessage = $"註冊失敗：{ex.Message} | 內層細節：{innerMsg}";
-                return View(model);
-            }
-        }
-
-        #endregion
-
-        #region 輔助方法
-
-        /// <summary>
-        /// 驗證 BCrypt 密碼；既有 SHA-256 或明碼僅用於登入時升級。
-        /// </summary>
-        private bool VerifyPassword(string password, string hash)
-        {
-            if (IsBcryptHash(hash))
-                return _passwordHasher.Verify(password, hash);
-
-            if (IsLegacySha256Hash(hash))
-            {
-                using var sha256 = SHA256.Create();
-                var hashOfInput = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-                return CryptographicOperations.FixedTimeEquals(hashOfInput, Convert.FromBase64String(hash));
-            }
-
-            // 僅為過去後台建立的明碼帳號提供一次性升級路徑。
-            return CryptographicOperations.FixedTimeEquals(
-                Encoding.UTF8.GetBytes(password), Encoding.UTF8.GetBytes(hash));
-        }
-
-        private static bool IsBcryptHash(string hash) => hash.StartsWith("$2", StringComparison.Ordinal);
-
-        private static bool IsLegacySha256Hash(string hash)
-        {
-            try
-            {
-                return Convert.FromBase64String(hash).Length == 32;
-            }
-            catch (FormatException)
-            {
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// 建立認證 Cookie 並登入使用者
-        /// </summary>
-        private async Task SignInUser(User user, bool rememberMe)
-        {
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
-                new Claim(ClaimTypes.Name, user.Nickname),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, ToAuthorizationRole(user.Role)),
-                new Claim("AccountStatus", user.AccountStatus),
-                new Claim("AvatarUrl", user.AvatarUrl ?? "")
-            };
-
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var authProperties = new AuthenticationProperties
-            {
-                IsPersistent = rememberMe,
-                ExpiresUtc = rememberMe
-                    ? DateTimeOffset.UtcNow.AddDays(30)  // 記住我 30 天
-                    : DateTimeOffset.UtcNow.AddHours(8)  // 否則 8 小時
-            };
-
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity),
-                authProperties);
-
-            // 更新最後活動時間
-            user.LastActiveAt = DateTime.Now;
-            _context.Users.Update(user);
-            await _context.SaveChangesAsync();
-        }
-
-        private static string ToAuthorizationRole(string role) => role switch
-        {
-            "管理員" or "Admin" => "Admin",
-            "團主" or "EventLeader" => "EventLeader",
-            _ => "Member"
+            Nickname = request.Nickname,
+            Email = request.Email,
+            PasswordHash = _passwordHasher.Hash(request.Password),
+            Role = "一般會員",
+            AccountStatus = "正常",
+            CurrentLevelId = 1,
+            TotalXp = 0,
+            RegionPreference = request.RegionPreference ?? string.Empty,
+            DifficultyPreference = request.DifficultyPreference ?? string.Empty,
+            AvatarUrl = string.Empty,
+            AvatarBlurState = "不模糊",
+            Bio = string.Empty,
+            CreatedAt = now,
+            LastActiveAt = now
         };
 
-        #endregion
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var tokens = await _jwtTokenService.CreateTokenPairAsync(user, cancellationToken);
+        return Created(string.Empty, ToAuthResponse(tokens));
+    }
+
+    [HttpPost("refresh")]
+    public async Task<ActionResult<AuthResponseDto>> Refresh(
+        RefreshRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.RefreshToken))
+            return Unauthorized();
+
+        var tokens = await _jwtTokenService.RotateRefreshTokenAsync(request.RefreshToken, cancellationToken);
+        if (tokens is null)
+            return Unauthorized();
+
+        return Ok(ToAuthResponse(tokens));
+    }
+
+    private static AuthResponseDto ToAuthResponse(TokenPair tokens) => new()
+    {
+        AccessToken = tokens.AccessToken,
+        RefreshToken = tokens.RefreshToken,
+        ExpiresAt = tokens.ExpiresAt
+    };
+
+    private bool VerifyPassword(string password, string hash)
+    {
+        if (IsBcryptHash(hash))
+            return _passwordHasher.Verify(password, hash);
+
+        if (IsLegacySha256Hash(hash))
+        {
+            using var sha256 = SHA256.Create();
+            return CryptographicOperations.FixedTimeEquals(
+                sha256.ComputeHash(Encoding.UTF8.GetBytes(password)),
+                Convert.FromBase64String(hash));
+        }
+
+        // 僅供過去後台以明碼建立的帳號登入一次，成功後立即升級成 BCrypt。
+        return CryptographicOperations.FixedTimeEquals(
+            Encoding.UTF8.GetBytes(password), Encoding.UTF8.GetBytes(hash));
+    }
+
+    private static bool IsBcryptHash(string hash) => hash.StartsWith("$2", StringComparison.Ordinal);
+
+    private static bool IsLegacySha256Hash(string hash)
+    {
+        try
+        {
+            return Convert.FromBase64String(hash).Length == 32;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
     }
 }

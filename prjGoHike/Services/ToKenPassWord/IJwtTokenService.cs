@@ -4,7 +4,7 @@ namespace prjGoHike.Services
 {
     public interface IJwtTokenService
     {
-        string GenerateAccessToken(User user);
-        string GenerateRefreshToken();
+        Task<TokenPair> CreateTokenPairAsync(User user, CancellationToken cancellationToken = default);
+        Task<TokenPair?> RotateRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
     }
 }
