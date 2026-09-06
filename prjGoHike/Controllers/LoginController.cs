@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.Models;
+using prjGoHike.Services;
 using prjGoHike.ViewModels_user.Member;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -16,11 +17,13 @@ namespace GoHike.Controllers
     {
         private readonly GoHikeDataContext _context;
         private readonly ILogger<LoginController> _logger;
+        private readonly IPasswordHasher _passwordHasher;
 
-        public LoginController(GoHikeDataContext context, ILogger<LoginController> logger)
+        public LoginController(GoHikeDataContext context, ILogger<LoginController> logger, IPasswordHasher passwordHasher)
         {
             _context = context;
             _logger = logger;
+            _passwordHasher = passwordHasher;
         }
 
         #region 登入相關
@@ -94,6 +97,13 @@ namespace GoHike.Controllers
                     model.ErrorMessage = "信箱或密碼錯誤";
                     _logger.LogWarning($"登入失敗：使用者 {user.UserId} 密碼驗證失敗");
                     return View("Index", model);
+                }
+
+                // 相容既有 SHA-256／明碼資料；驗證成功後立即升級，不再產生舊格式。
+                if (!IsBcryptHash(user.PasswordHash))
+                {
+                    user.PasswordHash = _passwordHasher.Hash(model.Password);
+                    await _context.SaveChangesAsync();
                 }
 
                 // 登入成功 - 建立 Cookie
@@ -190,7 +200,7 @@ namespace GoHike.Controllers
                 {
                     Nickname = model.Nickname,
                     Email = model.Email,
-                    PasswordHash = HashPassword(model.Password),  // 密碼加密
+                    PasswordHash = _passwordHasher.Hash(model.Password),
                     Role = "一般會員",
                     AccountStatus = "正常",
                     CurrentLevelId = 1,  // ⚠️ 確保 levels 表中 ID=1 存在
@@ -231,35 +241,37 @@ namespace GoHike.Controllers
         #region 輔助方法
 
         /// <summary>
-        /// 密碼加密（使用 SHA256）
-        /// ⚠️ 實務上建議改用 BCrypt 或 Argon2，見下方註解
-        /// </summary>
-        private string HashPassword(string password)
-        {
-            using (var sha256 = SHA256.Create())
-            {
-                var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-                return Convert.ToBase64String(hashedBytes);
-            }
-
-            // 🔐 更安全的做法（需先安裝 NuGet: BCrypt.Net-Next）：
-            // return BCrypt.Net.BCrypt.HashPassword(password, workFactor: 12);
-        }
-
-        /// <summary>
-        /// 密碼驗證
+        /// 驗證 BCrypt 密碼；既有 SHA-256 或明碼僅用於登入時升級。
         /// </summary>
         private bool VerifyPassword(string password, string hash)
         {
-            using (var sha256 = SHA256.Create())
+            if (IsBcryptHash(hash))
+                return _passwordHasher.Verify(password, hash);
+
+            if (IsLegacySha256Hash(hash))
             {
+                using var sha256 = SHA256.Create();
                 var hashOfInput = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-                var hashOfInputAsString = Convert.ToBase64String(hashOfInput);
-                return hashOfInputAsString == hash;
+                return CryptographicOperations.FixedTimeEquals(hashOfInput, Convert.FromBase64String(hash));
             }
 
-            // 🔐 BCrypt 驗證方式：
-            // return BCrypt.Net.BCrypt.Verify(password, hash);
+            // 僅為過去後台建立的明碼帳號提供一次性升級路徑。
+            return CryptographicOperations.FixedTimeEquals(
+                Encoding.UTF8.GetBytes(password), Encoding.UTF8.GetBytes(hash));
+        }
+
+        private static bool IsBcryptHash(string hash) => hash.StartsWith("$2", StringComparison.Ordinal);
+
+        private static bool IsLegacySha256Hash(string hash)
+        {
+            try
+            {
+                return Convert.FromBase64String(hash).Length == 32;
+            }
+            catch (FormatException)
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -272,7 +284,7 @@ namespace GoHike.Controllers
                 new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
                 new Claim(ClaimTypes.Name, user.Nickname),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim("Role", user.Role),
+                new Claim(ClaimTypes.Role, ToAuthorizationRole(user.Role)),
                 new Claim("AccountStatus", user.AccountStatus),
                 new Claim("AvatarUrl", user.AvatarUrl ?? "")
             };
@@ -296,6 +308,13 @@ namespace GoHike.Controllers
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
         }
+
+        private static string ToAuthorizationRole(string role) => role switch
+        {
+            "管理員" or "Admin" => "Admin",
+            "團主" or "EventLeader" => "EventLeader",
+            _ => "Member"
+        };
 
         #endregion
     }

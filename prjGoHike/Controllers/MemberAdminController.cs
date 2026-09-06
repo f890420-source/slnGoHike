@@ -1,12 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.Models;
+using prjGoHike.Services;
 using prjGoHike.ViewModels_user.Member;
 using static prjGoHike.Models.UserPermissions;
 using static prjGoHike.ViewModels_user.Member.MemberAdminViewModel;
 
 namespace prjGoHike.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class MemberAdminController : Controller
     {
         [HttpGet]
@@ -30,7 +33,7 @@ namespace prjGoHike.Controllers
             {
                 Nickname = vm.Nickname,
                 Email = vm.Email,
-                PasswordHash = vm.PasswordHash,  //  實務上要加密
+                PasswordHash = _passwordHasher.Hash(vm.PasswordHash),
                 Role = "一般會員",
                 AccountStatus = "正常",
                 CurrentLevelId = 1,  // 新人預設等級 1
@@ -49,9 +52,12 @@ namespace prjGoHike.Controllers
         }
 
         private readonly GoHikeDataContext _context;
-            public MemberAdminController(GoHikeDataContext context)
+        private readonly IPasswordHasher _passwordHasher;
+
+            public MemberAdminController(GoHikeDataContext context, IPasswordHasher passwordHasher)
             {
                 _context = context;
+                _passwordHasher = passwordHasher;
             }
 
         // 會員列表(搜尋 + 角色篩選 + 分頁)

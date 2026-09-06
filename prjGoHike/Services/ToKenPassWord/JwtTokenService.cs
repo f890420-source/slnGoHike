@@ -27,7 +27,7 @@ namespace prjGoHike.Services
                 new(ClaimTypes.NameIdentifier, user.UserId.ToString()), // 跟 Cookie 版共用同一個 Claim Type，MemberController.GetUserId() 之後不用改
                 new(ClaimTypes.Name, user.Nickname),
                 new(ClaimTypes.Email, user.Email),
-                new(ClaimTypes.Role, user.Role),
+                new(ClaimTypes.Role, ToAuthorizationRole(user.Role)),
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
@@ -55,5 +55,12 @@ namespace prjGoHike.Services
             rng.GetBytes(randomBytes);
             return Convert.ToBase64String(randomBytes);
         }
+
+        private static string ToAuthorizationRole(string role) => role switch
+        {
+            "管理員" or "Admin" => "Admin",
+            "團主" or "EventLeader" => "EventLeader",
+            _ => "Member"
+        };
     }
 }
