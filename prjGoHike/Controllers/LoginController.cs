@@ -74,7 +74,7 @@ public class LoginController : ControllerBase
     }
 
     [HttpPost("register")]
-    public async Task<ActionResult<AuthResponseDto>> Register(
+    public async Task<ActionResult> Register(
         RegisterRequestDto request,
         CancellationToken cancellationToken)
     {
@@ -107,8 +107,7 @@ public class LoginController : ControllerBase
         _context.Users.Add(user);
         await _context.SaveChangesAsync(cancellationToken);
 
-        var tokens = await _jwtTokenService.CreateTokenPairAsync(user, cancellationToken);
-        return Created(string.Empty, ToAuthResponse(tokens));
+        return StatusCode(StatusCodes.Status201Created, new { message = "註冊成功。" });
     }
 
     [HttpPost("refresh")]
