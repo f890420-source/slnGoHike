@@ -82,7 +82,28 @@ namespace prjGoHike.Controllers
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userid);
                 if (user == null)
                     return NotFound("使用者不存在");
+                if (model.AvatarFile != null && model.AvatarFile.Length > 0)
+                {
+                    // 1. 設定圖片儲存路徑 (wwwroot/uploads/avatars)
+                    string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "avatars");
+                    if (!Directory.Exists(uploadsFolder))
+                    {
+                        Directory.CreateDirectory(uploadsFolder);
+                    }
 
+                    // 2. 產生獨一無二的檔名（避免不同人上傳同檔名被覆蓋）
+                    string uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileName(model.AvatarFile.FileName)}";
+                    string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                    // 3. 將檔案寫入伺服器硬碟
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await model.AvatarFile.CopyToAsync(fileStream);
+                    }
+
+                    // 4. 把產生好的新網址寫入 user.AvatarUrl
+                    user.AvatarUrl = "/uploads/avatars/" + uniqueFileName;
+                }
                 // 只允許修改特定欄位
                 user.Nickname = model.Nickname;
                 user.Bio = model.Bio ?? "";

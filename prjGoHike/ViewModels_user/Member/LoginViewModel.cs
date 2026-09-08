@@ -25,7 +25,7 @@
             /// <summary>
             /// 登入失敗錯誤訊息(由 Controller 填入)
             /// </summary>
-            public string ErrorMessage { get; set; }
+            public string? ErrorMessage { get; set; }
         }
 
         /// <summary>
@@ -64,7 +64,7 @@
             /// <summary>
             /// 註冊錯誤訊息(由 Controller 填入)
             /// </summary>
-            public string ErrorMessage { get; set; }
+            public string? ErrorMessage { get; set; }
         }
     }
 

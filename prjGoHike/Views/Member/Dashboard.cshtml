@@ -1,106 +1,218 @@
 ﻿@model prjGoHike.ViewModels_user.Member.MemberDashboardViewModel
 
 @{
-    ViewData["Title"] = "會員總覽";
+    ViewData["Title"] = "會員總覽 - GO-HIKE";
 }
 
-<div class="container">
-    <h1>@Model.Nickname 的會員資料</h1>
+<div class="container py-4">
+    <!--個人檔案卡片 -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 bg-primary bg-gradient text-white overflow-hidden">
+        <div class="card-body p-4 p-md-5 position-relative">
+            <div class="d-flex flex-column flex-md-row align-items-center gap-4">
+                <!-- 頭像示意圖 -->
+                <div class="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center shadow"
+                     style="width: 80px; height: 80px; font-size: 2rem; flex-shrink: 0;">
+                    <i class="bi bi-person-fill"></i>
+                </div>
 
-    <!-- 基本資訊 -->
-    <div class="card mb-3">
-        <div class="card-header">基本資訊</div>
-        <div class="card-body">
-            <p>帳號狀態: @Model.AccountStatus</p>
-            <p>等級: @Model.LevelName | 經驗值: @Model.TotalXp</p>
-            <p>進度: @Model.ProgressPercentage.ToString("F1")%</p>
+                <div class="flex-grow-1 text-center text-md-start">
+                    <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-start gap-2 mb-2">
+                        <h2 class="fw-bold mb-0">@Model.Nickname</h2>
+                        <span class="badge bg-light text-primary rounded-pill fs-6 px-3 py-1">
+                            <i class="bi bi-shield-check me-1"></i> @Model.AccountStatus
+                        </span>
+                    </div>
+                    <p class="mb-0 opacity-75">
+                        <i class="bi bi-award me-1"></i> 等級：<strong>@Model.LevelName</strong>
+                        <span class="mx-2">|</span>
+                        <i class="bi bi-lightning-charge me-1"></i> 總經驗值：<strong>@Model.TotalXp XP</strong>
+                    </p>
+                </div>
+            </div>
+
+            <!-- 等級進度條 -->
+            <div class="mt-4 bg-white bg-opacity-25 rounded-3 p-3">
+                <div class="d-flex justify-content-between text-white mb-1 small fw-bold">
+                    <span>等級升級進度</span>
+                    <span>@Model.ProgressPercentage.ToString("F1")%</span>
+                </div>
+                <div class="progress bg-white bg-opacity-25" style="height: 10px;">
+                    <div class="progress-bar bg-warning progress-bar-striped progress-bar-animated"
+                         role="progressbar"
+                         style="width: @(Model.ProgressPercentage)%"
+                         aria-valuenow="@Model.ProgressPercentage"
+                         aria-valuemin="0"
+                         aria-valuemax="100">
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- 成就 -->
-    <div class="card mb-3">
-        <div class="card-header">成就 (@Model.UnlockedAchievements.Count / @Model.TotalAchievementCount)</div>
-        <div class="card-body">
-            @if (Model.UnlockedAchievements.Count > 0)
-            {
-                @foreach (var ach in Model.UnlockedAchievements)
-                {
-                    <span class="badge badge-info">@ach.Name</span>
-                }
-            }
-            else
-            {
-                <p>還沒解鎖任何成就</p>
-            }
+    <!-- 雙欄資訊網格 -->
+    <div class="row g-4 mb-4">
+        <!-- 左欄：成就與能力標籤 -->
+        <div class="col-lg-6">
+            <!-- 解鎖成就 -->
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold text-dark mb-0">
+                        <i class="bi bi-trophy text-warning me-2"></i>解鎖成就
+                    </h5>
+                    <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-bold">
+                        @Model.UnlockedAchievements.Count / @Model.TotalAchievementCount
+                    </span>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    @if (Model.UnlockedAchievements.Count > 0)
+                    {
+                        <div class="d-flex flex-wrap gap-2 pt-2">
+                            @foreach (var ach in Model.UnlockedAchievements)
+                            {
+                                <span class="badge bg-warning bg-opacity-10 text-dark border border-warning rounded-pill px-3 py-2 fw-normal fs-6">
+                                    <i class="bi bi-award-fill text-warning me-1"></i> @ach.Name
+                                </span>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-journal-x fs-1 opacity-50"></i>
+                            <p class="mb-0 mt-2">還沒解鎖任何成就，加油！</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <!-- 能力標籤 -->
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                    <h5 class="fw-bold text-dark mb-0">
+                        <i class="bi bi-tags text-success me-2"></i>能力標籤
+                    </h5>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    @if (Model.SkillTags.Count > 0)
+                    {
+                        <div class="d-flex flex-wrap gap-2 pt-2">
+                            @foreach (var tag in Model.SkillTags)
+                            {
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 py-2 fw-normal fs-6">
+                                    <i class="bi bi-tag-fill me-1"></i> @tag.TagName
+                                    <small class="opacity-75">(@tag.Source)</small>
+                                </span>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-bookmark-dash fs-1 opacity-50"></i>
+                            <p class="mb-0 mt-2">還沒有獲得任何能力標籤</p>
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- 標籤 -->
-    <div class="card mb-3">
-        <div class="card-header">能力標籤</div>
-        <div class="card-body">
-            @if (Model.SkillTags.Count > 0)
-            {
-                @foreach (var tag in Model.SkillTags)
-                {
-                    <span class="badge badge-success">@tag.TagName (@tag.Source)</span>
-                }
-            }
-            else
-            {
-                <p>還沒有任何標籤</p>
-            }
+    <!-- 爬山紀錄卡片 -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold text-dark mb-0">
+                <i class="bi bi-compass text-info me-2"></i>爬山紀錄
+            </h5>
+            <span class="badge bg-info bg-opacity-10 text-info fw-bold rounded-pill px-3 py-2">
+                總計 @Model.TotalHikeCount 次
+            </span>
         </div>
-    </div>
-
-    <!-- 爬山紀錄 -->
-    <div class="card mb-3">
-        <div class="card-header">爬山紀錄 (@Model.TotalHikeCount)</div>
-        <div class="card-body">
+        <div class="card-body px-4 pb-4">
             @if (Model.HikeRecords.Count > 0)
             {
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>日期</th>
-                            <th>山岳</th>
-                            <th>同伴數</th>
-                            <th>驗證</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var hike in Model.HikeRecords)
-                        {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
                             <tr>
-                                <td>@hike.HikeDate</td>
-                                <td>@hike.MountainName</td>
-                                <td>@hike.CompanionCount</td>
-                                <td>@(hike.Verified ? "✓" : "✗")</td>
+                                <th class="border-0 rounded-start">日期</th>
+                                <th class="border-0">山岳名稱</th>
+                                <th class="border-0">同行夥伴</th>
+                                <th class="border-0 text-center rounded-end">驗證狀態</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach (var hike in Model.HikeRecords)
+                            {
+                                <tr>
+                                    <td class="fw-medium text-secondary">
+                                        <i class="bi bi-calendar3 me-1"></i> @hike.HikeDate
+                                    </td>
+                                    <td class="fw-bold text-dark">
+                                        <i class="bi bi-geo-alt-fill text-danger me-1"></i> @hike.MountainName
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary-subtle text-dark rounded-pill px-2.5 py-1">
+                                            <i class="bi bi-people me-1"></i> @hike.CompanionCount 人
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        @if (hike.Verified)
+                                        {
+                                            <span class="badge bg-success-subtle text-success border border-success rounded-pill px-3 py-1">
+                                                <i class="bi bi-check-circle-fill me-1"></i> 已驗證
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary-subtle text-muted rounded-pill px-3 py-1">
+                                                <i class="bi bi-clock me-1"></i> 未驗證
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             }
             else
             {
-                <p>還沒有爬山紀錄</p>
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-map fs-1 opacity-50"></i>
+                    <p class="mb-0 mt-2">還沒有任何爬山紀錄，準備好開啟第一次旅程了嗎？</p>
+                </div>
             }
         </div>
     </div>
 
-    <!-- 停權紀錄 -->
+    <!-- 停權警示紀錄（只在有紀錄時顯示） -->
     @if (Model.SuspensionHistory.Count > 0)
     {
-        <div class="card mb-3">
-            <div class="card-header">停權紀錄</div>
-            <div class="card-body">
-                @foreach (var suspension in Model.SuspensionHistory)
-                {
-                    <div class="alert alert-warning">
-                        <p>原因: @suspension.Reason</p>
-                        <p>到期時間: @suspension.SuspensionExpirationTime | 狀態: @suspension.Status</p>
-                    </div>
-                }
+        <div class="card border-warning border-0 shadow-sm rounded-4 bg-warning bg-opacity-10">
+            <div class="card-header bg-transparent border-0 pt-4 px-4">
+                <h5 class="fw-bold text-warning-emphasis mb-0">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>帳號停權歷史紀錄
+                </h5>
+            </div>
+            <div class="card-body px-4 pb-4">
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var suspension in Model.SuspensionHistory)
+                    {
+                        <div class="alert alert-warning border-warning mb-0 rounded-3 shadow-sm">
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+                                <div>
+                                    <strong class="text-dark">停權原因：</strong> @suspension.Reason
+                                </div>
+                                <div class="small text-muted">
+                                    <span class="me-3"><i class="bi bi-calendar-x me-1"></i> 到期：@suspension.SuspensionExpirationTime</span>
+                                    <span class="badge bg-warning text-dark">@suspension.Status</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
             </div>
         </div>
     }

@@ -36,6 +36,8 @@ public partial class Trail
 
     public virtual ICollection<TrailRiskIndicator> TrailRiskIndicators { get; set; } = new List<TrailRiskIndicator>();
 
+    public virtual ICollection<TrailSegment> TrailSegments { get; set; } = new List<TrailSegment>();
+
     public virtual ICollection<TrailSubscription> TrailSubscriptions { get; set; } = new List<TrailSubscription>();
 
     public virtual ICollection<TripReport> TripReports { get; set; } = new List<TripReport>();

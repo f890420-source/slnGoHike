@@ -1,0 +1,67 @@
+@using System.Text.Json
+@model TrailMapViewModel
+
+@{
+    ViewData["Title"] = "步道路線";
+    var segmentsJson = JsonSerializer.Serialize(Model.Segments);
+}
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<h2>@Model.TrailName</h2>
+
+<p>
+    <a asp-action="Index" class="btn btn-secondary">返回列表</a>
+</p>
+
+<div id="trailMap" style="height: 600px;"></div>
+
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        const segments = @Html.Raw(segmentsJson);
+
+        const geoJson = {
+        type: "FeatureCollection",
+        features: segments.map(segment => ({
+        type: "Feature",
+        properties: {
+        trailSegmentId: segment.TrailSegmentId,
+        source: segment.Source
+        },
+        geometry: {
+        type: "LineString",
+        coordinates: segment.Coordinates
+        }
+        }))
+        };
+
+        const map = L.map("trailMap").setView([23.7, 121], 7);
+
+        L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+        attribution: "&copy; OpenStreetMap contributors"
+        }
+        ).addTo(map);
+
+        const trailLayer = L.geoJSON(geoJson, {
+        style: {
+        color: "#dc3545",
+        weight: 5
+        },
+        onEachFeature: function (feature, layer) {
+        layer.bindPopup(
+        `Segment ID：${feature.properties.trailSegmentId}`
+        );
+        }
+        }).addTo(map);
+
+        if (trailLayer.getBounds().isValid()) {
+        map.fitBounds(trailLayer.getBounds(), {
+        padding: [20, 20]
+        });
+        }
+    </script>
+}
