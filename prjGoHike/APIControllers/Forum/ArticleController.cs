@@ -37,5 +37,34 @@ namespace prjGoHike.Controllers
 
             return Ok(articles);
         }
+
+
+        // GET: api/Articles/2
+        [HttpGet("{id}")]
+        public async Task<ActionResult<ArticleDto>> GetArticle(int id)
+        {
+            var article = await _context.Articles
+                .Where(a => a.ArticleId == id)
+                .Select(a => new ArticleDto
+                {
+                    ArticleId = a.ArticleId,
+                    UserId = a.UserId,
+                    CategoryId = a.CategoryId,
+                    Title = a.Title,
+                    Content = a.Content,
+                    CreatedDate = a.CreatedDate,
+                    UpdateDate = a.UpdateDate,
+                    Status = a.Status,
+                    CategoryName = a.Category.CategoryName
+                })
+                .FirstOrDefaultAsync();
+
+            if (article == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(article);
+        }
     }
 }
