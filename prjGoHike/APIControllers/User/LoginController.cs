@@ -3,11 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using prjGoHike.DTO.Auth;
 using prjGoHike.Models;
 using prjGoHike.Services;
-using System.Security.Cryptography;
-using System.Text;
 using static prjGoHike.Models.UserPermissions;
 
-namespace GoHike.Controllers;
+namespace prjGoHike.APIControllers.User;
 
 [ApiController]
 [Route("api")]
@@ -35,19 +33,21 @@ public class LoginController : ControllerBase
         LoginRequestDto request,
         CancellationToken cancellationToken)
     {
+        request.Email = request.Email.Trim().ToLowerInvariant();
         var user = await _context.Users
             .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
 
-        if (user is null || !VerifyPassword(request.Password, user.PasswordHash))
+        if (user is null || !IsBcryptHash(user.PasswordHash) ||
+            !_passwordHasher.Verify(request.Password, user.PasswordHash))
         {
             _logger.LogWarning("登入失敗：帳號或密碼錯誤");
-            return Unauthorized();
+            return Unauthorized(new { message = "帳號或密碼錯誤。" });
         }
 
         if (user.AccountStatus != "正常")
         {
             _logger.LogWarning("登入失敗：使用者 {UserId} 帳戶狀態異常", user.UserId);
-            return Unauthorized();
+            return Unauthorized(new { message = "帳戶目前無法登入。" });
         }
 
         var now = DateTime.UtcNow;
@@ -57,12 +57,8 @@ public class LoginController : ControllerBase
         if (activeSuspension)
         {
             _logger.LogWarning("登入失敗：使用者 {UserId} 處於停權狀態", user.UserId);
-            return Unauthorized();
+            return Unauthorized(new { message = "帳戶目前處於停權狀態。" });
         }
-
-        // 只保留既有帳號的遷移路徑；所有新密碼皆使用 BCrypt。
-        if (!IsBcryptHash(user.PasswordHash))
-            user.PasswordHash = _passwordHasher.Hash(request.Password);
 
         user.LastActiveAt = now;
         await _context.SaveChangesAsync(cancellationToken);
@@ -78,12 +74,21 @@ public class LoginController : ControllerBase
         RegisterRequestDto request,
         CancellationToken cancellationToken)
     {
+        request.Email = request.Email.Trim().ToLowerInvariant();
+        request.Nickname = request.Nickname.Trim();
         var exists = await _context.Users.AnyAsync(
             user => user.Email == request.Email || user.Nickname == request.Nickname,
             cancellationToken);
 
         if (exists)
             return Conflict(new { message = "電子郵件或暱稱已被使用。" });
+
+        var defaultLevelId = await _context.Levels
+            .OrderBy(level => level.MinXp)
+            .Select(level => level.LevelId)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (defaultLevelId == 0)
+            return Problem("系統尚未設定初始會員等級，請聯絡管理員。", statusCode: StatusCodes.Status503ServiceUnavailable);
 
         var now = DateTime.UtcNow;
         var user = new Member
@@ -93,7 +98,7 @@ public class LoginController : ControllerBase
             PasswordHash = _passwordHasher.Hash(request.Password),
             Role = "一般會員",
             AccountStatus = "正常",
-            CurrentLevelId = 1,
+            CurrentLevelId = defaultLevelId,
             TotalXp = 0,
             RegionPreference = request.RegionPreference ?? string.Empty,
             DifficultyPreference = request.DifficultyPreference ?? string.Empty,
@@ -132,35 +137,5 @@ public class LoginController : ControllerBase
         ExpiresAt = tokens.ExpiresAt
     };
 
-    private bool VerifyPassword(string password, string hash)
-    {
-        if (IsBcryptHash(hash))
-            return _passwordHasher.Verify(password, hash);
-
-        if (IsLegacySha256Hash(hash))
-        {
-            using var sha256 = SHA256.Create();
-            return CryptographicOperations.FixedTimeEquals(
-                sha256.ComputeHash(Encoding.UTF8.GetBytes(password)),
-                Convert.FromBase64String(hash));
-        }
-
-        // 僅供過去後台以明碼建立的帳號登入一次，成功後立即升級成 BCrypt。
-        return CryptographicOperations.FixedTimeEquals(
-            Encoding.UTF8.GetBytes(password), Encoding.UTF8.GetBytes(hash));
-    }
-
     private static bool IsBcryptHash(string hash) => hash.StartsWith("$2", StringComparison.Ordinal);
-
-    private static bool IsLegacySha256Hash(string hash)
-    {
-        try
-        {
-            return Convert.FromBase64String(hash).Length == 32;
-        }
-        catch (FormatException)
-        {
-            return false;
-        }
-    }
 }
