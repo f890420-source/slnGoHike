@@ -18,7 +18,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="APIControllers\Forum\" />
     <Folder Include="DTO\" />
+    <Folder Include="Models\Dtos\Forum\" />
     <Folder Include="ViewModels_user\Admin\" />
     <Folder Include="ViewModels_user\Dto\" />
   </ItemGroup>
