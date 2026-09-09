@@ -28,26 +28,38 @@ namespace prjGoHike.Controllers
                     c.Status == 1
                 )
                 .OrderBy(c => c.CreatedDate)
-                .Select(c => new CommentDto
-                {
-                    CommentId = c.CommentId,
-                    ArticleId = c.ArticleId,
-                    UserId = c.UserId,
-                    Content = c.Content,
-                    ParentCommentId = c.ParentCommentId,
-                    ReplyToUserId = c.ReplyToUserId,
-                    CreatedDate = c.CreatedDate,
-                    UpdateDate = c.UpdateDate,
-                    Status = c.Status
-                })
+           .Select(c => new CommentDto
+           {
+               CommentId = c.CommentId,
+               ArticleId = c.ArticleId,
+               UserId = c.UserId,
+
+               UserNickname = c.User.Nickname,
+               UserAvatarUrl = c.User.AvatarUrl,
+
+               Content = c.Content,
+               ParentCommentId = c.ParentCommentId,
+               ReplyToUserId = c.ReplyToUserId,
+
+               // 被回覆者的暱稱
+               ReplyToUserNickname = c.ReplyToUserId != null
+        ? c.ReplyToUser.Nickname
+        : null,
+
+               CreatedDate = c.CreatedDate,
+               UpdateDate = c.UpdateDate,
+               Status = c.Status
+           })
                 .ToListAsync();
 
             return Ok(comments);
         }
 
+
+        // POST: api/Comments
         [HttpPost]
         public async Task<ActionResult<CommentDto>> CreateComment(
-    CreateCommentDto dto)
+            CreateCommentDto dto)
         {
             var comment = new Comment
             {
@@ -69,14 +81,42 @@ namespace prjGoHike.Controllers
             _context.Comments.Add(comment);
             await _context.SaveChangesAsync();
 
+            // 取得留言者資料
+            var user = await _context.Users
+                .Where(u => u.UserId == comment.UserId)
+                .Select(u => new
+                {
+                    u.Nickname,
+                    u.AvatarUrl
+                })
+                .FirstAsync();
+
+            string? replyToUserNickname = null;
+
+            if (comment.ReplyToUserId != null)
+            {
+                replyToUserNickname = await _context.Users
+                    .Where(u => u.UserId == comment.ReplyToUserId)
+                    .Select(u => u.Nickname)
+                    .FirstOrDefaultAsync();
+            }
+
             var result = new CommentDto
             {
                 CommentId = comment.CommentId,
                 ArticleId = comment.ArticleId,
                 UserId = comment.UserId,
+
+                UserNickname = user.Nickname,
+                UserAvatarUrl = user.AvatarUrl,
+
                 Content = comment.Content,
                 ParentCommentId = comment.ParentCommentId,
                 ReplyToUserId = comment.ReplyToUserId,
+
+                // 加這行
+                ReplyToUserNickname = replyToUserNickname,
+
                 CreatedDate = comment.CreatedDate,
                 UpdateDate = comment.UpdateDate,
                 Status = comment.Status
@@ -85,4 +125,4 @@ namespace prjGoHike.Controllers
             return Ok(result);
         }
     }
-}
+ }
