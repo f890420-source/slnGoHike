@@ -58,8 +58,8 @@ namespace prjGoHike.Controllers
 
                 Content = dto.Content,
 
-                ParentCommentId = null,
-                ReplyToUserId = null,
+                ParentCommentId = dto.ParentCommentId,
+                ReplyToUserId = dto.ReplyToUserId,
 
                 CreatedDate = DateTime.Now,
                 UpdateDate = null,
