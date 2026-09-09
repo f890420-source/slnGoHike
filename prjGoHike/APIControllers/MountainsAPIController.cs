@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.APIControllers;
+using prjGoHike.DTO.GroupJoinDTO;
 using prjGoHike.Models;
 using prjGoHike.Models.Dtos;
 

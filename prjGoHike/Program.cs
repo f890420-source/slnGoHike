@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.Models;
 
+string GroupJoinRoute = "http://localhost:4200";
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("GoHikeDataContext") ?? throw new InvalidOperationException("Connection string 'GoHikeDataContext' not found.");
 
@@ -27,6 +28,15 @@ builder.Services.AddLogging(config =>
 });
 builder.Services.AddControllersWithViews();
 builder.Services.AddSession();
+
+builder.Services.AddCors(option =>
+{
+    option.AddPolicy("GroupJoin", policy => {
+        policy.WithOrigins(GroupJoinRoute)
+        .AllowAnyHeader()
+        .AllowAnyMethod();
+    });
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -41,7 +51,7 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseSession();
-
+app.UseCors("GroupJoin");
 app.UseAuthorization();
 
 app.MapStaticAssets();

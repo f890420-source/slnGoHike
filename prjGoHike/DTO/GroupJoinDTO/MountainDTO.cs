@@ -1,6 +1,6 @@
 ﻿using Microsoft.Identity.Client;
 
-namespace prjGoHike.Models.Dtos
+namespace prjGoHike.DTO.GroupJoinDTO
 {
     public class MountainDTO
     {
