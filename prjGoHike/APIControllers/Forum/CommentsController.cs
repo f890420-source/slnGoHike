@@ -69,8 +69,63 @@ namespace prjGoHike.Controllers
         // POST: api/Comments
         [HttpPost]
         public async Task<ActionResult<CommentDto>> CreateComment(
-            [FromForm] CreateCommentDto dto)
+    [FromForm] CreateCommentDto dto)
         {
+            if (dto.Images.Count > 5)
+            {
+                return BadRequest(
+                    "一則留言最多只能上傳 5 張圖片"
+                );
+            }
+
+            foreach (var image in dto.Images)
+            {
+                if (image.Length > 5 * 1024 * 1024)
+                {
+                    return BadRequest(
+                        "單張圖片大小不能超過 5 MB"
+                    );
+                }
+            }
+
+            var allowedExtensions = new[]
+            {
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".webp"
+};
+
+            foreach (var image in dto.Images)
+            {
+                var extension = Path
+                    .GetExtension(image.FileName)
+                    .ToLowerInvariant();
+
+                if (!allowedExtensions.Contains(extension))
+                {
+                    return BadRequest(
+                        "只允許上傳 jpg、jpeg、png、webp 圖片"
+                    );
+                }
+            }
+
+            var allowedContentTypes = new[]
+            {
+    "image/jpeg",
+    "image/png",
+    "image/webp"
+};
+
+            foreach (var image in dto.Images)
+            {
+                if (!allowedContentTypes.Contains(image.ContentType))
+                {
+                    return BadRequest(
+                        "上傳檔案格式不正確"
+                    );
+                }
+            }
             var comment = new Comment
             {
                 ArticleId = dto.ArticleId,
@@ -87,6 +142,8 @@ namespace prjGoHike.Controllers
                 UpdateDate = null,
                 Status = 1
             };
+
+            // 後面維持原本程式...
 
             _context.Comments.Add(comment);
             await _context.SaveChangesAsync();
