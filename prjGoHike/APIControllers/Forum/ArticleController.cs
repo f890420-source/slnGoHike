@@ -26,12 +26,29 @@ namespace prjGoHike.Controllers
                     ArticleId = a.ArticleId,
                     UserId = a.UserId,
                     CategoryId = a.CategoryId,
+
                     Title = a.Title,
                     Content = a.Content,
+
                     CreatedDate = a.CreatedDate,
                     UpdateDate = a.UpdateDate,
+
+                    UserNickname = a.User.Nickname,
+                    UserAvatarUrl = a.User.AvatarUrl,
+
                     Status = a.Status,
-                    CategoryName = a.Category.CategoryName
+
+                    CategoryName = a.Category.CategoryName,
+
+                    ImagePaths = a.ArticleImages
+        .OrderBy(ai => ai.SortOrder)
+        .Select(ai => ai.ImagePath)
+        .ToList(),
+
+                    LikeCount = a.ArticleLikes.Count,
+
+                    FavoriteCount = _context.Favorites
+        .Count(f => f.ArticleId == a.ArticleId)
                 })
                 .ToListAsync();
 

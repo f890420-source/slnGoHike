@@ -20,6 +20,12 @@
 
         public string? CategoryName { get; set; }
         public List<string> ImagePaths { get; set; } = new();
+        public int LikeCount { get; set; }
+
+        public int FavoriteCount { get; set; }
+        public string UserNickname { get; set; } = string.Empty;
+
+        public string? UserAvatarUrl { get; set; }
     }
 }
 
