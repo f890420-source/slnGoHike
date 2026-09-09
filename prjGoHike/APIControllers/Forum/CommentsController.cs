@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using prjGoHike.Dtos;
 using prjGoHike.Models;
 using prjGoHike.Models.Dtos.Forum;
+using Microsoft.AspNetCore.SignalR;
+using prjGoHike.Hubs;
 
 namespace prjGoHike.Controllers
 {
@@ -11,12 +13,15 @@ namespace prjGoHike.Controllers
     public class CommentsController : ControllerBase
     {
         private readonly GoHikeDataContext _context;
+        private readonly IHubContext<CommentHub> _hubContext;
 
-        public CommentsController(GoHikeDataContext context)
+        public CommentsController(
+            GoHikeDataContext context,
+            IHubContext<CommentHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
-
         // GET: api/Comments/article/2
         [HttpGet("article/{articleId}")]
         public async Task<ActionResult<IEnumerable<CommentDto>>> GetCommentsByArticle(
@@ -121,7 +126,12 @@ namespace prjGoHike.Controllers
                 UpdateDate = comment.UpdateDate,
                 Status = comment.Status
             };
-
+            await _hubContext.Clients
+                .Group($"Article_{result.ArticleId}")
+                .SendAsync(
+                    "ReceiveComment",
+                    result
+                );
             return Ok(result);
         }
     }
