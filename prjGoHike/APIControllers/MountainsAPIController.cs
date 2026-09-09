@@ -30,7 +30,9 @@ public class MountainsAPIController : BaseController
                 Altitude = m.Altitude,
                 DifficultyLevel = m.DifficultyLevel,
                 MountainsPermitRequired = m.MountainsPermitRequired,
-                NationalParkPermitRequired = m.NationalParkPermitRequired
+                NationalParkPermitRequired = m.NationalParkPermitRequired,
+                Longitude = m.Longitude,
+                Latitude = m.Latitude
             }).ToListAsync();
             return SuccessResponse(mountain);
         }

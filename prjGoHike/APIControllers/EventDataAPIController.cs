@@ -35,7 +35,10 @@ public class EventDataAPIController : BaseController
                 NationalParkPermitRequired = e.Mountain.NationalParkPermitRequired,
                 EventStartTime = e.EventStartTime,
                 EventEndTime = e.EventEndTime,
-                EventCount = eventCount
+                EventCount = eventCount,
+                MountainName = e.Mountain.MountainName,
+                Longitude = e.Mountain.Longitude,
+                Latitude = e.Mountain.Latitude
             }).ToListAsync();
 
             return SuccessResponse(eventdata);
