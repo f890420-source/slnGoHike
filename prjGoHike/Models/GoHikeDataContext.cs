@@ -610,6 +610,8 @@ public partial class GoHikeDataContext : DbContext
                 .HasColumnName("Mountain_Name");
             entity.Property(e => e.MountainsPermitRequired).HasColumnName("Mountains_Permit_Required");
             entity.Property(e => e.NationalParkPermitRequired).HasColumnName("National_Park_Permit_Required");
+            entity.Property(e => e.Longitude).HasPrecision(9, 6);
+            entity.Property(e => e.Latitude).HasPrecision(9, 6);
         });
 
         modelBuilder.Entity<MountainEquipmentSuggestion>(entity =>

@@ -11,5 +11,6 @@ namespace prjGoHike.DTO.GroupJoinDTO
         public int DifficultyLevel { get; set; }
         public bool MountainsPermitRequired { get; set; }
         public bool NationalParkPermitRequired { get; set; }
+        
     }
 }

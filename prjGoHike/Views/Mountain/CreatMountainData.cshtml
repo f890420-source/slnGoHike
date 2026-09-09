@@ -60,6 +60,16 @@
                         @Html.ValidationMessageFor(n => n.MountainW.NationalParkPermitRequired, "")
 
                     </div>
+                    <div class="col-lg-12 my-2">
+                        @Html.LabelFor(n => n.MountainW.Latitude)
+                        @Html.TextBoxFor(n => n.MountainW.Latitude, new { @class = "form-control-custom my-1", placeholder = "請輸入資料" })
+                        @Html.ValidationMessageFor(n => n.MountainW.Latitude, "")
+                    </div>
+                    <div class="col-lg-12 my-2">
+                        @Html.LabelFor(n => n.MountainW.Longitude)
+                        @Html.TextBoxFor(n => n.MountainW.Longitude, new { @class = "form-control-custom my-1", placeholder = "請輸入資料" })
+                        @Html.ValidationMessageFor(n => n.MountainW.Longitude, "")
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <div>
@@ -135,6 +145,8 @@
                             $("#EditModal [name='MountainW.DifficultyLevel']").val(response.data.difficultyLevel);
                             $("#EditModal [name='MountainW.MountainsPermitRequired'][type='checkbox']").prop("checked",response.data.mountainsPermitRequired);
                             $("#EditModal [name='MountainW.NationalParkPermitRequired'][type='checkbox']").prop("checked",response.data.nationalParkPermitRequired);
+                            $("#EditModal [name='MountainW.Latitude']").val(response.data.latitude);
+                            $("#EditModal [name='MountainW.Longitude']").val(response.data.longitude);
                             
                             var editModalEl = document.getElementById('EditMountain');
                             var editModal = bootstrap.Modal.getOrCreateInstance(editModalEl);
@@ -255,6 +267,14 @@
                         @* @Html.ValidationMessageFor(n => n.MountainW.NationalParkPermitRequired, "") *@
 
                     </div>
+                    <div class="col-lg-12 my-2">
+                        @Html.LabelFor(n => n.MountainW.Latitude)
+                        @Html.TextBoxFor(n => n.MountainW.Latitude, new { @class = "form-control-custom my-1" })
+                    </div>
+                    <div class="col-lg-12 my-2">
+                        @Html.LabelFor(n => n.MountainW.Longitude)
+                        @Html.TextBoxFor(n => n.MountainW.Longitude, new { @class = "form-control-custom my-1" })
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <div>
@@ -352,6 +372,12 @@
                     <th style="font-size: 16px">
                  @Html.DisplayNameFor(model => model.MountainW.NationalParkPermitRequired)
             </th>
+                    <th style="font-size: 16px">
+                        @Html.DisplayNameFor(model => model.MountainW.Latitude)
+                    </th>
+                    <th style="font-size: 16px">
+                        @Html.DisplayNameFor(model => model.MountainW.Longitude)
+                    </th>
 
              <th >
                  
@@ -392,6 +418,12 @@
                     <td>
                         @Html.DisplayFor(model => item.NationalParkPermitRequired)
                     </td>
+                            <td>
+                                @Html.DisplayFor(model => item.Latitude)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(model => item.Longitude)
+                            </td>
                     <td>
                         <p class="d-flex justify-content-end">
                             <button type="button" data-id="@item.MountainId" class="Btn-Edit btn-custom btn-custom-outline-secondary">      

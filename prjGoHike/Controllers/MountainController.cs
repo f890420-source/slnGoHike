@@ -130,6 +130,8 @@ namespace prjGoHike.Controllers
                     newMountain.DifficultyLevel = cMountainVM.MountainW.DifficultyLevel;
                     newMountain.MountainsPermitRequired = cMountainVM.MountainW.MountainsPermitRequired;
                     newMountain.NationalParkPermitRequired = cMountainVM.MountainW.NationalParkPermitRequired;
+                    newMountain.Latitude = cMountainVM.MountainW.Latitude;
+                    newMountain.Longitude = cMountainVM.MountainW.Longitude;
                     _db.Mountains.Add(newMountain);
                     _db.SaveChanges();
 
@@ -160,7 +162,9 @@ namespace prjGoHike.Controllers
                             altitude = moun.Altitude,
                             difficultyLevel = moun.DifficultyLevel,
                             mountainsPermitRequired = moun.MountainsPermitRequired,
-                            nationalParkPermitRequired = moun.NationalParkPermitRequired
+                            nationalParkPermitRequired = moun.NationalParkPermitRequired,
+                            latitude = moun.Latitude,
+                            longitude = moun.Longitude
                         }
                         //匿名型別
                     });
@@ -188,6 +192,8 @@ namespace prjGoHike.Controllers
                     moun.DifficultyLevel = cMountainVM.MountainW.DifficultyLevel;
                     moun.MountainsPermitRequired = cMountainVM.MountainW.MountainsPermitRequired;
                     moun.NationalParkPermitRequired = cMountainVM.MountainW.NationalParkPermitRequired;
+                    moun.Latitude = cMountainVM.MountainW.Latitude;
+                    moun.Longitude = cMountainVM.MountainW.Longitude;
 
                     _db.SaveChanges();
                     return Json(new { success = true, message = "資料修改成功！" });

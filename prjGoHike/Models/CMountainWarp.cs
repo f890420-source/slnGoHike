@@ -65,6 +65,18 @@ namespace prjGoHike.Models
             get { return _Mountain.NationalParkPermitRequired; }
             set { _Mountain.NationalParkPermitRequired = value; }
         }
-        
+        [DisplayName("經度")]
+        public decimal? Longitude
+        {
+            get { return _Mountain.Longitude; }
+            set { _Mountain.Longitude = value; }
+        }
+        [DisplayName("緯度")]
+        public decimal? Latitude
+        {
+            get { return _Mountain.Latitude; }
+            set { _Mountain.Latitude = value; }
+        }
+
     }
 }

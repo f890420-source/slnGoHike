@@ -19,7 +19,8 @@ public class EventDataAPIController : BaseController
     [HttpGet]
     public async Task<IActionResult> GetCEventDataWarp()
     {
-        if(_db.EventData != null)
+        var eventCount = _db.EventData.Select(e => e.EventId).Count();
+        if (_db.EventData != null)
         {
             var eventdata = await _db.EventData.Select(e => new EventDataDTO
             {
@@ -33,7 +34,8 @@ public class EventDataAPIController : BaseController
                 MountainsPermitRequired = e.Mountain.MountainsPermitRequired,
                 NationalParkPermitRequired = e.Mountain.NationalParkPermitRequired,
                 EventStartTime = e.EventStartTime,
-                EventEndTime = e.EventEndTime
+                EventEndTime = e.EventEndTime,
+                EventCount = eventCount
             }).ToListAsync();
 
             return SuccessResponse(eventdata);

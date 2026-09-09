@@ -21,6 +21,9 @@ public partial class Mountain
 
     public bool NationalParkPermitRequired { get; set; }
 
+    public decimal? Longitude { get; set; }
+    public decimal? Latitude { get; set; }
+
     public virtual ICollection<EventData> EventData { get; set; } = new List<EventData>();
 
     public virtual ICollection<HikeRecord> HikeRecords { get; set; } = new List<HikeRecord>();
@@ -28,4 +31,5 @@ public partial class Mountain
     public virtual ICollection<MountainEquipmentSuggestion> MountainEquipmentSuggestions { get; set; } = new List<MountainEquipmentSuggestion>();
 
     public virtual ICollection<PersonalEquipmentList> PersonalEquipmentLists { get; set; } = new List<PersonalEquipmentList>();
+
 }
