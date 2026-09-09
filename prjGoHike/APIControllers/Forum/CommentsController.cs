@@ -53,7 +53,12 @@ namespace prjGoHike.Controllers
 
                CreatedDate = c.CreatedDate,
                UpdateDate = c.UpdateDate,
-               Status = c.Status
+               Status = c.Status,
+
+               ImagePaths = _context.CommentImages
+    .Where(ci => ci.CommentId == c.CommentId)
+    .Select(ci => ci.ImagePath)
+    .ToList()
            })
                 .ToListAsync();
 
@@ -64,7 +69,7 @@ namespace prjGoHike.Controllers
         // POST: api/Comments
         [HttpPost]
         public async Task<ActionResult<CommentDto>> CreateComment(
-            CreateCommentDto dto)
+            [FromForm] CreateCommentDto dto)
         {
             var comment = new Comment
             {
@@ -85,6 +90,63 @@ namespace prjGoHike.Controllers
 
             _context.Comments.Add(comment);
             await _context.SaveChangesAsync();
+
+            // 儲存留言圖片
+            var imagePaths = new List<string>();
+
+            if (dto.Images != null && dto.Images.Count > 0)
+            {
+                var uploadFolder = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot",
+                    "uploads",
+                    "comments"
+                );
+
+                if (!Directory.Exists(uploadFolder))
+                {
+                    Directory.CreateDirectory(uploadFolder);
+                }
+
+                foreach (var image in dto.Images)
+                {
+                    if (image.Length == 0)
+                    {
+                        continue;
+                    }
+
+                    var extension = Path.GetExtension(image.FileName);
+
+                    var fileName = $"{Guid.NewGuid()}{extension}";
+
+                    var filePath = Path.Combine(
+                        uploadFolder,
+                        fileName
+                    );
+
+                    using (var stream = new FileStream(
+                        filePath,
+                        FileMode.Create))
+                    {
+                        await image.CopyToAsync(stream);
+                    }
+
+                    var imagePath = $"/uploads/comments/{fileName}";
+
+                    var commentImage = new CommentImage
+                    {
+                        CommentId = comment.CommentId,
+                        ImagePath = imagePath,
+                        CreatedDate = DateTime.Now
+                    };
+
+                    _context.CommentImages.Add(commentImage);
+
+                    imagePaths.Add(imagePath);
+                }
+
+                await _context.SaveChangesAsync();
+            }
 
             // 取得留言者資料
             var user = await _context.Users
@@ -116,23 +178,26 @@ namespace prjGoHike.Controllers
                 UserAvatarUrl = user.AvatarUrl,
 
                 Content = comment.Content,
+
                 ParentCommentId = comment.ParentCommentId,
                 ReplyToUserId = comment.ReplyToUserId,
-
-                // 加這行
                 ReplyToUserNickname = replyToUserNickname,
 
                 CreatedDate = comment.CreatedDate,
                 UpdateDate = comment.UpdateDate,
-                Status = comment.Status
+                Status = comment.Status,
+
+                ImagePaths = imagePaths
             };
+
             await _hubContext.Clients
                 .Group($"Article_{result.ArticleId}")
                 .SendAsync(
                     "ReceiveComment",
                     result
                 );
+
             return Ok(result);
         }
     }
- }
+    }
