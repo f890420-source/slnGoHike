@@ -19,6 +19,7 @@
         public byte Status { get; set; }
 
         public string? CategoryName { get; set; }
+        public List<string> ImagePaths { get; set; } = new();
     }
 }
 
