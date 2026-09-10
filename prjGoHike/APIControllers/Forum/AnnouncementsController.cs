@@ -24,6 +24,7 @@ namespace prjGoHike.Controllers
             var announcements = await _context.Announcements
                 .Where(a => a.Status == 1)
                 .OrderByDescending(a => a.CreatedDate)
+                .Take(5)
                 .Select(a => new AnnouncementDto
                 {
                     AnnouncementId = a.AnnouncementId,
