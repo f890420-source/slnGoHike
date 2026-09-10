@@ -21,7 +21,8 @@ namespace prjGoHike.Controllers.Api
         public async Task<IActionResult> CreateReport(
             [FromBody] CreateReportDto dto)
         {
-            const long userId = 15; // 暫時測試，之後改成 Claims
+            //todo 暫時測試，之後改成 Claims
+            const long userId = 15;
 
             if (string.IsNullOrWhiteSpace(dto.Reason))
             {
