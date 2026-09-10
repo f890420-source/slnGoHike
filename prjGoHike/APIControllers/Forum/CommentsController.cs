@@ -5,7 +5,7 @@ using prjGoHike.Models;
 using prjGoHike.Models.Dtos.Forum;
 using Microsoft.AspNetCore.SignalR;
 using prjGoHike.Hubs;
-
+using prjGoHike.Services.forum;
 namespace prjGoHike.Controllers
 {
     [Route("api/[controller]")]
@@ -14,14 +14,19 @@ namespace prjGoHike.Controllers
     {
         private readonly GoHikeDataContext _context;
         private readonly IHubContext<CommentHub> _hubContext;
+        private readonly CloudinaryService _cloudinaryService;
 
         public CommentsController(
             GoHikeDataContext context,
-            IHubContext<CommentHub> hubContext)
+            IHubContext<CommentHub> hubContext,
+            CloudinaryService cloudinaryService)
         {
             _context = context;
             _hubContext = hubContext;
+            _cloudinaryService = cloudinaryService;
         }
+
+        #region 取得文章的留言
         // GET: api/Comments/article/2
         [HttpGet("article/{articleId}")]
         public async Task<ActionResult<IEnumerable<CommentDto>>> GetCommentsByArticle(
@@ -64,13 +69,17 @@ namespace prjGoHike.Controllers
 
             return Ok(comments);
         }
+        #endregion
 
-
+        #region 發布留言
         // POST: api/Comments
         [HttpPost]
         public async Task<ActionResult<CommentDto>> CreateComment(
-    [FromForm] CreateCommentDto dto)
+            [FromForm] CreateCommentDto dto)
         {
+            // =========================
+            // 圖片數量驗證
+            // =========================
             if (dto.Images.Count > 5)
             {
                 return BadRequest(
@@ -78,6 +87,10 @@ namespace prjGoHike.Controllers
                 );
             }
 
+
+            // =========================
+            // 圖片大小驗證
+            // =========================
             foreach (var image in dto.Images)
             {
                 if (image.Length > 5 * 1024 * 1024)
@@ -88,13 +101,17 @@ namespace prjGoHike.Controllers
                 }
             }
 
+
+            // =========================
+            // 副檔名驗證
+            // =========================
             var allowedExtensions = new[]
             {
-    ".jpg",
-    ".jpeg",
-    ".png",
-    ".webp"
-};
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".webp"
+    };
 
             foreach (var image in dto.Images)
             {
@@ -110,12 +127,16 @@ namespace prjGoHike.Controllers
                 }
             }
 
+
+            // =========================
+            // MIME Type 驗證
+            // =========================
             var allowedContentTypes = new[]
             {
-    "image/jpeg",
-    "image/png",
-    "image/webp"
-};
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+    };
 
             foreach (var image in dto.Images)
             {
@@ -126,6 +147,11 @@ namespace prjGoHike.Controllers
                     );
                 }
             }
+
+
+            // =========================
+            // 建立留言
+            // =========================
             var comment = new Comment
             {
                 ArticleId = dto.ArticleId,
@@ -143,28 +169,19 @@ namespace prjGoHike.Controllers
                 Status = 1
             };
 
-            // 後面維持原本程式...
-
             _context.Comments.Add(comment);
+
+            // 先取得 CommentId
             await _context.SaveChangesAsync();
 
-            // 儲存留言圖片
+
+            // =========================
+            // 上傳留言圖片
+            // =========================
             var imagePaths = new List<string>();
 
             if (dto.Images != null && dto.Images.Count > 0)
             {
-                var uploadFolder = Path.Combine(
-                    Directory.GetCurrentDirectory(),
-                    "wwwroot",
-                    "uploads",
-                    "comments"
-                );
-
-                if (!Directory.Exists(uploadFolder))
-                {
-                    Directory.CreateDirectory(uploadFolder);
-                }
-
                 foreach (var image in dto.Images)
                 {
                     if (image.Length == 0)
@@ -172,40 +189,36 @@ namespace prjGoHike.Controllers
                         continue;
                     }
 
-                    var extension = Path.GetExtension(image.FileName);
+                    // 上傳到 Cloudinary
+                    var imageUrl =
+                        await _cloudinaryService.UploadImageAsync(
+                            image,
+                            "gohike/comments"
+                        );
 
-                    var fileName = $"{Guid.NewGuid()}{extension}";
-
-                    var filePath = Path.Combine(
-                        uploadFolder,
-                        fileName
-                    );
-
-                    using (var stream = new FileStream(
-                        filePath,
-                        FileMode.Create))
-                    {
-                        await image.CopyToAsync(stream);
-                    }
-
-                    var imagePath = $"/uploads/comments/{fileName}";
-
+                    // Cloudinary URL 存進 CommentImage
                     var commentImage = new CommentImage
                     {
                         CommentId = comment.CommentId,
-                        ImagePath = imagePath,
+
+                        ImagePath = imageUrl,
+
                         CreatedDate = DateTime.Now
                     };
 
                     _context.CommentImages.Add(commentImage);
 
-                    imagePaths.Add(imagePath);
+                    // 回傳給 Angular
+                    imagePaths.Add(imageUrl);
                 }
 
                 await _context.SaveChangesAsync();
             }
 
+
+            // =========================
             // 取得留言者資料
+            // =========================
             var user = await _context.Users
                 .Where(u => u.UserId == comment.UserId)
                 .Select(u => new
@@ -215,6 +228,10 @@ namespace prjGoHike.Controllers
                 })
                 .FirstAsync();
 
+
+            // =========================
+            // 取得被回覆者暱稱
+            // =========================
             string? replyToUserNickname = null;
 
             if (comment.ReplyToUserId != null)
@@ -225,6 +242,10 @@ namespace prjGoHike.Controllers
                     .FirstOrDefaultAsync();
             }
 
+
+            // =========================
+            // 建立回傳 DTO
+            // =========================
             var result = new CommentDto
             {
                 CommentId = comment.CommentId,
@@ -247,6 +268,10 @@ namespace prjGoHike.Controllers
                 ImagePaths = imagePaths
             };
 
+
+            // =========================
+            // SignalR 即時推播
+            // =========================
             await _hubContext.Clients
                 .Group($"Article_{result.ArticleId}")
                 .SendAsync(
@@ -254,7 +279,10 @@ namespace prjGoHike.Controllers
                     result
                 );
 
+
             return Ok(result);
         }
+        #endregion
     }
-    }
+
+}

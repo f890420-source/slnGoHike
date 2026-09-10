@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using prjGoHike.Dtos;
 using prjGoHike.Models;
 using prjGoHike.Models.Dtos.Forum;
-using prjGoHike.Dtos;
+using prjGoHike.Services.forum;
 namespace prjGoHike.Controllers
 {
     [Route("api/[controller]")]
@@ -10,10 +11,14 @@ namespace prjGoHike.Controllers
     public class ArticlesController : ControllerBase
     {
         private readonly GoHikeDataContext _context;
+        private readonly CloudinaryService _cloudinaryService;
 
-        public ArticlesController(GoHikeDataContext context)
+        public ArticlesController(
+            GoHikeDataContext context,
+            CloudinaryService cloudinaryService)
         {
             _context = context;
+            _cloudinaryService = cloudinaryService;
         }
         #region 取得所有文章
         // GET: api/Articles
@@ -123,21 +128,6 @@ namespace prjGoHike.Controllers
             // 2. 處理圖片
             if (dto.Images != null && dto.Images.Count > 0)
             {
-                // 實體資料夾：
-                // wwwroot/uploads/articles
-                var uploadFolder = Path.Combine(
-                    Directory.GetCurrentDirectory(),
-                    "wwwroot",
-                    "uploads",
-                    "articles"
-                );
-
-                // 資料夾不存在就自動建立
-                if (!Directory.Exists(uploadFolder))
-                {
-                    Directory.CreateDirectory(uploadFolder);
-                }
-
                 int sortOrder = 1;
 
                 foreach (var image in dto.Images)
@@ -147,32 +137,19 @@ namespace prjGoHike.Controllers
                         continue;
                     }
 
-                    // 取得副檔名，例如 .jpg
-                    var extension = Path.GetExtension(image.FileName);
+                    // 3. 上傳圖片到 Cloudinary
+                    var imageUrl =
+                        await _cloudinaryService.UploadImageAsync(
+                            image,
+                            "gohike/articles"
+                        );
 
-                    // 使用 Guid 避免檔名重複
-                    var fileName = $"{Guid.NewGuid()}{extension}";
-
-                    var filePath = Path.Combine(
-                        uploadFolder,
-                        fileName
-                    );
-
-                    // 3. 儲存實體圖片
-                    using (var stream = new FileStream(
-                        filePath,
-                        FileMode.Create))
-                    {
-                        await image.CopyToAsync(stream);
-                    }
-
-                    // 4. 存進 ArticleImage 資料表
+                    // 4. 存 Cloudinary URL 到 ArticleImage
                     var articleImage = new ArticleImage
                     {
                         ArticleId = article.ArticleId,
 
-                        ImagePath =
-                            $"/uploads/articles/{fileName}",
+                        ImagePath = imageUrl,
 
                         SortOrder = sortOrder,
 
@@ -200,7 +177,12 @@ namespace prjGoHike.Controllers
                     CreatedDate = a.CreatedDate,
                     UpdateDate = a.UpdateDate,
                     Status = a.Status,
-                    CategoryName = a.Category.CategoryName
+                    CategoryName = a.Category.CategoryName,
+
+                    ImagePaths = a.ArticleImages
+                        .OrderBy(ai => ai.SortOrder)
+                        .Select(ai => ai.ImagePath)
+                        .ToList()
                 })
                 .FirstAsync();
 
