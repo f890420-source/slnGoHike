@@ -27,6 +27,8 @@ public partial class User
 
     public int TotalXp { get; set; }
 
+    public long? DisplayedAchievementId { get; set; }
+
     public string RegionPreference { get; set; } = null!;
 
     public string DifficultyPreference { get; set; } = null!;
@@ -44,6 +46,8 @@ public partial class User
     public virtual ICollection<Comment> CommentUsers { get; set; } = new List<Comment>();
 
     public virtual Level CurrentLevel { get; set; } = null!;
+
+    public virtual Achievement? DisplayedAchievement { get; set; }
 
     public virtual ICollection<EventData> EventData { get; set; } = new List<EventData>();
 

@@ -11,9 +11,15 @@ namespace prjGoHike.APIControllers.User;
 [Authorize]
 public sealed class UsersController : UserApiControllerBase
 {
+    private const long MaxAvatarBytes = 5 * 1024 * 1024;
     private readonly GoHikeDataContext _context;
+    private readonly IWebHostEnvironment _environment;
 
-    public UsersController(GoHikeDataContext context) => _context = context;
+    public UsersController(GoHikeDataContext context, IWebHostEnvironment environment)
+    {
+        _context = context;
+        _environment = environment;
+    }
 
     [HttpGet("me")]
     public async Task<ActionResult> GetMe(CancellationToken cancellationToken)
@@ -33,17 +39,81 @@ public sealed class UsersController : UserApiControllerBase
         if (await _context.Users.AnyAsync(u => u.UserId != userId && u.Nickname == nickname, cancellationToken))
             return Conflict(new { message = "暱稱已被使用。" });
 
+        if (request.DisplayedAchievementId is long achievementId &&
+            !await _context.UserAchievements.AnyAsync(
+                x => x.UserId == userId && x.AchievementId == achievementId,
+                cancellationToken))
+        {
+            return BadRequest(new { message = "展示成就必須是你已解鎖的成就。" });
+        }
+
         var user = await _context.Users.FindAsync([userId], cancellationToken);
         if (user is null) return NotFound();
 
         user.Nickname = nickname;
         user.Bio = request.Bio?.Trim();
-        user.AvatarUrl = request.AvatarUrl?.Trim();
         user.AvatarBlurState = request.AvatarBlurState?.Trim();
         user.RegionPreference = request.RegionPreference?.Trim() ?? string.Empty;
         user.DifficultyPreference = request.DifficultyPreference?.Trim() ?? string.Empty;
+        user.DisplayedAchievementId = request.DisplayedAchievementId;
         await _context.SaveChangesAsync(cancellationToken);
         return NoContent();
+    }
+
+    [HttpPatch("me/avatar-blur")]
+    public async Task<ActionResult> SetAvatarBlur(SetAvatarBlurRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUserId(out var userId)) return Unauthorized();
+
+        var user = await _context.Users.FindAsync([userId], cancellationToken);
+        if (user is null) return NotFound();
+
+        user.AvatarBlurState = request.IsBlurred ? "模糊" : "不模糊";
+        await _context.SaveChangesAsync(cancellationToken);
+        return NoContent();
+    }
+
+    [HttpPost("me/avatar")]
+    [RequestSizeLimit(MaxAvatarBytes + 64 * 1024)]
+    public async Task<ActionResult> UploadAvatar(IFormFile file, CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUserId(out var userId)) return Unauthorized();
+        if (file.Length == 0) return BadRequest(new { message = "請選擇圖片檔案。" });
+        if (file.Length > MaxAvatarBytes) return BadRequest(new { message = "頭像大小不可超過 5 MB。" });
+
+        var extension = file.ContentType.ToLowerInvariant() switch
+        {
+            "image/jpeg" => ".jpg",
+            "image/png" => ".png",
+            "image/webp" => ".webp",
+            _ => null
+        };
+        if (extension is null)
+            return BadRequest(new { message = "頭像僅支援 JPG、PNG 或 WebP。" });
+
+        await using var buffer = new MemoryStream();
+        await file.CopyToAsync(buffer, cancellationToken);
+        var bytes = buffer.ToArray();
+        if (!HasValidImageSignature(bytes, extension))
+            return BadRequest(new { message = "圖片內容與檔案格式不符。" });
+
+        var user = await _context.Users.FindAsync([userId], cancellationToken);
+        if (user is null) return NotFound();
+
+        var webRoot = _environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot");
+        var avatarDirectory = Path.Combine(webRoot, "uploads", "avatars");
+        Directory.CreateDirectory(avatarDirectory);
+
+        var fileName = $"{userId}_{Guid.NewGuid():N}{extension}";
+        await System.IO.File.WriteAllBytesAsync(
+            Path.Combine(avatarDirectory, fileName), bytes, cancellationToken);
+
+        var previousAvatarUrl = user.AvatarUrl;
+        user.AvatarUrl = $"/uploads/avatars/{fileName}";
+        await _context.SaveChangesAsync(cancellationToken);
+        DeletePreviousLocalAvatar(previousAvatarUrl, avatarDirectory);
+
+        return Ok(new { avatarUrl = user.AvatarUrl });
     }
 
     [HttpGet]
@@ -123,8 +193,39 @@ public sealed class UsersController : UserApiControllerBase
         CreatedAt = u.CreatedAt,
         LastActiveAt = u.LastActiveAt,
         AchievementCount = u.UserAchievements.Count,
-        SkillTagCount = u.UserSkillTags.Count
+        SkillTagCount = u.UserSkillTags.Count,
+        DisplayedAchievementId = u.DisplayedAchievementId,
+        DisplayedAchievementName = u.DisplayedAchievement == null ? null : u.DisplayedAchievement.Name,
+        DisplayedAchievementRarity = u.DisplayedAchievement == null ? null : u.DisplayedAchievement.Rarity
     });
+
+    private static bool HasValidImageSignature(byte[] bytes, string extension) => extension switch
+    {
+        ".jpg" => bytes.Length >= 3 && bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF,
+        ".png" => bytes.Length >= 8 && bytes.AsSpan(0, 8).SequenceEqual(
+            new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }),
+        ".webp" => bytes.Length >= 12 &&
+            bytes.AsSpan(0, 4).SequenceEqual("RIFF"u8) &&
+            bytes.AsSpan(8, 4).SequenceEqual("WEBP"u8),
+        _ => false
+    };
+
+    private static void DeletePreviousLocalAvatar(string? avatarUrl, string avatarDirectory)
+    {
+        const string prefix = "/uploads/avatars/";
+        if (string.IsNullOrWhiteSpace(avatarUrl) || !avatarUrl.StartsWith(prefix, StringComparison.Ordinal)) return;
+
+        var previousFileName = Path.GetFileName(avatarUrl);
+        var previousPath = Path.Combine(avatarDirectory, previousFileName);
+        try
+        {
+            if (System.IO.File.Exists(previousPath)) System.IO.File.Delete(previousPath);
+        }
+        catch (IOException)
+        {
+            // 新頭像與資料庫已更新成功；舊檔清理失敗不應讓 API 回傳 500。
+        }
+    }
 
     private static string? NormalizeRole(string role) => role.Trim() switch
     {
@@ -153,5 +254,8 @@ public sealed class UsersController : UserApiControllerBase
         public DateTime LastActiveAt { get; set; }
         public int AchievementCount { get; set; }
         public int SkillTagCount { get; set; }
+        public long? DisplayedAchievementId { get; set; }
+        public string? DisplayedAchievementName { get; set; }
+        public string? DisplayedAchievementRarity { get; set; }
     }
 }

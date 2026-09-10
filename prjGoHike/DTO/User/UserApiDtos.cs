@@ -8,10 +8,15 @@ public sealed class UpdateProfileRequest
     public string Nickname { get; set; } = string.Empty;
 
     [StringLength(500)] public string? Bio { get; set; }
-    [StringLength(255)] public string? AvatarUrl { get; set; }
     [StringLength(20)] public string? AvatarBlurState { get; set; }
     [StringLength(100)] public string? RegionPreference { get; set; }
     [StringLength(50)] public string? DifficultyPreference { get; set; }
+    public long? DisplayedAchievementId { get; set; }
+}
+
+public sealed class SetAvatarBlurRequest
+{
+    public bool IsBlurred { get; set; }
 }
 
 public sealed class ChangeRoleRequest
@@ -58,6 +63,11 @@ public sealed class AssignSkillTagRequest
     [StringLength(20)] public string? Source { get; set; }
 }
 
+public sealed class SetSkillTagDisplayRequest
+{
+    public bool IsDisplayed { get; set; }
+}
+
 public sealed class SkillTagTreeNodeDto
 {
     public long TagId { get; set; }
@@ -89,4 +99,5 @@ public sealed class UserSkillTagDto
     public string TagName { get; set; } = string.Empty;
     public long? ParentTagId { get; set; }
     public string UnlockCondition { get; set; } = string.Empty;
+    public bool IsDisplayed { get; set; }
 }

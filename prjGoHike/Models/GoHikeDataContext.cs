@@ -1010,6 +1010,7 @@ public partial class GoHikeDataContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("created_at");
             entity.Property(e => e.CurrentLevelId).HasColumnName("current_level_id");
+            entity.Property(e => e.DisplayedAchievementId).HasColumnName("displayed_achievement_id");
             entity.Property(e => e.DifficultyPreference)
                 .HasMaxLength(50)
                 .IsUnicode(false)
@@ -1043,6 +1044,11 @@ public partial class GoHikeDataContext : DbContext
                 .HasForeignKey(d => d.CurrentLevelId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_users_current_level_id");
+
+            entity.HasOne(d => d.DisplayedAchievement).WithMany()
+                .HasForeignKey(d => d.DisplayedAchievementId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_users_displayed_achievement_id");
         });
 
         modelBuilder.Entity<UserAchievement>(entity =>
@@ -1076,6 +1082,7 @@ public partial class GoHikeDataContext : DbContext
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.TagId).HasColumnName("tag_id");
+            entity.Property(e => e.IsDisplayed).HasColumnName("is_displayed");
             entity.Property(e => e.Source)
                 .HasMaxLength(20)
                 .IsUnicode(false)
