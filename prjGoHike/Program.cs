@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
-using prjGoHike.Models;
 using prjGoHike.Hubs;
+using prjGoHike.Models;
+using prjGoHike.Services.forum;
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("GoHikeDataContext") ?? throw new InvalidOperationException("Connection string 'GoHikeDataContext' not found.");
 
 builder.Services.AddDbContext<GoHikeDataContext>(options => options.UseSqlServer(connectionString));
-
+builder.Services.AddScoped<CloudinaryService>();
 // Add services to the container.
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
