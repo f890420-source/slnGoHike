@@ -15,12 +15,13 @@ namespace prjGoHike.Controllers
         {
             _context = context;
         }
-
+        #region 取得所有文章
         // GET: api/Articles
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ArticleDto>>> GetArticles()
         {
             var articles = await _context.Articles
+                .Where(a => a.Status == 1 || a.Status == 3)
                 .Select(a => new ArticleDto
                 {
                     ArticleId = a.ArticleId,
@@ -47,6 +48,9 @@ namespace prjGoHike.Controllers
 
                     LikeCount = a.ArticleLikes.Count,
 
+                    CommentCount = _context.Comments
+    .Count(c => c.ArticleId == a.ArticleId),
+
                     FavoriteCount = _context.Favorites
         .Count(f => f.ArticleId == a.ArticleId)
                 })
@@ -54,8 +58,9 @@ namespace prjGoHike.Controllers
 
             return Ok(articles);
         }
+        #endregion
 
-
+        #region 透過ID拿文章
         // GET: api/Articles/2
         [HttpGet("{id}")]
         public async Task<ActionResult<ArticleDto>> GetArticle(int id)
@@ -88,7 +93,9 @@ namespace prjGoHike.Controllers
 
             return Ok(article);
         }
+        #endregion
 
+        #region 發文
         // POST: api/Articles
         [HttpPost]
         public async Task<ActionResult<ArticleDto>> CreateArticle(
@@ -203,5 +210,64 @@ namespace prjGoHike.Controllers
                 result
             );
         }
+        #endregion
+
+        #region 取得熱門文章
+        // GET: api/Articles/hot
+        [HttpGet("hot")]
+        public async Task<ActionResult<IEnumerable<HotArticleDto>>> GetHotArticles()
+        {
+            var hotArticles = await _context.Articles
+
+                // 只取得前台可以看到的文章
+                .Where(a => a.Status == 1 || a.Status == 3)
+
+                // 計算每篇文章的互動數
+                .Select(a => new
+                {
+                    a.ArticleId,
+                    a.Title,
+                    a.CreatedDate,
+
+                    LikeCount = _context.ArticleLikes
+                        .Count(l => l.ArticleId == a.ArticleId),
+
+                    FavoriteCount = _context.Favorites
+                        .Count(f => f.ArticleId == a.ArticleId),
+
+                    CommentCount = _context.Comments
+                        .Count(c => c.ArticleId == a.ArticleId)
+                })
+
+                // 熱門分數：
+                // 留言 × 3 + 收藏 × 2 + 愛心 × 1
+                .OrderByDescending(a =>
+                    a.CommentCount * 3 +
+                    a.FavoriteCount * 2 +
+                    a.LikeCount
+                )
+
+                // 分數相同時，較新的文章優先
+                .ThenByDescending(a => a.CreatedDate)
+
+                // 最多只需要 3 篇
+                .Take(3)
+
+                // 轉成熱門文章專用 DTO
+                .Select(a => new HotArticleDto
+                {
+                    ArticleId = a.ArticleId,
+                    Title = a.Title,
+                    CreatedDate = a.CreatedDate,
+                    LikeCount = a.LikeCount,
+                    FavoriteCount = a.FavoriteCount,
+                    CommentCount = a.CommentCount
+                })
+
+                .ToListAsync();
+
+            return Ok(hotArticles);
+        }
+#endregion
     }
 }
