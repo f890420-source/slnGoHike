@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.Dtos;
 using prjGoHike.Models;
+using prjGoHike.Models.Dtos;
 using prjGoHike.Models.Dtos.Forum;
 using prjGoHike.Services.forum;
 namespace prjGoHike.Controllers
@@ -250,6 +251,84 @@ namespace prjGoHike.Controllers
 
             return Ok(hotArticles);
         }
-#endregion
+        #endregion
+
+        #region 取得登入者的發文
+        // GET: api/Articles/my
+        [HttpGet("my")]
+        public async Task<ActionResult<IEnumerable<ArticleDto>>> GetMyArticles()
+        {
+            const long userId = 15;
+
+            var articles = await _context.Articles
+                .Where(a => a.UserId == userId)
+                .OrderByDescending(a => a.CreatedDate)
+                .Select(a => new ArticleDto
+                {
+                    ArticleId = a.ArticleId,
+                    UserId = a.UserId,
+
+                    UserNickname = a.User.Nickname,
+                    UserAvatarUrl = a.User.AvatarUrl,
+
+                    CategoryId = a.CategoryId,
+                    CategoryName = a.Category.CategoryName,
+
+                    Title = a.Title,
+                    Content = a.Content,
+
+                    CreatedDate = a.CreatedDate,
+                    UpdateDate = a.UpdateDate,
+
+                    Status = a.Status,
+
+                    ImagePaths = a.ArticleImages
+                        .OrderBy(ai => ai.SortOrder)
+                        .Select(ai => ai.ImagePath)
+                        .ToList(),
+
+                    LikeCount = a.ArticleLikes.Count,
+
+                    FavoriteCount = _context.Favorites.Count(f =>
+                        f.ArticleId == a.ArticleId),
+
+                    CommentCount = _context.Comments.Count(c =>
+                        c.ArticleId == a.ArticleId)
+                })
+                .ToListAsync();
+
+            return Ok(articles);
+        }
+        #endregion
+
+        #region 修改文章
+        // PUT: api/Articles/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateArticle(
+            int id,
+            [FromBody] UpdateArticleDto dto)
+        {
+            const long userId = 15;
+
+            var article = await _context.Articles
+                .FirstOrDefaultAsync(a =>
+                    a.ArticleId == id &&
+                    a.UserId == userId);
+
+            if (article == null)
+            {
+                return NotFound();
+            }
+
+            article.CategoryId = dto.CategoryId;
+            article.Title = dto.Title;
+            article.Content = dto.Content;
+            article.UpdateDate = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+        #endregion
     }
 }
