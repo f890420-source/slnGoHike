@@ -20,6 +20,7 @@ public class EventDataAPIController : BaseController
     public async Task<IActionResult> GetCEventDataWarp()
     {
         var eventCount = _db.EventData.Select(e => e.EventId).Count();
+        
         if (_db.EventData != null)
         {
             var eventdata = await _db.EventData.Select(e => new EventDataDTO
@@ -36,6 +37,7 @@ public class EventDataAPIController : BaseController
                 EventStartTime = e.EventStartTime,
                 EventEndTime = e.EventEndTime,
                 EventCount = eventCount,
+                EveryMountainCount = e.Mountain.EventData.Count(),
                 MountainName = e.Mountain.MountainName,
                 Longitude = e.Mountain.Longitude,
                 Latitude = e.Mountain.Latitude
