@@ -330,5 +330,78 @@ namespace prjGoHike.Controllers
             return NoContent();
         }
         #endregion
+
+        #region 刪除文章
+        // DELETE: api/Articles/{id}
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteArticle(int id)
+        {
+            const long userId = 15;
+
+            var article = await _context.Articles
+                .FirstOrDefaultAsync(a =>
+                    a.ArticleId == id &&
+                    a.UserId == userId);
+
+            if (article == null)
+            {
+                return NotFound();
+            }
+
+            // 1. 找出文章所有留言
+            var comments = await _context.Comments
+                .Where(c => c.ArticleId == id)
+                .ToListAsync();
+
+            var commentIds = comments
+                .Select(c => c.CommentId)
+                .ToList();
+
+            // 2. 先刪留言圖片
+            var commentImages = await _context.CommentImages
+                .Where(ci => commentIds.Contains(ci.CommentId))
+                .ToListAsync();
+
+            _context.CommentImages.RemoveRange(commentImages);
+
+            // 3. 刪留言
+            _context.Comments.RemoveRange(comments);
+
+            // 4. 刪文章圖片
+            var articleImages = await _context.ArticleImages
+                .Where(ai => ai.ArticleId == id)
+                .ToListAsync();
+
+            _context.ArticleImages.RemoveRange(articleImages);
+
+            // 5. 刪按讚
+            var likes = await _context.ArticleLikes
+                .Where(al => al.ArticleId == id)
+                .ToListAsync();
+
+            _context.ArticleLikes.RemoveRange(likes);
+
+            // 6. 刪收藏
+            var favorites = await _context.Favorites
+                .Where(f => f.ArticleId == id)
+                .ToListAsync();
+
+            _context.Favorites.RemoveRange(favorites);
+
+            // 7. 刪檢舉
+            var reports = await _context.Reports
+                .Where(r => r.ArticleId == id)
+                .ToListAsync();
+
+            _context.Reports.RemoveRange(reports);
+
+            // 8. 最後刪文章
+            _context.Articles.Remove(article);
+
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+        #endregion
     }
 }
