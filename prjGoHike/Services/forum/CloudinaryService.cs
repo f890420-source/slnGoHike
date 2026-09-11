@@ -57,5 +57,53 @@ namespace prjGoHike.Services.forum
 
             return result.SecureUrl.ToString();
         }
+
+        public async Task DeleteImageAsync(string imageUrl)
+        {
+            if (string.IsNullOrWhiteSpace(imageUrl))
+            {
+                return;
+            }
+
+            var uri = new Uri(imageUrl);
+
+            var path = uri.AbsolutePath;
+
+            var uploadIndex = path.IndexOf("/upload/");
+
+            if (uploadIndex == -1)
+            {
+                return;
+            }
+
+            var publicIdWithExtension =
+                path[(uploadIndex + "/upload/".Length)..];
+
+            // Cloudinary URL 可能包含 v1234567890 版本號
+            var parts = publicIdWithExtension.Split('/');
+
+            if (
+                parts.Length > 0 &&
+                parts[0].StartsWith("v") &&
+                parts[0].Substring(1).All(char.IsDigit)
+            )
+            {
+                publicIdWithExtension =
+                    string.Join("/", parts.Skip(1));
+            }
+
+            var publicId =
+                Path.ChangeExtension(
+                    publicIdWithExtension,
+                    null
+                );
+
+            var deletionParams =
+                new DeletionParams(publicId);
+
+            await _cloudinary.DestroyAsync(
+                deletionParams
+            );
+        }
     }
 }

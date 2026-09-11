@@ -306,11 +306,12 @@ namespace prjGoHike.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateArticle(
             int id,
-            [FromBody] UpdateArticleDto dto)
+            [FromForm] UpdateArticleDto dto)
         {
             const long userId = 15;
 
             var article = await _context.Articles
+                .Include(a => a.ArticleImages)
                 .FirstOrDefaultAsync(a =>
                     a.ArticleId == id &&
                     a.UserId == userId);
@@ -320,10 +321,63 @@ namespace prjGoHike.Controllers
                 return NotFound();
             }
 
+            // 更新文章基本資料
             article.CategoryId = dto.CategoryId;
             article.Title = dto.Title;
             article.Content = dto.Content;
             article.UpdateDate = DateTime.Now;
+
+            // 找出被刪除的舊圖片
+            var imagesToDelete = article.ArticleImages
+                .Where(image =>
+                    !dto.KeepImagePaths.Contains(image.ImagePath))
+                .ToList();
+
+            // 刪除 Cloudinary 圖片
+            foreach (var image in imagesToDelete)
+            {
+                await _cloudinaryService.DeleteImageAsync(
+                    image.ImagePath
+                );
+            }
+
+            // 刪除資料庫圖片紀錄
+            _context.ArticleImages.RemoveRange(
+                imagesToDelete
+            );
+
+            // 計算下一張圖片排序
+            var nextSortOrder =
+                article.ArticleImages
+                    .Where(image =>
+                        !imagesToDelete.Contains(image))
+                    .Select(image => image.SortOrder)
+                    .DefaultIfEmpty(0)
+                    .Max() + 1;
+
+            // 上傳新圖片
+            foreach (var imageFile in dto.ImageFiles)
+            {
+                var imageUrl =
+                    await _cloudinaryService.UploadImageAsync(
+                        imageFile,
+                        "gohike/articles"
+                    );
+
+                var articleImage = new ArticleImage
+                {
+                    ArticleId = article.ArticleId,
+                    ImagePath = imageUrl,
+                    SortOrder = nextSortOrder,
+                    CreatedDate = DateTime.Now
+                };
+
+                _context.ArticleImages.Add(
+                    articleImage
+                );
+
+                nextSortOrder++;
+            }
 
             await _context.SaveChangesAsync();
 
@@ -357,21 +411,39 @@ namespace prjGoHike.Controllers
                 .Select(c => c.CommentId)
                 .ToList();
 
-            // 2. 先刪留言圖片
+            // 2. 找出留言圖片
             var commentImages = await _context.CommentImages
                 .Where(ci => commentIds.Contains(ci.CommentId))
                 .ToListAsync();
 
+            // 刪除 Cloudinary 上的留言圖片
+            foreach (var image in commentImages)
+            {
+                await _cloudinaryService.DeleteImageAsync(
+                    image.ImagePath
+                );
+            }
+
+            // 刪除資料庫留言圖片紀錄
             _context.CommentImages.RemoveRange(commentImages);
 
             // 3. 刪留言
             _context.Comments.RemoveRange(comments);
 
-            // 4. 刪文章圖片
+            // 4. 找出文章圖片
             var articleImages = await _context.ArticleImages
                 .Where(ai => ai.ArticleId == id)
                 .ToListAsync();
 
+            // 刪除 Cloudinary 上的文章圖片
+            foreach (var image in articleImages)
+            {
+                await _cloudinaryService.DeleteImageAsync(
+                    image.ImagePath
+                );
+            }
+
+            // 刪除資料庫圖片紀錄
             _context.ArticleImages.RemoveRange(articleImages);
 
             // 5. 刪按讚
