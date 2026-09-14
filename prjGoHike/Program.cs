@@ -7,9 +7,13 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("GoHikeDataContext") ?? throw new InvalidOperationException("Connection string 'GoHikeDataContext' not found.");
 
 builder.Services.AddDbContext<GoHikeDataContext>(options => options.UseSqlServer(connectionString));
+#region 討論區用的 Service
 builder.Services.AddScoped<CloudinaryService>();
 builder.Services.AddScoped<SensitiveWordService>();
+builder.Services.AddScoped<CommentValidationService>();
+
 builder.Services.AddHttpClient<GeminiModerationService>();
+#endregion
 // Add services to the container.
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

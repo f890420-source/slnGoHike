@@ -16,21 +16,23 @@ namespace prjGoHike.Controllers
         private readonly IHubContext<CommentHub> _hubContext;
         private readonly CloudinaryService _cloudinaryService;
         private readonly SensitiveWordService _sensitiveWordService;
-
+        private readonly CommentValidationService _commentValidationService;
         private readonly GeminiModerationService _geminiModerationService;
 
         public CommentsController(
             GoHikeDataContext context,
-            IHubContext<CommentHub> hubContext,
             CloudinaryService cloudinaryService,
+            IHubContext<CommentHub> hubContext,
             SensitiveWordService sensitiveWordService,
-            GeminiModerationService geminiModerationService)
+            GeminiModerationService geminiModerationService,
+            CommentValidationService commentValidationService)
         {
             _context = context;
-            _hubContext = hubContext;
             _cloudinaryService = cloudinaryService;
+            _hubContext = hubContext;
             _sensitiveWordService = sensitiveWordService;
             _geminiModerationService = geminiModerationService;
+            _commentValidationService = commentValidationService;
         }
 
         #region 取得文章的留言
@@ -85,74 +87,15 @@ namespace prjGoHike.Controllers
             [FromForm] CreateCommentDto dto)
         {
             // =========================
-            // 圖片數量驗證
+            // 留言圖片驗證
             // =========================
-            if (dto.Images.Count > 5)
+            var imageValidationError =
+                _commentValidationService
+                    .ValidateImages(dto.Images);
+
+            if (imageValidationError != null)
             {
-                return BadRequest(
-                    "一則留言最多只能上傳 5 張圖片"
-                );
-            }
-
-
-            // =========================
-            // 圖片大小驗證
-            // =========================
-            foreach (var image in dto.Images)
-            {
-                if (image.Length > 5 * 1024 * 1024)
-                {
-                    return BadRequest(
-                        "單張圖片大小不能超過 5 MB"
-                    );
-                }
-            }
-
-
-            // =========================
-            // 副檔名驗證
-            // =========================
-            var allowedExtensions = new[]
-            {
-        ".jpg",
-        ".jpeg",
-        ".png",
-        ".webp"
-    };
-
-            foreach (var image in dto.Images)
-            {
-                var extension = Path
-                    .GetExtension(image.FileName)
-                    .ToLowerInvariant();
-
-                if (!allowedExtensions.Contains(extension))
-                {
-                    return BadRequest(
-                        "只允許上傳 jpg、jpeg、png、webp 圖片"
-                    );
-                }
-            }
-
-
-            // =========================
-            // MIME Type 驗證
-            // =========================
-            var allowedContentTypes = new[]
-            {
-        "image/jpeg",
-        "image/png",
-        "image/webp"
-    };
-
-            foreach (var image in dto.Images)
-            {
-                if (!allowedContentTypes.Contains(image.ContentType))
-                {
-                    return BadRequest(
-                        "上傳檔案格式不正確"
-                    );
-                }
+                return BadRequest(imageValidationError);
             }
 
             // =========================
