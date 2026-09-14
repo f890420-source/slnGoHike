@@ -32,6 +32,9 @@ namespace prjGoHike.APIControllers
                 {
                     id = x.TrailId,
                     TrailName = x.TrailName,
+                    Region = x.Region,
+                    DifficultyLevel = x.DifficultyLevel,
+                    DistanceKm = x.DistanceKm,
                     TrailSegDtos = x.TrailSegments.Select(s => new TrailSegmentPublicDto()
                             {
                                 id = s.TrailSegmentId,
