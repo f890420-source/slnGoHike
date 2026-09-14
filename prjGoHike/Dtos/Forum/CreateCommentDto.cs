@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 
-namespace prjGoHike.Dtos
+namespace prjGoHike.Dtos.Forum
 {
     public class CreateCommentDto
     {

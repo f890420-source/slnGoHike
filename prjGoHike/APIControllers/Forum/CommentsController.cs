@@ -1,11 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using prjGoHike.Dtos;
 using prjGoHike.Models;
-using prjGoHike.Models.Dtos.Forum;
 using Microsoft.AspNetCore.SignalR;
 using prjGoHike.Hubs;
 using prjGoHike.Services.forum;
+using prjGoHike.Dtos.Forum;
 namespace prjGoHike.Controllers
 {
     [Route("api/[controller]")]

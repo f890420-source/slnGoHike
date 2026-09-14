@@ -1,4 +1,4 @@
-﻿namespace prjGoHike.Dtos
+﻿namespace prjGoHike.Dtos.Forum
 {
     public class CommentDto
     {

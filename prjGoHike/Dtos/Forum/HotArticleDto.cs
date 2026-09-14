@@ -1,4 +1,4 @@
-﻿namespace prjGoHike.Models.Dtos.Forum
+﻿namespace prjGoHike.Dtos.Forum
 {
     public class HotArticleDto
     {

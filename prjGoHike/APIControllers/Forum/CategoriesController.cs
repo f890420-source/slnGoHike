@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
+using prjGoHike.Dtos.Forum;
 using prjGoHike.Models;
-using prjGoHike.Models.Dtos.Forum;
 
 namespace prjGoHike.Controllers
 {
