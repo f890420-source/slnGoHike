@@ -82,4 +82,9 @@ public partial class User
     public virtual ICollection<UserAchievement> UserAchievements { get; set; } = new List<UserAchievement>();
 
     public virtual ICollection<UserSkillTag> UserSkillTags { get; set; } = new List<UserSkillTag>();
+    public virtual ICollection<ArticleView> ArticleViews { get; set; } = new List<ArticleView>();
+
+    public virtual ICollection<Notification> NotificationSenderUsers { get; set; } = new List<Notification>();
+
+    public virtual ICollection<Notification> NotificationUsers { get; set; } = new List<Notification>();
 }
