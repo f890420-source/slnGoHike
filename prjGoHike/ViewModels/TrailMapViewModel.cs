@@ -1,3 +1,4 @@
+// NEXT-TODO: merge with some DTOs
 public class TrailMapViewModel
 {
     public long TrailId { get; set; }
