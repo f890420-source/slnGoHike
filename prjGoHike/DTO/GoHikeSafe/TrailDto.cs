@@ -5,8 +5,7 @@ namespace prjGoHike.DTO.GoHikeSafe
 {
     public class TrailDto
     {
-        [Key]
-        public long TrailId { get; set; }
+        public long id { get; set; }
 
         public string TrailName { get; set; } = null!;
 
