@@ -200,10 +200,15 @@ namespace prjGoHike.Controllers
         [HttpGet("hot")]
         public async Task<ActionResult<IEnumerable<HotArticleDto>>> GetHotArticles()
         {
+            var startDate = DateTime.Now.AddDays(-30);
+
             var hotArticles = await _context.Articles
 
                 // 只取得前台可以看到的文章
-                .Where(a => a.Status == 1 || a.Status == 3)
+                .Where(a =>
+                    (a.Status == 1 || a.Status == 3) &&
+                    a.CreatedDate >= startDate
+                )
 
                 // 計算每篇文章的互動數
                 .Select(a => new
