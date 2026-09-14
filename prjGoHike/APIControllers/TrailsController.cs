@@ -20,6 +20,11 @@ namespace prjGoHike.APIControllers
         }
         
         [HttpGet]
+        [EndpointSummary("取得已發布的步道")]
+        [EndpointDescription("回傳已發布步道及其路段資料，路段 geometry 使用 GeoJSON 格式。查無已發布步道時回傳成功與空陣列。")]
+        [ProducesResponseType(typeof(ApiResponse<List<TrailPublicDto>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> List()
         {
             var trailsQuery = _context.Trails.Where(x => x.IsPublished == true).Select(
