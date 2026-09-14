@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.Models;
+using prjGoHike.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("GoHikeDataContext") ?? throw new InvalidOperationException("Connection string 'GoHikeDataContext' not found.");
@@ -9,6 +10,23 @@ builder.Services.AddDbContext<GoHikeDataContext>(options => options.UseSqlServer
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// OpenAPI uses HTTP JSON options; match the existing MVC GeoJSON converter.
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.Converters.Add(
+        new NetTopologySuite.IO.Converters.GeoJsonConverterFactory()));
+builder.Services.AddOpenApi("v1", options =>
+{
+    options.ShouldInclude = description =>
+        description.RelativePath?.StartsWith("api/v1/", StringComparison.OrdinalIgnoreCase) == true;
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    {
+        document.Info.Title = "GoHike API";
+        document.Info.Version = "v1";
+        return Task.CompletedTask;
+    });
+    options.AddSchemaTransformer<GeoJsonSchemaTransformer>();
+});
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -42,6 +60,15 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.UseSwaggerUI(options =>
+    {
+        options.RoutePrefix = "swagger";
+        options.SwaggerEndpoint("../openapi/v1.json", "GoHike API v1");
+    });
+}
 app.UseRouting();
 
 app.UseAuthentication();
