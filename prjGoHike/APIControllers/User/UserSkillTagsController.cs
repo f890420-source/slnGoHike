@@ -86,7 +86,8 @@ public sealed class UserSkillTagsController : UserApiControllerBase
             return Conflict(new { message = "會員已擁有此標籤。" });
 
         var reachedLevelCount = await _context.Levels.CountAsync(x => x.MinXp <= user.TotalXp, ct);
-        var earnedSkillPoints = Math.Max(0, reachedLevelCount - 1);
+        const int baseSkillPoints = 3;
+        var earnedSkillPoints = baseSkillPoints + Math.Max(0, reachedLevelCount - 1);
         var usedSkillPoints = await _context.UserSkillTags.CountAsync(x => x.UserId == userId, ct);
         if (usedSkillPoints >= earnedSkillPoints)
             return Conflict(new { message = "技能點數不足；每提升一級可獲得 1 點。" });
