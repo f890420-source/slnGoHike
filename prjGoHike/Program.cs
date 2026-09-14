@@ -63,7 +63,12 @@ builder.Services.AddLogging(config =>
     config.AddConsole();
     config.AddDebug();
 });
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(
+            new NetTopologySuite.IO.Converters.GeoJsonConverterFactory());
+    });
 builder.Services.AddSignalR();
 builder.Services.AddSession();
 var app = builder.Build();
