@@ -7,6 +7,11 @@ namespace prjGoHike.DTO.GoHikeSafe
         public long id { get; set; }
 
         public string TrailName { get; set; } = null!;
+        public string Region { get; set; } = null!;
+
+        public int DifficultyLevel { get; set; }
+
+        public decimal? DistanceKm { get; set; }
         public IEnumerable<TrailSegmentPublicDto>? TrailSegDtos { get; set; }
     }
 
