@@ -8,6 +8,8 @@ var connectionString = builder.Configuration.GetConnectionString("GoHikeDataCont
 
 builder.Services.AddDbContext<GoHikeDataContext>(options => options.UseSqlServer(connectionString));
 builder.Services.AddScoped<CloudinaryService>();
+builder.Services.AddScoped<SensitiveWordService>();
+builder.Services.AddHttpClient<GeminiModerationService>();
 // Add services to the container.
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

@@ -15,15 +15,22 @@ namespace prjGoHike.Controllers
         private readonly GoHikeDataContext _context;
         private readonly IHubContext<CommentHub> _hubContext;
         private readonly CloudinaryService _cloudinaryService;
+        private readonly SensitiveWordService _sensitiveWordService;
+
+        private readonly GeminiModerationService _geminiModerationService;
 
         public CommentsController(
             GoHikeDataContext context,
             IHubContext<CommentHub> hubContext,
-            CloudinaryService cloudinaryService)
+            CloudinaryService cloudinaryService,
+            SensitiveWordService sensitiveWordService,
+            GeminiModerationService geminiModerationService)
         {
             _context = context;
             _hubContext = hubContext;
             _cloudinaryService = cloudinaryService;
+            _sensitiveWordService = sensitiveWordService;
+            _geminiModerationService = geminiModerationService;
         }
 
         #region 取得文章的留言
@@ -148,6 +155,40 @@ namespace prjGoHike.Controllers
                 }
             }
 
+            // =========================
+            // 敏感詞檢查
+            // =========================
+            if (_sensitiveWordService.ContainsSensitiveWord(dto.Content))
+            {
+                return BadRequest(
+                    "留言包含不適當文字"
+                );
+            }
+
+            //// =========================
+            //// Gemini AI 內容審核
+            //// =========================
+            //try
+            //{
+            //    var isSafe =
+            //        await _geminiModerationService
+            //            .IsContentSafeAsync(dto.Content);
+
+            //    if (!isSafe)
+            //    {
+            //        return BadRequest(
+            //            "留言內容可能包含不適當文字"
+            //        );
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    // Gemini 額度不足、逾時或服務異常時，
+            //    // 不影響留言功能，改由本地敏感詞機制把關
+            //    Console.WriteLine(
+            //        $"Gemini 內容審核失敗：{ex.Message}"
+            //    );
+            //}
 
             // =========================
             // 建立留言
