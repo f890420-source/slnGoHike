@@ -157,6 +157,91 @@ namespace prjGoHike.Controllers
             // 先取得 CommentId
             await _context.SaveChangesAsync();
 
+            // =========================
+            // 建立文章留言通知
+            // Type 1 = 我的文章收到留言
+            // =========================
+            if (comment.ParentCommentId == null)
+            {
+                var article = await _context.Articles
+                    .Where(a => a.ArticleId == comment.ArticleId)
+                    .Select(a => new
+                    {
+                        a.UserId
+                    })
+                    .FirstOrDefaultAsync();
+
+                // 文章存在，而且不是自己留言自己的文章
+                if (article != null &&
+                    article.UserId != comment.UserId)
+                {
+                    var notification = new Notification
+                    {
+                        // 收到通知的人 = 文章作者
+                        UserId = article.UserId,
+
+                        // 發送通知的人 = 留言者
+                        SenderUserId = comment.UserId,
+
+                        ArticleId = comment.ArticleId,
+                        CommentId = comment.CommentId,
+
+                        Type = 1,
+
+                        Message = "在你的文章留下了留言",
+
+                        IsRead = false,
+                        CreatedDate = DateTime.Now
+                    };
+
+                    _context.Notifications.Add(notification);
+
+                    await _context.SaveChangesAsync();
+                }
+            }
+
+            // =========================
+            // 建立留言回覆通知
+            // Type 2 = 我的留言收到回覆
+            // =========================
+            if (comment.ParentCommentId != null)
+            {
+                var parentComment = await _context.Comments
+                    .Where(c => c.CommentId == comment.ParentCommentId)
+                    .Select(c => new
+                    {
+                        c.UserId
+                    })
+                    .FirstOrDefaultAsync();
+
+                // 被回覆的留言存在，而且不是自己回覆自己
+                if (parentComment != null &&
+                    parentComment.UserId != comment.UserId)
+                {
+                    var notification = new Notification
+                    {
+                        // 收到通知的人 = 被回覆留言的作者
+                        UserId = parentComment.UserId,
+
+                        // 發送通知的人 = 回覆者
+                        SenderUserId = comment.UserId,
+
+                        ArticleId = comment.ArticleId,
+                        CommentId = comment.CommentId,
+
+                        Type = 2,
+
+                        Message = "回覆了你的留言",
+
+                        IsRead = false,
+                        CreatedDate = DateTime.Now
+                    };
+
+                    _context.Notifications.Add(notification);
+
+                    await _context.SaveChangesAsync();
+                }
+            }
 
             // =========================
             // 上傳留言圖片

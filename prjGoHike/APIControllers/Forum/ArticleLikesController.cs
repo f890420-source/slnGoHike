@@ -45,7 +45,60 @@ namespace prjGoHike.Controllers
             _context.ArticleLikes.Add(like);
 
             await _context.SaveChangesAsync();
+            // =========================
+            // 建立文章按讚通知
+            // Type 3 = 我的文章收到按讚
+            // =========================
+            var article = await _context.Articles
+                .Where(a => a.ArticleId == articleId)
+                .Select(a => new
+                {
+                    a.UserId
+                })
+                .FirstOrDefaultAsync();
 
+
+            // 文章存在，而且不是自己按讚自己的文章
+            if (article != null &&
+                article.UserId != userId)
+            {
+                // 檢查這個人是否曾經對這篇文章產生過按讚通知
+                var notificationExists =
+                    await _context.Notifications
+                        .AnyAsync(n =>
+                            n.UserId == article.UserId &&
+                            n.SenderUserId == userId &&
+                            n.ArticleId == articleId &&
+                            n.Type == 3
+                        );
+
+                // 沒有通知過才建立
+                if (!notificationExists)
+                {
+                    var notification = new Notification
+                    {
+                        // 收到通知的人 = 文章作者
+                        UserId = article.UserId,
+
+                        // 發送通知的人 = 按讚者
+                        SenderUserId = userId,
+
+                        ArticleId = articleId,
+                        CommentId = null,
+
+                        Type = 3,
+
+                        Message = "對你的文章按讚",
+
+                        IsRead = false,
+                        CreatedDate = DateTime.Now
+                    };
+
+                    _context.Notifications.Add(notification);
+
+                    await _context.SaveChangesAsync();
+                }
+            }
             return Ok();
         }
 
