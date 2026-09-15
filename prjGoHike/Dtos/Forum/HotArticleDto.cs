@@ -13,5 +13,7 @@
         public int FavoriteCount { get; set; }
 
         public int CommentCount { get; set; }
+
+        public int ViewCount { get; set; }
     }
 }

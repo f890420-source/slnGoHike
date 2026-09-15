@@ -29,6 +29,7 @@
         public int FavoriteCount { get; set; }
 
         public int CommentCount { get; set; }
+        public int ViewCount { get; set; }
 
         public string UserNickname { get; set; } = string.Empty;
 

@@ -57,6 +57,8 @@ namespace prjGoHike.Controllers
 
                     LikeCount = a.ArticleLikes.Count,
 
+                    ViewCount = a.ArticleViews.Count(),
+
                     CommentCount = _context.Comments
                        .Count(c => c.ArticleId == a.ArticleId),
 
@@ -87,7 +89,7 @@ namespace prjGoHike.Controllers
                     UpdateDate = a.UpdateDate,
                     Status = a.Status,
                     CategoryName = a.Category.CategoryName,
-
+                    ViewCount = a.ArticleViews.Count(),
                     ImagePaths = a.ArticleImages
                         .OrderBy(image => image.SortOrder)
                         .Select(image => image.ImagePath)
@@ -269,7 +271,9 @@ namespace prjGoHike.Controllers
                         .Count(f => f.ArticleId == a.ArticleId),
 
                     CommentCount = _context.Comments
-                        .Count(c => c.ArticleId == a.ArticleId)
+                        .Count(c => c.ArticleId == a.ArticleId),
+
+                    ViewCount = a.ArticleViews.Count()
                 })
 
                 // 熱門分數：
@@ -277,7 +281,8 @@ namespace prjGoHike.Controllers
                 .OrderByDescending(a =>
                     a.CommentCount * 3 +
                     a.FavoriteCount * 2 +
-                    a.LikeCount
+                    a.LikeCount +
+                    a.ViewCount * 0.2
                 )
 
                 // 分數相同時，較新的文章優先
@@ -286,16 +291,17 @@ namespace prjGoHike.Controllers
                 // 最多只需要 3 篇
                 .Take(3)
 
-                // 轉成熱門文章專用 DTO
-                .Select(a => new HotArticleDto
-                {
-                    ArticleId = a.ArticleId,
-                    Title = a.Title,
-                    CreatedDate = a.CreatedDate,
-                    LikeCount = a.LikeCount,
-                    FavoriteCount = a.FavoriteCount,
-                    CommentCount = a.CommentCount
-                })
+              // 轉成熱門文章專用 DTO
+              .Select(a => new HotArticleDto
+              {
+                  ArticleId = a.ArticleId,
+                  Title = a.Title,
+                  CreatedDate = a.CreatedDate,
+                  LikeCount = a.LikeCount,
+                  FavoriteCount = a.FavoriteCount,
+                  CommentCount = a.CommentCount,
+                  ViewCount = a.ViewCount
+              })
 
                 .ToListAsync();
 
@@ -543,6 +549,80 @@ namespace prjGoHike.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+        #endregion
+
+        #region 取得熱門標籤
+        // GET: api/Articles/tags/hot
+        [HttpGet("tags/hot")]
+        public async Task<IActionResult> GetHotTags()
+        {
+            var hotTags = await _context.Tags
+                .Select(t => new
+                {
+                    TagName = t.TagName,
+
+                    ArticleCount = t.Articles
+                        .Count(a =>
+                            a.Status == 1 ||
+                            a.Status == 3)
+                })
+                .Where(t => t.ArticleCount > 0)
+                .OrderByDescending(t => t.ArticleCount)
+                .ThenBy(t => t.TagName)
+                .Take(4)
+                .ToListAsync();
+
+            return Ok(hotTags);
+        }
+        #endregion
+
+        #region 記錄文章瀏覽
+        // POST: api/Articles/{id}/view
+        [HttpPost("{id}/view")]
+        public async Task<IActionResult> RecordArticleView(int id)
+        {
+            const long userId = 15;
+
+            // 確認文章存在
+            var articleExists = await _context.Articles
+                .AnyAsync(a =>
+                    a.ArticleId == id &&
+                    (a.Status == 1 || a.Status == 3));
+
+            if (!articleExists)
+            {
+                return NotFound("找不到文章");
+            }
+
+            // 30 分鐘內的時間
+            var thirtyMinutesAgo = DateTime.Now.AddMinutes(-30);
+
+            // 檢查同一個使用者是否在 30 分鐘內看過這篇文章
+            var recentlyViewed = await _context.ArticleViews
+                .AnyAsync(av =>
+                    av.ArticleId == id &&
+                    av.UserId == userId &&
+                    av.ViewedDate >= thirtyMinutesAgo);
+
+            // 30 分鐘內已經看過，不重複新增
+            if (recentlyViewed)
+            {
+                return Ok();
+            }
+
+            var articleView = new ArticleView
+            {
+                ArticleId = id,
+                UserId = userId,
+                ViewedDate = DateTime.Now
+            };
+
+            _context.ArticleViews.Add(articleView);
+
+            await _context.SaveChangesAsync();
+
+            return Ok();
         }
         #endregion
     }
