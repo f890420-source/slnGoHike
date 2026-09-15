@@ -56,7 +56,7 @@ namespace prjGoHike.Models
 
         [DisplayName("活動圖片")]
 
-        public string ActivityPhoto
+        public string? ActivityPhoto
         {
             get { return _EventData.ActivityPhoto; }
             set { _EventData.ActivityPhoto = value; }
@@ -64,7 +64,7 @@ namespace prjGoHike.Models
 
         [DisplayName("描述")]
 
-        public string Description
+        public string? Description
         {
             get { return _EventData.Description; }
             set { _EventData.Description = value; }
@@ -79,7 +79,7 @@ namespace prjGoHike.Models
 
         [DisplayName("是否需要入園/入山證")]
         //這個欄位暫時沒用到
-        public bool ReviewRequired 
+        public bool? ReviewRequired 
 {
             get { return _EventData.ReviewRequired; }
             set { _EventData.ReviewRequired = value; }
@@ -87,14 +87,14 @@ namespace prjGoHike.Models
 
         [DisplayName("是否所有團員都有入山證/入園證")]
         //這個欄位暫時沒用到
-        public string ReviewStatus
+        public string? ReviewStatus
         {
             get { return _EventData.ReviewStatus; }
             set { _EventData.ReviewStatus = value; }
         }
         [DisplayName("有無舉報")]
         //有無檢舉那欄要做成按鈕 點開是新的痾網頁?
-        public bool HasActiveReport
+        public bool? HasActiveReport
         {
             get { return _EventData.HasActiveReport; }
             set { _EventData.HasActiveReport = value; }

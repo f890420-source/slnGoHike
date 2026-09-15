@@ -15,17 +15,17 @@ public partial class EventData
 
     public string ActivityStatus { get; set; } = null!;
 
-    public string ActivityPhoto { get; set; } = null!;
+    public string? ActivityPhoto { get; set; } = null!;
 
-    public string Description { get; set; } = null!;
+    public string? Description { get; set; } = null!;
 
     public DateTime EventDate { get; set; }
 
-    public bool ReviewRequired { get; set; }
+    public bool? ReviewRequired { get; set; }
 
-    public string ReviewStatus { get; set; } = null!;
+    public string? ReviewStatus { get; set; } = null!;
 
-    public bool HasActiveReport { get; set; }
+    public bool? HasActiveReport { get; set; }
 
     public long LeaderUserId { get; set; }
 

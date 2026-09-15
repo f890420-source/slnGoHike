@@ -170,7 +170,7 @@
                     </div> *@
                     <div class="my-3">
                         @Html.LabelFor(e => e.cEvent.HasActiveReport)
-                        @Html.CheckBoxFor(e => e.cEvent.HasActiveReport, new { @class = "form-check-input-custom" })
+                        @Html.CheckBox("cEvent.HasActiveReport", Model.cEvent.HasActiveReport ?? false, new { @class = "form-check-input-custom" })
                     </div>
                     <div>
                         @Html.LabelFor(e => e.cEvent.LeaderUserId)
