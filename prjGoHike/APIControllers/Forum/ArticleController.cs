@@ -47,17 +47,21 @@ namespace prjGoHike.Controllers
                     CategoryName = a.Category.CategoryName,
 
                     ImagePaths = a.ArticleImages
-        .OrderBy(ai => ai.SortOrder)
-        .Select(ai => ai.ImagePath)
-        .ToList(),
+                      .OrderBy(ai => ai.SortOrder)
+                      .Select(ai => ai.ImagePath)
+                      .ToList(),
+
+                    Tags = a.Tags
+                       .Select(t => t.TagName)
+                       .ToList(),
 
                     LikeCount = a.ArticleLikes.Count,
 
                     CommentCount = _context.Comments
-    .Count(c => c.ArticleId == a.ArticleId),
+                       .Count(c => c.ArticleId == a.ArticleId),
 
                     FavoriteCount = _context.Favorites
-        .Count(f => f.ArticleId == a.ArticleId)
+                       .Count(f => f.ArticleId == a.ArticleId)
                 })
                 .ToListAsync();
 
@@ -439,9 +443,10 @@ namespace prjGoHike.Controllers
             const long userId = 15;
 
             var article = await _context.Articles
-                .FirstOrDefaultAsync(a =>
-                    a.ArticleId == id &&
-                    a.UserId == userId);
+      .Include(a => a.Tags)
+      .FirstOrDefaultAsync(a =>
+          a.ArticleId == id &&
+          a.UserId == userId);
 
             if (article == null)
             {
@@ -456,6 +461,15 @@ namespace prjGoHike.Controllers
             var commentIds = comments
                 .Select(c => c.CommentId)
                 .ToList();
+            // 2. 刪除與文章或留言相關的通知
+            var notifications = await _context.Notifications
+                .Where(n =>
+                    n.ArticleId == id ||
+                    (n.CommentId.HasValue &&
+                     commentIds.Contains(n.CommentId.Value)))
+                .ToListAsync();
+
+            _context.Notifications.RemoveRange(notifications);
 
             // 2. 找出留言圖片
             var commentImages = await _context.CommentImages
@@ -513,7 +527,17 @@ namespace prjGoHike.Controllers
 
             _context.Reports.RemoveRange(reports);
 
-            // 8. 最後刪文章
+            // 8. 解除文章與標籤的關聯
+            article.Tags.Clear();
+
+            // 9. 刪除文章瀏覽紀錄
+            var articleViews = await _context.ArticleViews
+                .Where(av => av.ArticleId == id)
+                .ToListAsync();
+
+            _context.ArticleViews.RemoveRange(articleViews);
+
+            // 10. 最後刪文章
             _context.Articles.Remove(article);
 
             await _context.SaveChangesAsync();
