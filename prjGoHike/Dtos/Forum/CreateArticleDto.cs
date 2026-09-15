@@ -12,5 +12,8 @@ namespace prjGoHike.Dtos.Forum
 
         // 文章圖片，可一次上傳多張
         public List<IFormFile> Images { get; set; } = new();
+
+        // 文章標籤，例如：百岳、裝備、新手
+        public List<string> Tags { get; set; } = new();
     }
 }

@@ -87,7 +87,12 @@ namespace prjGoHike.Controllers
                     ImagePaths = a.ArticleImages
                         .OrderBy(image => image.SortOrder)
                         .Select(image => image.ImagePath)
-                        .ToList()
+                        .ToList(),
+
+                          // 文章標籤
+                    Tags = a.Tags
+                .Select(tag => tag.TagName)
+                .ToList()
                 })
                 .FirstOrDefaultAsync();
 
@@ -106,6 +111,7 @@ namespace prjGoHike.Controllers
         public async Task<ActionResult<ArticleDto>> CreateArticle(
             [FromForm] CreateArticleDto dto)
         {
+            Console.WriteLine($"收到的 CategoryId = {dto.CategoryId}");
             // 1. 建立文章
             var article = new Article
             {
@@ -125,7 +131,39 @@ namespace prjGoHike.Controllers
             // 先存一次，取得 ArticleId
             await _context.SaveChangesAsync();
 
-            // 2. 處理圖片
+            // 2. 處理文章標籤
+            if (dto.Tags != null && dto.Tags.Count > 0)
+            {
+                foreach (var tagName in dto.Tags)
+                {
+                    var cleanTagName = tagName.Trim();
+
+                    if (string.IsNullOrWhiteSpace(cleanTagName))
+                    {
+                        continue;
+                    }
+
+                    var tag = await _context.Tags
+                        .FirstOrDefaultAsync(t => t.TagName == cleanTagName);
+
+                    if (tag == null)
+                    {
+                        tag = new Tag
+                        {
+                            TagName = cleanTagName,
+                            CreatedDate = DateTime.Now
+                        };
+
+                        _context.Tags.Add(tag);
+                    }
+
+                    article.Tags.Add(tag);
+                }
+
+                await _context.SaveChangesAsync();
+            }
+
+            // 3. 處理圖片
             if (dto.Images != null && dto.Images.Count > 0)
             {
                 int sortOrder = 1;
@@ -137,14 +175,14 @@ namespace prjGoHike.Controllers
                         continue;
                     }
 
-                    // 3. 上傳圖片到 Cloudinary
+                    // 4. 上傳圖片到 Cloudinary
                     var imageUrl =
                         await _cloudinaryService.UploadImageAsync(
                             image,
                             "gohike/articles"
                         );
 
-                    // 4. 存 Cloudinary URL 到 ArticleImage
+                    // 5. 存 Cloudinary URL 到 ArticleImage
                     var articleImage = new ArticleImage
                     {
                         ArticleId = article.ArticleId,
@@ -164,7 +202,7 @@ namespace prjGoHike.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            // 5. 回傳新增完成的文章
+            // 6. 回傳新增完成的文章
             var result = await _context.Articles
                 .Where(a => a.ArticleId == article.ArticleId)
                 .Select(a => new ArticleDto
@@ -180,9 +218,13 @@ namespace prjGoHike.Controllers
                     CategoryName = a.Category.CategoryName,
 
                     ImagePaths = a.ArticleImages
-                        .OrderBy(ai => ai.SortOrder)
-                        .Select(ai => ai.ImagePath)
-                        .ToList()
+    .OrderBy(ai => ai.SortOrder)
+    .Select(ai => ai.ImagePath)
+    .ToList(),
+
+                    Tags = a.Tags
+    .Select(t => t.TagName)
+    .ToList()
                 })
                 .FirstAsync();
 

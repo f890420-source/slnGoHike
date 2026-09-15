@@ -1,4 +1,4 @@
-﻿using prjGoHike.TempModels;
+﻿using prjGoHike.Models;
 using System;
 using System.Collections.Generic;
 
