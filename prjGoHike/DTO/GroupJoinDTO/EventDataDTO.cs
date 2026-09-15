@@ -6,7 +6,8 @@
         public string? EventName { get; set; }
         public int MaximumNumber { get; set; }
         public string? ActivityStatus { get; set; }
-        public string? ActivityPhoto { get; set; }
+        public IFormFile? ActivityPhoto { get; set; }
+        //使用來自前端圖片的格式
         public string? Description { get; set; }
         public DateTime? EventStartTime { get; set; }
         public DateTime? EventEndTime { get; set; }

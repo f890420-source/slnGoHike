@@ -20,6 +20,7 @@
   <ItemGroup>
     <Folder Include="ViewModels_user\Admin\" />
     <Folder Include="ViewModels_user\Dto\" />
+    <Folder Include="wwwroot\assets\JoinGroup_Images\" />
   </ItemGroup>
 
 </Project>

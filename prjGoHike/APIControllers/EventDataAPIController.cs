@@ -9,10 +9,14 @@ using prjGoHike.Models;
 public class EventDataAPIController : BaseController
 {
     private readonly GoHikeDataContext _db;
-    public EventDataAPIController(GoHikeDataContext db)
+    private readonly IWebHostEnvironment _environment;
+    public EventDataAPIController(GoHikeDataContext db, IWebHostEnvironment environment)
     {
         _db = db;
+        _environment = environment;
     }
+    
+
 
     // GET: api/CEventDataWarp
     //活動欄位的部分
@@ -101,16 +105,34 @@ public class EventDataAPIController : BaseController
     //// POST: api/CEventDataWarp
     //// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
     [HttpPost]
-    public async Task<IActionResult> PostCEventDataWarp(EventDataDTO eventdata)
+    public async Task<IActionResult> PostCEventDataWarp([FromForm] EventDataDTO eventdata)
     {
+        string SavedFilePath = "";
+        string UploadsFolder = "";
+        if (eventdata.ActivityPhoto != null)
+        {
+            UploadsFolder = Path.Combine(_environment.WebRootPath, "assets", "JoinGroup_Images");
+            //把上傳路徑存到一個變數裡
+        }
+        string FileExtension = Path.GetExtension(eventdata.ActivityPhoto);
+        //把傳進來的圖片副檔名存到一個變數
+        string UniqueFileName = $"{Guid.NewGuid()}{FileExtension}";
+        //使用guid方法創建一個全新的亂數名字加上副檔名
+        string filePath = Path.Combine(UploadsFolder, UniqueFileName);
+        //跟轉成亂數的圖片與副檔名進行路徑名稱合併
+        using (var stream = new FileStream(filePath, FileMode.Create)) 
+        {
+            await eventdata.ActivityPhoto.CopyToAsync(stream);
+        }
+        SavedFilePath = $"/assets/JoinGroup_Images{UniqueFileName}";
             CEventDataWarp Event =  new CEventDataWarp
             {
-                EventId = eventdata.EventId,
-                MountainId = eventdata.MountainId,
+                
+                
                 EventName = eventdata.EventName,
                 MaximumNumber = eventdata.MaximumNumber,
                 ActivityStatus = eventdata.ActivityStatus,
-                ActivityPhoto = eventdata.ActivityPhoto,
+                ActivityPhoto = SavedFilePath,
                 Description = eventdata.Description,
                 EventStartTime = eventdata.EventStartTime,
                 EventEndTime = eventdata.EventEndTime
