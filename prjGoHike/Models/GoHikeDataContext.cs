@@ -113,10 +113,11 @@ public partial class GoHikeDataContext : DbContext
             .HasValue<Admin>("管理員");
 
         modelBuilder.Entity<Level>().HasData(
-        new Level { LevelId = 1, LevelName = "新手山友", MinXp = 0, MaxXp = 99 },
-        new Level { LevelId = 2, LevelName = "初階登山客", MinXp = 100, MaxXp = 499 },
-        new Level { LevelId = 3, LevelName = "中階登山客", MinXp = 500, MaxXp = 999 },
-        new Level { LevelId = 4, LevelName = "高階登山客", MinXp = 1000, MaxXp = 99999 });
+        new Level { LevelId = 2, LevelName = "新手登山客", MinXp = 0, MaxXp = 100 },
+        new Level { LevelId = 3, LevelName = "初階登山客", MinXp = 101, MaxXp = 500 },
+        new Level { LevelId = 4, LevelName = "進階登山客", MinXp = 501, MaxXp = 1500 },
+        new Level { LevelId = 5, LevelName = "資深登山客", MinXp = 1501, MaxXp = 3000 },
+        new Level { LevelId = 6, LevelName = "登山達人", MinXp = 3001, MaxXp = 99999 });
 
         modelBuilder.Entity<RefreshToken>(entity =>
         {
