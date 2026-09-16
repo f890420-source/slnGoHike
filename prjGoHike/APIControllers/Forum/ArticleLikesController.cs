@@ -15,7 +15,7 @@ namespace prjGoHike.Controllers
         {
             _context = context;
         }
-
+        #region 按愛心
         // POST: api/ArticleLikes/10
         [HttpPost("{articleId}")]
         public async Task<IActionResult> LikeArticle(
@@ -101,8 +101,9 @@ namespace prjGoHike.Controllers
             }
             return Ok();
         }
+        #endregion
 
-
+        #region 刪除愛心
         // DELETE: api/ArticleLikes/2
         [HttpDelete("{articleId}")]
         public async Task<IActionResult> UnlikeArticle(
@@ -128,8 +129,9 @@ namespace prjGoHike.Controllers
 
             return Ok();
         }
+        #endregion
 
-
+        #region 取得文章愛心數量
         // GET: api/ArticleLikes/2
         [HttpGet("{articleId}")]
         public async Task<IActionResult> GetLikeStatus(
@@ -155,5 +157,6 @@ namespace prjGoHike.Controllers
                 isLiked
             });
         }
+        #endregion
     }
 }
