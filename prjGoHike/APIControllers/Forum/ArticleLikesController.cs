@@ -15,7 +15,7 @@ namespace prjGoHike.Controllers
         {
             _context = context;
         }
-        #region 按愛心
+        #region 新增文章按讚
         // POST: api/ArticleLikes/10
         [HttpPost("{articleId}")]
         public async Task<IActionResult> LikeArticle(
@@ -103,7 +103,7 @@ namespace prjGoHike.Controllers
         }
         #endregion
 
-        #region 刪除愛心
+        #region 取消文章按讚
         // DELETE: api/ArticleLikes/2
         [HttpDelete("{articleId}")]
         public async Task<IActionResult> UnlikeArticle(
@@ -131,7 +131,7 @@ namespace prjGoHike.Controllers
         }
         #endregion
 
-        #region 取得文章愛心數量
+        #region 取得文章按讚狀態
         // GET: api/ArticleLikes/2
         [HttpGet("{articleId}")]
         public async Task<IActionResult> GetLikeStatus(
