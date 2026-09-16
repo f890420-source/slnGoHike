@@ -12,13 +12,16 @@ namespace prjGoHike.Controllers
     {
         private readonly GoHikeDataContext _context;
         private readonly CloudinaryService _cloudinaryService;
+        private readonly CommentValidationService _commentValidationService;
 
         public ArticlesController(
             GoHikeDataContext context,
-            CloudinaryService cloudinaryService)
+            CloudinaryService cloudinaryService,
+            CommentValidationService commentValidationService)
         {
             _context = context;
             _cloudinaryService = cloudinaryService;
+            _commentValidationService = commentValidationService;
         }
         #region 取得所有文章
         // GET: api/Articles
@@ -157,50 +160,15 @@ namespace prjGoHike.Controllers
 
             // =========================
             // 文章圖片驗證
+            // 共用留言圖片驗證規則
             // =========================
-            if (dto.Images != null && dto.Images.Count > 0)
+            var imageValidationError =
+                _commentValidationService
+                    .ValidateImages(dto.Images);
+
+            if (imageValidationError != null)
             {
-                // 最多 5 張
-                if (dto.Images.Count > 5)
-                {
-                    return BadRequest("文章最多只能上傳 5 張圖片");
-                }
-
-                // 單張最大 5 MB
-                const long maxFileSize = 5 * 1024 * 1024;
-
-                // 允許的圖片格式
-                var allowedContentTypes = new[]
-                {
-        "image/jpeg",
-        "image/png",
-        "image/webp"
-    };
-
-                foreach (var image in dto.Images)
-                {
-                    if (image.Length == 0)
-                    {
-                        continue;
-                    }
-
-                    // 檔案大小
-                    if (image.Length > maxFileSize)
-                    {
-                        return BadRequest(
-                            "單張圖片大小不能超過 5 MB"
-                        );
-                    }
-
-                    // 圖片格式
-                    if (!allowedContentTypes.Contains(
-                        image.ContentType.ToLowerInvariant()))
-                    {
-                        return BadRequest(
-                            "只允許上傳 JPG、JPEG、PNG、WEBP 圖片"
-                        );
-                    }
-                }
+                return BadRequest(imageValidationError);
             }
 
             // 1. 建立文章
