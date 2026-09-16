@@ -190,22 +190,25 @@ namespace prjGoHike.Controllers
 
             // 先存一次，取得 ArticleId
             await _context.SaveChangesAsync();
-
             // 2. 處理文章標籤
             if (dto.Tags != null && dto.Tags.Count > 0)
             {
-                foreach (var tagName in dto.Tags)
+                // 清除空白、空字串以及同一次發文中的重複標籤
+                var cleanTagNames = dto.Tags
+                    .Select(tagName => tagName.Trim())
+                    .Where(tagName =>
+                        !string.IsNullOrWhiteSpace(tagName))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                foreach (var cleanTagName in cleanTagNames)
                 {
-                    var cleanTagName = tagName.Trim();
-
-                    if (string.IsNullOrWhiteSpace(cleanTagName))
-                    {
-                        continue;
-                    }
-
+                    // 先尋找資料庫中是否已有相同標籤
                     var tag = await _context.Tags
-                        .FirstOrDefaultAsync(t => t.TagName == cleanTagName);
+                        .FirstOrDefaultAsync(t =>
+                            t.TagName == cleanTagName);
 
+                    // 沒有才建立新的 Tag
                     if (tag == null)
                     {
                         tag = new Tag
@@ -217,6 +220,7 @@ namespace prjGoHike.Controllers
                         _context.Tags.Add(tag);
                     }
 
+                    // 將 Tag 與文章建立關聯
                     article.Tags.Add(tag);
                 }
 
