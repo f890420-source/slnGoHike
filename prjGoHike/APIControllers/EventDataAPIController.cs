@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.APIControllers;
 using prjGoHike.DTO.GroupJoinDTO;
+using prjGoHike.Hubs;
 using prjGoHike.Models;
 
 [Route("api/[controller]")]
@@ -10,10 +12,13 @@ public class EventDataAPIController : BaseController
 {
     private readonly GoHikeDataContext _db;
     private readonly IWebHostEnvironment _environment;
-    public EventDataAPIController(GoHikeDataContext db, IWebHostEnvironment environment)
+    private readonly IHubContext<EventHub> _hubContext;
+    public EventDataAPIController(GoHikeDataContext db, IWebHostEnvironment environment
+        ,IHubContext<EventHub> hubContext)
     {
         _db = db;
         _environment = environment;
+        _hubContext = hubContext;
     }
     
 
@@ -116,18 +121,19 @@ public class EventDataAPIController : BaseController
         {
             UploadsFolder = Path.Combine(_environment.WebRootPath, "assets", "JoinGroup_Images");
             //把上傳路徑存到一個變數裡
+            string FileExtension = Path.GetExtension(eventdata.ActivityPhoto.FileName);
+            //把傳進來的圖片副檔名存到一個變數
+            string UniqueFileName = $"{Guid.NewGuid()}{FileExtension}";
+            //使用guid方法創建一個全新的亂數名字加上副檔名
+            string FilePath = Path.Combine(UploadsFolder, UniqueFileName);
+            //跟轉成亂數的圖片與副檔名進行路徑名稱合併
+            using (var stream = new FileStream(FilePath, FileMode.Create))
+            {
+                await eventdata.ActivityPhoto.CopyToAsync(stream);
+            }
+            SavedFilePath = $"/assets/JoinGroup_Images{UniqueFileName}";
         }
-        string FileExtension = Path.GetExtension(eventdata.ActivityPhoto.FileName);
-        //把傳進來的圖片副檔名存到一個變數
-        string UniqueFileName = $"{Guid.NewGuid()}{FileExtension}";
-        //使用guid方法創建一個全新的亂數名字加上副檔名
-        string FilePath = Path.Combine(UploadsFolder, UniqueFileName);
-        //跟轉成亂數的圖片與副檔名進行路徑名稱合併
-        using (var stream = new FileStream(FilePath, FileMode.Create)) 
-        {
-            await eventdata.ActivityPhoto.CopyToAsync(stream);
-        }
-        SavedFilePath = $"/assets/JoinGroup_Images{UniqueFileName}";
+        
         EventData Event =  new EventData
         {
 
@@ -156,6 +162,10 @@ public class EventDataAPIController : BaseController
         _db.EventData.Add(Event);
 
         await _db.SaveChangesAsync();
+
+        await _hubContext.Clients.All.SendAsync("EventDataChanged", Event.MountainId);
+        //對著所有request的那方進行廣播? 然後傳送一個自訂的事件名,加上剛剛才熱騰騰從前端傳來的
+        //使用者所選擇的山的id
 
         return SuccessResponse(Event);
     }
