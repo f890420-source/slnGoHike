@@ -118,6 +118,91 @@ namespace prjGoHike.Controllers
             [FromForm] CreateArticleDto dto)
         {
             Console.WriteLine($"收到的 CategoryId = {dto.CategoryId}");
+            // =========================
+            // 文章資料驗證
+            // =========================
+
+            // 分類必填
+            if (dto.CategoryId <= 0)
+            {
+                return BadRequest("請選擇文章分類");
+            }
+
+            // 確認分類真的存在
+            var categoryExists = await _context.Categories
+                .AnyAsync(c => c.CategoryId == dto.CategoryId);
+
+            if (!categoryExists)
+            {
+                return BadRequest("文章分類不存在");
+            }
+
+            // 標題必填
+            if (string.IsNullOrWhiteSpace(dto.Title))
+            {
+                return BadRequest("請輸入文章標題");
+            }
+
+            // 標題最多 100 字
+            if (dto.Title.Trim().Length > 100)
+            {
+                return BadRequest("文章標題不能超過 100 字");
+            }
+
+            // 內容必填
+            if (string.IsNullOrWhiteSpace(dto.Content))
+            {
+                return BadRequest("請輸入文章內容");
+            }
+
+            // =========================
+            // 文章圖片驗證
+            // =========================
+            if (dto.Images != null && dto.Images.Count > 0)
+            {
+                // 最多 5 張
+                if (dto.Images.Count > 5)
+                {
+                    return BadRequest("文章最多只能上傳 5 張圖片");
+                }
+
+                // 單張最大 5 MB
+                const long maxFileSize = 5 * 1024 * 1024;
+
+                // 允許的圖片格式
+                var allowedContentTypes = new[]
+                {
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+    };
+
+                foreach (var image in dto.Images)
+                {
+                    if (image.Length == 0)
+                    {
+                        continue;
+                    }
+
+                    // 檔案大小
+                    if (image.Length > maxFileSize)
+                    {
+                        return BadRequest(
+                            "單張圖片大小不能超過 5 MB"
+                        );
+                    }
+
+                    // 圖片格式
+                    if (!allowedContentTypes.Contains(
+                        image.ContentType.ToLowerInvariant()))
+                    {
+                        return BadRequest(
+                            "只允許上傳 JPG、JPEG、PNG、WEBP 圖片"
+                        );
+                    }
+                }
+            }
+
             // 1. 建立文章
             var article = new Article
             {
@@ -125,8 +210,9 @@ namespace prjGoHike.Controllers
                 UserId = 15,
 
                 CategoryId = dto.CategoryId,
-                Title = dto.Title,
-                Content = dto.Content,
+                Title = dto.Title.Trim(),
+                Content = dto.Content.Trim(),
+
                 CreatedDate = DateTime.Now,
                 UpdateDate = null,
                 Status = 1
