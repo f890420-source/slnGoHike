@@ -30,6 +30,15 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.AccessDeniedPath = "/Login";       // 無權限時重定向
         options.ExpireTimeSpan = TimeSpan.FromHours(8);  // Cookie 預設有效期
         options.SlidingExpiration = true;          // 滑動過期時間（每次請求延長）
+
+        if (builder.Environment.IsDevelopment())
+        {
+            options.Cookie.SameSite =
+                SameSiteMode.None;
+
+            options.Cookie.SecurePolicy =
+                CookieSecurePolicy.Always;
+        }
     });
 builder.Services.AddAuthorization();
 builder.Services.AddLogging(config =>
