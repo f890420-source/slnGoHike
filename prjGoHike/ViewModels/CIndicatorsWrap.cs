@@ -55,7 +55,7 @@ public class CIndicatorsWrap
     }
 
     [DisplayName("指標風險等級")]
-    public byte IndicatorLevel
+    public byte? IndicatorLevel
     {
         get { return _indicator.IndicatorLevel; }
         set { _indicator.IndicatorLevel = value; }
@@ -66,20 +66,6 @@ public class CIndicatorsWrap
     {
         get { return _indicator.IndicatorDescription; }
         set { _indicator.IndicatorDescription = value; }
-    }
-
-    [DisplayName("指標有效起始時間")]
-    public DateTime? ValidFrom
-    {
-        get { return _indicator.ValidFrom; }
-        set { _indicator.ValidFrom = value; }
-    }
-
-    [DisplayName("指標有效終止時間")]
-    public DateTime? ValidTo
-    {
-        get { return _indicator.ValidTo; }
-        set { _indicator.ValidTo = value; }
     }
 
     [DisplayName("指標資料來源")]

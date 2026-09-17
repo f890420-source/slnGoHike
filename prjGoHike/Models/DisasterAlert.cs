@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using NetTopologySuite.Geometries;
 
 namespace prjGoHike.Models;
 
@@ -20,13 +19,13 @@ public partial class DisasterAlert
 
     public DateTime? EffectiveTo { get; set; }
 
-    public Geometry? AffectedArea { get; set; }
-
     public string? SourceAgency { get; set; }
 
     public string? SourceUrl { get; set; }
 
     public bool IsActive { get; set; }
+
+    public virtual ICollection<AlertSegment> AlertSegments { get; set; } = new List<AlertSegment>();
 
     public virtual ICollection<AlertsTrail> AlertsTrails { get; set; } = new List<AlertsTrail>();
 }

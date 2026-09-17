@@ -16,10 +16,10 @@ namespace prj.Controllers
             _context = context;
         }
 
-        // GET: AdminRiskinController
+        // GET: AdminIndicatorController
         public async Task<IActionResult> Index()
         {
-            var riskIndicator = await _context.RiskIndicators.ToListAsync();
+            var riskIndicator = await _context.Indicators.ToListAsync();
             var rwList = riskIndicator.Select(t => new CIndicatorsWrap(t)).ToList();
             return View(rwList);
         }
@@ -48,7 +48,7 @@ namespace prj.Controllers
             {
                 return NotFound();
             }
-            var riskindb = await _context.RiskIndicators.FirstOrDefaultAsync(x => x.IndicatorId == id);
+            var riskindb = await _context.Indicators.FirstOrDefaultAsync(x => x.IndicatorId == id);
             if (riskindb == null)
             {
                 return NotFound();
@@ -93,7 +93,7 @@ namespace prj.Controllers
             {
                 return NotFound();
             }
-            var riskindb = await _context.RiskIndicators.FirstOrDefaultAsync(x => x.IndicatorId == id);
+            var riskindb = await _context.Indicators.FirstOrDefaultAsync(x => x.IndicatorId == id);
             if (riskindb == null)
             {
                 return NotFound();
@@ -109,10 +109,10 @@ namespace prj.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(long? id)
         {
-            var riskindb = await _context.RiskIndicators.FirstOrDefaultAsync(x => x.IndicatorId == id);
+            var riskindb = await _context.Indicators.FirstOrDefaultAsync(x => x.IndicatorId == id);
             if (riskindb != null)
             {
-                _context.RiskIndicators.Remove(riskindb);
+                _context.Indicators.Remove(riskindb);
             }
 
             await _context.SaveChangesAsync();
@@ -121,7 +121,7 @@ namespace prj.Controllers
 
         private bool RiskIndicatorExists(long? riskIndicatorId)
         {
-            return _context.RiskIndicators.Any(e => e.IndicatorId == riskIndicatorId);
+            return _context.Indicators.Any(e => e.IndicatorId == riskIndicatorId);
         }
     }
 }

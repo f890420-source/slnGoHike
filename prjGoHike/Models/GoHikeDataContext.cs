@@ -19,6 +19,8 @@ public partial class GoHikeDataContext : DbContext
 
     public virtual DbSet<Achievement> Achievements { get; set; }
 
+    public virtual DbSet<AlertSegment> AlertSegments { get; set; }
+
     public virtual DbSet<AlertsTrail> AlertsTrails { get; set; }
 
     public virtual DbSet<Announcement> Announcements { get; set; }
@@ -57,6 +59,10 @@ public partial class GoHikeDataContext : DbContext
 
     public virtual DbSet<HikeRecordDetail> HikeRecordDetails { get; set; }
 
+    public virtual DbSet<Indicator> Indicators { get; set; }
+
+    public virtual DbSet<IndicatorSegment> IndicatorSegments { get; set; }
+
     public virtual DbSet<Level> Levels { get; set; }
 
     public virtual DbSet<Mountain> Mountains { get; set; }
@@ -73,8 +79,6 @@ public partial class GoHikeDataContext : DbContext
 
     public virtual DbSet<ReviewApplication> ReviewApplications { get; set; }
 
-    public virtual DbSet<Indicator> RiskIndicators { get; set; }
-
     public virtual DbSet<SkillTag> SkillTags { get; set; }
 
     public virtual DbSet<SuspensionSchedule> SuspensionSchedules { get; set; }
@@ -83,7 +87,7 @@ public partial class GoHikeDataContext : DbContext
 
     public virtual DbSet<TrailFeature> TrailFeatures { get; set; }
 
-    public virtual DbSet<TrailRiskIndicator> TrailRiskIndicators { get; set; }
+    public virtual DbSet<TrailIndicator> TrailIndicators { get; set; }
 
     public virtual DbSet<TrailSegment> TrailSegments { get; set; }
 
@@ -143,12 +147,27 @@ public partial class GoHikeDataContext : DbContext
                 .HasColumnName("rarity");
         });
 
+        modelBuilder.Entity<AlertSegment>(entity =>
+        {
+            entity.HasIndex(e => e.Shape, "SIX_AlertSegments_Shape");
+
+            entity.Property(e => e.Description).HasMaxLength(1000);
+            entity.Property(e => e.SegmentName).HasMaxLength(200);
+            entity.Property(e => e.SourceFeatureId).HasMaxLength(100);
+
+            entity.HasOne(d => d.Alert).WithMany(p => p.AlertSegments)
+                .HasForeignKey(d => d.AlertId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_AlertSegments_DisasterAlerts");
+        });
+
         modelBuilder.Entity<AlertsTrail>(entity =>
         {
             entity.HasKey(e => e.AlertTrailId);
 
-            entity.Property(e => e.AlertTrailId).HasColumnName("Alert_Trail_Id");
-            entity.Property(e => e.AlertId).HasColumnName("Alert_Id");
+            entity.HasIndex(e => new { e.AlertId, e.TrailId }, "UQ_AlertsTrails_AlertId_TrailId").IsUnique();
+
+            entity.Property(e => e.AlertTrailId).HasColumnName("AlertTrail_Id");
             entity.Property(e => e.ReasonDescription)
                 .HasMaxLength(2000)
                 .HasColumnName("Reason_Description");
@@ -429,7 +448,6 @@ public partial class GoHikeDataContext : DbContext
             entity.Property(e => e.EventEndTime)
                 .HasColumnType("datetime")
                 .HasColumnName("Event_End_Time");
-
             entity.Property(e => e.EventName)
                 .HasMaxLength(50)
                 .HasColumnName("Event_Name");
@@ -644,6 +662,33 @@ public partial class GoHikeDataContext : DbContext
                 .HasForeignKey(d => d.TrailId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_hike_record_details_Trail_Id");
+        });
+
+        modelBuilder.Entity<Indicator>(entity =>
+        {
+            entity.Property(e => e.DataSource).HasMaxLength(500);
+            entity.Property(e => e.IndicatorDescription).HasMaxLength(1500);
+            entity.Property(e => e.IndicatorName).HasMaxLength(120);
+            entity.Property(e => e.IndicatorType)
+                .HasMaxLength(30)
+                .IsUnicode(false);
+            entity.Property(e => e.IsActive).HasDefaultValue(true, "DF_Indicators_IsActive");
+            entity.Property(e => e.Weight).HasColumnType("decimal(6, 3)");
+        });
+
+        modelBuilder.Entity<IndicatorSegment>(entity =>
+        {
+            entity.HasIndex(e => e.IndicatorId, "IX_IndicatorSegments_IndicatorId");
+
+            entity.HasIndex(e => e.Shape, "SIX_IndicatorSegments_Shape");
+
+            entity.Property(e => e.Description).HasMaxLength(1000);
+            entity.Property(e => e.SegmentName).HasMaxLength(200);
+            entity.Property(e => e.SourceFeatureId).HasMaxLength(100);
+
+            entity.HasOne(d => d.Indicator).WithMany(p => p.IndicatorSegments)
+                .HasForeignKey(d => d.IndicatorId)
+                .HasConstraintName("FK_IndicatorSegments_Indicators");
         });
 
         modelBuilder.Entity<Level>(entity =>
@@ -888,19 +933,6 @@ public partial class GoHikeDataContext : DbContext
                 .HasConstraintName("FK_ReviewApplications_ReviewerUserId");
         });
 
-        modelBuilder.Entity<Indicator>(entity =>
-        {
-            entity.Property(e => e.DataSource).HasMaxLength(200);
-            entity.Property(e => e.IndicatorDescription).HasMaxLength(1500);
-            entity.Property(e => e.IndicatorName).HasMaxLength(120);
-            entity.Property(e => e.IndicatorType)
-                .HasMaxLength(30)
-                .IsUnicode(false);
-            entity.Property(e => e.ValidFrom).HasPrecision(0);
-            entity.Property(e => e.ValidTo).HasPrecision(0);
-            entity.Property(e => e.Weight).HasColumnType("decimal(6, 3)");
-        });
-
         modelBuilder.Entity<SkillTag>(entity =>
         {
             entity.HasKey(e => e.TagId);
@@ -1008,30 +1040,36 @@ public partial class GoHikeDataContext : DbContext
                 .HasConstraintName("FK_TrailFeatures_Trail_Id");
         });
 
-        modelBuilder.Entity<TrailRiskIndicator>(entity =>
+        modelBuilder.Entity<TrailIndicator>(entity =>
         {
-            entity.HasKey(e => new { e.TrailId, e.RiskIndicatorId });
+            entity.HasKey(e => new { e.TrailId, e.IndicatorId });
+
+            entity.HasIndex(e => e.IndicatorId, "IX_TrailIndicators_IndicatorId");
 
             entity.Property(e => e.TrailId).HasColumnName("Trail_Id");
-            entity.Property(e => e.DistanceFromTrailMeters).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.EvaluatedAt).HasPrecision(0);
+            entity.Property(e => e.DistanceMeters).HasColumnType("decimal(12, 2)");
+            entity.Property(e => e.EvaluatedAt)
+                .HasPrecision(0)
+                .HasDefaultValueSql("(sysdatetime())", "DF_TrailIndicators_EvaluatedAt");
+            entity.Property(e => e.EvaluatedScore).HasColumnType("decimal(10, 4)");
             entity.Property(e => e.IndicatorWeightSnapshot).HasColumnType("decimal(6, 3)");
-            entity.Property(e => e.OverlapRatio).HasColumnType("decimal(6, 5)");
-            entity.Property(e => e.RiskScore).HasColumnType("decimal(8, 2)");
+            entity.Property(e => e.OverlapRatio).HasColumnType("decimal(7, 6)");
+            entity.Property(e => e.RawScore).HasColumnType("decimal(10, 4)");
 
-            entity.HasOne(d => d.RiskIndicator).WithMany(p => p.TrailRiskIndicators)
-                .HasForeignKey(d => d.RiskIndicatorId)
+            entity.HasOne(d => d.Indicator).WithMany(p => p.TrailIndicators)
+                .HasForeignKey(d => d.IndicatorId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_TrailRiskIndicators_RiskIndicatorId");
+                .HasConstraintName("FK_TrailIndicators_Indicators");
 
-            entity.HasOne(d => d.Trail).WithMany(p => p.TrailRiskIndicators)
+            entity.HasOne(d => d.Trail).WithMany(p => p.TrailIndicators)
                 .HasForeignKey(d => d.TrailId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_TrailRiskIndicators_Trail_Id");
+                .HasConstraintName("FK_TrailIndicators_Trails");
         });
 
         modelBuilder.Entity<TrailSegment>(entity =>
         {
+            entity.HasIndex(e => e.Shape, "SIX_TrailSegments_Shape");
+
             entity.Property(e => e.TrailSegmentId).HasColumnName("TrailSegment_Id");
             entity.Property(e => e.Source).HasMaxLength(50);
             entity.Property(e => e.SourceId)
@@ -1051,6 +1089,8 @@ public partial class GoHikeDataContext : DbContext
         modelBuilder.Entity<TrailSubscription>(entity =>
         {
             entity.HasKey(e => e.SubscriptionId);
+
+            entity.HasIndex(e => new { e.UserId, e.TrailId }, "UQ_TrailSubscriptions_UserId_TrailId").IsUnique();
 
             entity.Property(e => e.TrailId).HasColumnName("Trail_Id");
 
@@ -1081,6 +1121,7 @@ public partial class GoHikeDataContext : DbContext
             entity.Property(e => e.SourceType)
                 .HasMaxLength(20)
                 .IsUnicode(false);
+            entity.Property(e => e.TrailId).HasColumnName("Trail_Id");
 
             entity.HasOne(d => d.ReporterUser).WithMany(p => p.TripReportReporterUsers)
                 .HasForeignKey(d => d.ReporterUserId)
@@ -1090,8 +1131,8 @@ public partial class GoHikeDataContext : DbContext
                 .HasForeignKey(d => d.ReviewedByUserId)
                 .HasConstraintName("FK_TripReports_ReviewedByUserId");
 
-            entity.HasOne(d => d.Tr).WithMany(p => p.TripReports)
-                .HasForeignKey(d => d.TrId)
+            entity.HasOne(d => d.Trail).WithMany(p => p.TripReports)
+                .HasForeignKey(d => d.TrailId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_TripReports_TrId");
         });
