@@ -32,14 +32,14 @@ public class EventDataAPIController : BaseController
         
         if (_db.EventData != null)
         {
-            var eventdata = await _db.EventData.Select(e => new EventDataDTO
+            var eventdata = await _db.EventData.Select(e => new EventDataResponseDTO
             {
                 EventId = e.EventId,
                 MountainId = e.MountainId,
                 EventName = e.EventName,
                 MaximumNumber = e.MaximumNumber,
                 ActivityStatus = e.ActivityStatus,
-                
+                ActivityPhoto = e.ActivityPhoto,
                 Description = e.Description,
                 MountainsPermitRequired = e.Mountain.MountainsPermitRequired,
                 NationalParkPermitRequired = e.Mountain.NationalParkPermitRequired,
@@ -117,6 +117,8 @@ public class EventDataAPIController : BaseController
     {
         string SavedFilePath = "";
         string UploadsFolder = "";
+        string BaseUrl = $"{Request.Scheme}://{Request.Host}";
+        //得到請求端使用的協定/得到請求端的路由
         if (eventdata.ActivityPhoto != null)
         {
             UploadsFolder = Path.Combine(_environment.WebRootPath, "assets", "JoinGroup_Images");
@@ -131,7 +133,8 @@ public class EventDataAPIController : BaseController
             {
                 await eventdata.ActivityPhoto.CopyToAsync(stream);
             }
-            SavedFilePath = $"/assets/JoinGroup_Images{UniqueFileName}";
+
+            SavedFilePath = $"{BaseUrl}/assets/JoinGroup_Images/{UniqueFileName}";
         }
         
         EventData Event =  new EventData
