@@ -2,10 +2,10 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.Hubs;
 using prjGoHike.Models;
-
+using prjGoHike.Services.forum;
 
 string GroupJoinRoute = "http://localhost:4200";
-using prjGoHike.Services.forum;
+
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("GoHikeDataContext") ?? throw new InvalidOperationException("Connection string 'GoHikeDataContext' not found.");
 

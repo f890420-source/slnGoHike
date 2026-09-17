@@ -1,10 +1,7 @@
-<<<<<<<< HEAD:prjGoHike/DTO/GroupJoinDTO/HikeRecordDto.cs
-﻿namespace prjGoHike.DTO.GroupJoinDTO
-========
-﻿namespace prjGoHike.Dtos
->>>>>>>> origin/develop:prjGoHike/Dtos/HikeRecordDto.cs
+namespace prjGoHike.DTO.GroupJoinDTO
+
 {
     public class HikeRecordDto
     {
-    }
-}
+    };
+};
