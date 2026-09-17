@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.Models;
@@ -17,6 +18,7 @@ namespace prj.Controllers
         }
 
         // GET: AdminIndicatorController
+        [Authorize]
         public async Task<IActionResult> Index()
         {
             var indicator = await _context.Indicators.ToListAsync();
@@ -31,6 +33,7 @@ namespace prj.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize]
         public async Task<IActionResult> Create(Indicator indicator)
         {
             if (ModelState.IsValid)
@@ -42,6 +45,7 @@ namespace prj.Controllers
             return View();
         }
 
+        [Authorize]
         public async Task<IActionResult> Edit(long? id)
         {
             if (id == null)
@@ -62,6 +66,7 @@ namespace prj.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize]
         public async Task<IActionResult> Edit(int? id, Indicator indicator)
         {
             if (id != indicator.IndicatorId || !ModelState.IsValid)
@@ -87,6 +92,7 @@ namespace prj.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [Authorize]
         public async Task<IActionResult> Delete(long? id)
         {
             if (id == null)
@@ -107,6 +113,7 @@ namespace prj.Controllers
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize]
         public async Task<IActionResult> DeleteConfirmed(long? id)
         {
             var riskindb = await _context.Indicators.FirstOrDefaultAsync(x => x.IndicatorId == id);
