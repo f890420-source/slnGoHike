@@ -21,9 +21,9 @@ public class CIndicatorsWrap
         _indicator = new Indicator();
     }
 
-    public CIndicatorsWrap(Indicator riskIndicator)
+    public CIndicatorsWrap(Indicator indicator)
     {
-        _indicator = riskIndicator;
+        _indicator = indicator;
     }
 
     [Key]

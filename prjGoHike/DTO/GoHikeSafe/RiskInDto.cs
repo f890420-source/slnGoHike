@@ -4,7 +4,7 @@ namespace prjGoHike.DTO.GoHikeSafe
 {
     public class RiskInDto
     {
-        public long RiskIndicatorId { get; set; }
+        public long indicatorId { get; set; }
 
         public string IndicatorName { get; set; } = null!;
 
