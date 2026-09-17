@@ -128,7 +128,15 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
     app.UseHttpsRedirection();
 }
-
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.UseSwaggerUI(options =>
+    {
+        options.RoutePrefix = "swagger";
+        options.SwaggerEndpoint("../openapi/v1.json", "GoHike API v1");
+    });
+}
 app.UseRouting();
 app.UseCors("AngularDevelopment");
 app.UseStaticFiles();
