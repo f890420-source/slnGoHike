@@ -1,0 +1,15 @@
+.git
+.github
+.agents
+.codex
+**/bin
+**/obj
+**/.vs
+**/.vscode
+**/node_modules
+**/*.user
+**/*.suo
+**/.env
+**/.env.*
+**/*.pfx
+**/*.p12
