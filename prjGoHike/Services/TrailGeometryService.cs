@@ -51,12 +51,12 @@ namespace prjGoHike.Services
             TrailSegment? segment =
                 trail.TrailSegments.SingleOrDefault();
 
-            if (segment?.RoutePath == null)
+            if (segment?.Shape == null)
             {
                 return Array.Empty<double[]>();
             }
 
-            return segment.RoutePath.Coordinates
+            return segment.Shape.Coordinates
                 .Select(coordinate => new[]
                 {
             coordinate.X,

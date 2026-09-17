@@ -10,7 +10,7 @@ public class TrailMapViewModel
 
 public class TrailSegmentMapViewModel
 {
-    public int TrailSegmentId { get; set; }
+    public long TrailSegmentId { get; set; }
 
     public string? Source { get; set; }
 

@@ -6,11 +6,11 @@ namespace prjGoHike.Models;
 
 public partial class TrailSegment
 {
-    public int TrailSegmentId { get; set; }
+    public long TrailSegmentId { get; set; }
 
     public long TrailId { get; set; }
 
-    public Geometry RoutePath { get; set; } = null!;
+    public Geometry Shape { get; set; } = null!;
 
     public string? Source { get; set; }
 
