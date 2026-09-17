@@ -10,7 +10,7 @@ public partial class TripReport
 
     public long? TripId { get; set; }
 
-    public long TrId { get; set; }
+    public long TrailId { get; set; }
 
     public long? ReporterUserId { get; set; }
 
@@ -38,5 +38,5 @@ public partial class TripReport
 
     public virtual User? ReviewedByUser { get; set; }
 
-    public virtual Trail Tr { get; set; } = null!;
+    public virtual Trail Trail { get; set; } = null!;
 }

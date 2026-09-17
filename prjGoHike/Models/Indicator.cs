@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using NetTopologySuite.Geometries;
 
 namespace prjGoHike.Models;
 
@@ -14,19 +13,15 @@ public partial class Indicator
 
     public decimal Weight { get; set; }
 
-    public byte IndicatorLevel { get; set; }
+    public byte? IndicatorLevel { get; set; }
 
     public string? IndicatorDescription { get; set; }
-
-    public Geometry? SpatialArea { get; set; }
-
-    public DateTime? ValidFrom { get; set; }
-
-    public DateTime? ValidTo { get; set; }
 
     public string? DataSource { get; set; }
 
     public bool IsActive { get; set; }
 
-    public virtual ICollection<TrailRiskIndicator> TrailRiskIndicators { get; set; } = new List<TrailRiskIndicator>();
+    public virtual ICollection<IndicatorSegment> IndicatorSegments { get; set; } = new List<IndicatorSegment>();
+
+    public virtual ICollection<TrailIndicator> TrailIndicators { get; set; } = new List<TrailIndicator>();
 }
