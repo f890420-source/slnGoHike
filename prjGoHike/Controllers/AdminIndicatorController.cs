@@ -19,8 +19,8 @@ namespace prj.Controllers
         // GET: AdminIndicatorController
         public async Task<IActionResult> Index()
         {
-            var riskIndicator = await _context.Indicators.ToListAsync();
-            var rwList = riskIndicator.Select(t => new CIndicatorsWrap(t)).ToList();
+            var indicator = await _context.Indicators.ToListAsync();
+            var rwList = indicator.Select(t => new CIndicatorsWrap(t)).ToList();
             return View(rwList);
         }
 
@@ -31,11 +31,11 @@ namespace prj.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Indicator riskIndicator)
+        public async Task<IActionResult> Create(Indicator indicator)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(riskIndicator);
+                _context.Add(indicator);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
@@ -62,20 +62,20 @@ namespace prj.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int? id, Indicator riskIndicator)
+        public async Task<IActionResult> Edit(int? id, Indicator indicator)
         {
-            if (id != riskIndicator.IndicatorId || !ModelState.IsValid)
+            if (id != indicator.IndicatorId || !ModelState.IsValid)
             {
                 return NotFound();
             }
             try
             {
-                _context.Update(riskIndicator);
+                _context.Update(indicator);
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!RiskIndicatorExists(riskIndicator.IndicatorId))
+                if (!IndicatorExists(indicator.IndicatorId))
                 {
                     return NotFound();
                 }
@@ -119,9 +119,9 @@ namespace prj.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private bool RiskIndicatorExists(long? riskIndicatorId)
+        private bool IndicatorExists(long? indicatorId)
         {
-            return _context.Indicators.Any(e => e.IndicatorId == riskIndicatorId);
+            return _context.Indicators.Any(e => e.IndicatorId == indicatorId);
         }
     }
 }
