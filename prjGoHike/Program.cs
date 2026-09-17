@@ -16,6 +16,18 @@ builder.Services.AddHttpClient<GeminiModerationService>();
 #endregion
 // Add services to the container.
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AngularDevelopment", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:4200")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -24,6 +36,15 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.AccessDeniedPath = "/Login";       // 無權限時重定向
         options.ExpireTimeSpan = TimeSpan.FromHours(8);  // Cookie 預設有效期
         options.SlidingExpiration = true;          // 滑動過期時間（每次請求延長）
+
+        if (builder.Environment.IsDevelopment())
+        {
+            options.Cookie.SameSite =
+                SameSiteMode.None;
+
+            options.Cookie.SecurePolicy =
+                CookieSecurePolicy.Always;
+        }
     });
 builder.Services.AddAuthorization();
 builder.Services.AddCors(options =>
