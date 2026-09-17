@@ -73,7 +73,7 @@ public partial class GoHikeDataContext : DbContext
 
     public virtual DbSet<ReviewApplication> ReviewApplications { get; set; }
 
-    public virtual DbSet<RiskIndicator> RiskIndicators { get; set; }
+    public virtual DbSet<Indicator> RiskIndicators { get; set; }
 
     public virtual DbSet<SkillTag> SkillTags { get; set; }
 
@@ -888,7 +888,7 @@ public partial class GoHikeDataContext : DbContext
                 .HasConstraintName("FK_ReviewApplications_ReviewerUserId");
         });
 
-        modelBuilder.Entity<RiskIndicator>(entity =>
+        modelBuilder.Entity<Indicator>(entity =>
         {
             entity.Property(e => e.DataSource).HasMaxLength(200);
             entity.Property(e => e.IndicatorDescription).HasMaxLength(1500);

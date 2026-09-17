@@ -1,4 +1,4 @@
-@model prjGoHike.ViewModels.CRiskIndicatorsWrap
+@model prjGoHike.ViewModels.CIndicatorsWrap
 
 @{
     ViewData["Title"] = "指標刪除";
@@ -40,7 +40,7 @@
         </dd>
     </dl>
     <form asp-action="Delete" class="d-flex gap-2 p-2">
-        <input type="hidden" asp-for="RiskIndicatorId" />
+        <input type="hidden" asp-for="IndicatorId" />
         <input type="submit" value="永久刪除" class="btn-custom btn-custom-danger" />
         <a asp-action="Index" class="btn-custom btn-custom-outline-primary">回到選單</a>
     </form>

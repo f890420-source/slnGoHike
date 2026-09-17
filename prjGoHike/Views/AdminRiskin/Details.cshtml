@@ -1,4 +1,4 @@
-@model prjGoHike.ViewModels.CRiskIndicatorsWrap
+@model prjGoHike.ViewModels.CIndicatorsWrap
 
 @{
     ViewData["Title"] = "Details";
@@ -11,12 +11,13 @@
     <hr />
     <dl class="row">
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.riskIndicator)
+            @Html.DisplayNameFor(model => model.indicator)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.riskIndicator)
+            @Html.DisplayFor(model => model.indicator)
         </dd>
     </dl>
+    <dl class="row">
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.IndicatorName)
         </dt>
@@ -24,6 +25,7 @@
             @Html.DisplayFor(model => model.IndicatorName)
         </dd>
     </dl>
+    <dl class="row">
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.IndicatorType)
         </dt>
@@ -31,6 +33,7 @@
             @Html.DisplayFor(model => model.IndicatorType)
         </dd>
     </dl>
+    <dl class="row">
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.Weight)
         </dt>
@@ -38,13 +41,15 @@
             @Html.DisplayFor(model => model.Weight)
         </dd>
     </dl>
+    <dl class="row">
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.RiskLevel)
+            @Html.DisplayNameFor(model => model.IndicatorLevel)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.RiskLevel)
+            @Html.DisplayFor(model => model.IndicatorLevel)
         </dd>
     </dl>
+    <dl class="row">
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.IndicatorDescription)
         </dt>
@@ -52,6 +57,7 @@
             @Html.DisplayFor(model => model.IndicatorDescription)
         </dd>
     </dl>
+    <dl class="row">
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.ValidFrom)
         </dt>
@@ -59,6 +65,7 @@
             @Html.DisplayFor(model => model.ValidFrom)
         </dd>
     </dl>
+    <dl class="row">
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.ValidTo)
         </dt>
@@ -66,6 +73,7 @@
             @Html.DisplayFor(model => model.ValidTo)
         </dd>
     </dl>
+    <dl class="row">
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.DataSource)
         </dt>
@@ -73,6 +81,7 @@
             @Html.DisplayFor(model => model.DataSource)
         </dd>
     </dl>
+    <dl class="row">
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.IsActive)
         </dt>
@@ -80,15 +89,8 @@
             @Html.DisplayFor(model => model.IsActive)
         </dd>
     </dl>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.SpatialArea)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.SpatialArea)
-        </dd>
-    </dl>
 </div>
 <div>
-    <a asp-action="Edit" asp-route-id="@Model?.RiskIndicatorId">Edit</a> |
+    <a asp-action="Edit" asp-route-id="@Model?.IndicatorId">Edit</a> |
     <a asp-action="Index">Back to List</a>
 </div>
