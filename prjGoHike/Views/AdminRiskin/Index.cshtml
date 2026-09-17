@@ -1,4 +1,4 @@
-@model IEnumerable<prjGoHike.ViewModels.CRiskIndicatorsWrap>
+@model IEnumerable<prjGoHike.ViewModels.CIndicatorsWrap>
 
 @{
     ViewData["Title"] = "指標圖資管理";
@@ -33,7 +33,7 @@
                 @Html.DisplayNameFor(model => model.Weight)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.RiskLevel)
+                @Html.DisplayNameFor(model => model.IndicatorLevel)
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.IndicatorDescription)
@@ -54,7 +54,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (prjGoHike.ViewModels.CRiskIndicatorsWrap item in Model)
+        @foreach (prjGoHike.ViewModels.CIndicatorsWrap item in Model)
         {
             <tr>
                 <td>
@@ -67,7 +67,7 @@
                     @Html.DisplayFor(model => item.Weight)
                 </td>
                 <td>
-                    @Html.DisplayFor(model => item.RiskLevel)
+                    @Html.DisplayFor(model => item.IndicatorLevel)
                 </td>
                 <td>
                     @Html.DisplayFor(model => item.IndicatorDescription)
@@ -92,10 +92,10 @@
                     }
                 </td>
                 <td>
-                    <a asp-action="Edit" asp-route-id="@item.RiskIndicatorId" class="table-btn-action" title="編輯">
+                    <a asp-action="Edit" asp-route-id="@item.IndicatorId" class="table-btn-action" title="編輯">
                         <i class="bi bi-pencil"></i>
                     </a>
-                    <a asp-action="Delete" asp-route-id="@item.RiskIndicatorId" class="table-btn-action delete" title="刪除">
+                    <a asp-action="Delete" asp-route-id="@item.IndicatorId" class="table-btn-action delete" title="刪除">
                         <i class="bi bi-trash"></i>
                     </a>
                 </td>

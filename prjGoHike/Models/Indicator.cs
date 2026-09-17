@@ -4,9 +4,9 @@ using NetTopologySuite.Geometries;
 
 namespace prjGoHike.Models;
 
-public partial class RiskIndicator
+public partial class Indicator
 {
-    public long RiskIndicatorId { get; set; }
+    public long IndicatorId { get; set; }
 
     public string IndicatorName { get; set; } = null!;
 
@@ -14,7 +14,7 @@ public partial class RiskIndicator
 
     public decimal Weight { get; set; }
 
-    public byte RiskLevel { get; set; }
+    public byte IndicatorLevel { get; set; }
 
     public string? IndicatorDescription { get; set; }
 

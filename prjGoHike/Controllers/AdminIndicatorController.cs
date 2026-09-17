@@ -7,11 +7,11 @@ using System.Collections;
 namespace prj.Controllers
 {
     //TODO: 表單驗證安全細節
-    public class AdminRiskinController : Controller
+    public class AdminIndicatorController : Controller
     {
         private readonly GoHikeDataContext _context;
 
-        public AdminRiskinController(GoHikeDataContext context)
+        public AdminIndicatorController(GoHikeDataContext context)
         {
             _context = context;
         }
@@ -20,7 +20,7 @@ namespace prj.Controllers
         public async Task<IActionResult> Index()
         {
             var riskIndicator = await _context.RiskIndicators.ToListAsync();
-            var rwList = riskIndicator.Select(t => new CRiskIndicatorsWrap(t)).ToList();
+            var rwList = riskIndicator.Select(t => new CIndicatorsWrap(t)).ToList();
             return View(rwList);
         }
 
@@ -31,7 +31,7 @@ namespace prj.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(RiskIndicator riskIndicator)
+        public async Task<IActionResult> Create(Indicator riskIndicator)
         {
             if (ModelState.IsValid)
             {
@@ -48,23 +48,23 @@ namespace prj.Controllers
             {
                 return NotFound();
             }
-            var riskindb = await _context.RiskIndicators.FirstOrDefaultAsync(x => x.RiskIndicatorId == id);
+            var riskindb = await _context.RiskIndicators.FirstOrDefaultAsync(x => x.IndicatorId == id);
             if (riskindb == null)
             {
                 return NotFound();
             }
-            CRiskIndicatorsWrap rw = new CRiskIndicatorsWrap()
+            CIndicatorsWrap rw = new CIndicatorsWrap()
             {
-                riskIndicator = riskindb
+                indicator = riskindb
             };
             return View(rw);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int? id, RiskIndicator riskIndicator)
+        public async Task<IActionResult> Edit(int? id, Indicator riskIndicator)
         {
-            if (id != riskIndicator.RiskIndicatorId || !ModelState.IsValid)
+            if (id != riskIndicator.IndicatorId || !ModelState.IsValid)
             {
                 return NotFound();
             }
@@ -75,7 +75,7 @@ namespace prj.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!RiskIndicatorExists(riskIndicator.RiskIndicatorId))
+                if (!RiskIndicatorExists(riskIndicator.IndicatorId))
                 {
                     return NotFound();
                 }
@@ -93,14 +93,14 @@ namespace prj.Controllers
             {
                 return NotFound();
             }
-            var riskindb = await _context.RiskIndicators.FirstOrDefaultAsync(x => x.RiskIndicatorId == id);
+            var riskindb = await _context.RiskIndicators.FirstOrDefaultAsync(x => x.IndicatorId == id);
             if (riskindb == null)
             {
                 return NotFound();
             }
-            CRiskIndicatorsWrap rw = new CRiskIndicatorsWrap()
+            CIndicatorsWrap rw = new CIndicatorsWrap()
             {
-                riskIndicator = riskindb
+                indicator = riskindb
             };
             return View(rw);
         }
@@ -109,7 +109,7 @@ namespace prj.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(long? id)
         {
-            var riskindb = await _context.RiskIndicators.FirstOrDefaultAsync(x => x.RiskIndicatorId == id);
+            var riskindb = await _context.RiskIndicators.FirstOrDefaultAsync(x => x.IndicatorId == id);
             if (riskindb != null)
             {
                 _context.RiskIndicators.Remove(riskindb);
@@ -121,7 +121,7 @@ namespace prj.Controllers
 
         private bool RiskIndicatorExists(long? riskIndicatorId)
         {
-            return _context.RiskIndicators.Any(e => e.RiskIndicatorId == riskIndicatorId);
+            return _context.RiskIndicators.Any(e => e.IndicatorId == riskIndicatorId);
         }
     }
 }

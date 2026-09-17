@@ -19,7 +19,7 @@ public partial class TrailRiskIndicator
 
     public DateTime EvaluatedAt { get; set; }
 
-    public virtual RiskIndicator RiskIndicator { get; set; } = null!;
+    public virtual Indicator RiskIndicator { get; set; } = null!;
 
     public virtual Trail Trail { get; set; } = null!;
 }
