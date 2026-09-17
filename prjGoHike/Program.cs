@@ -1,8 +1,10 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.Hubs;
+using Microsoft.IdentityModel.Tokens;
 using prjGoHike.Models;
 using prjGoHike.Services;
+using System.Text;
 
 using prjGoHike.Services.forum;
 
@@ -16,9 +18,30 @@ builder.Services.AddDbContext<GoHikeDataContext>(options => options.UseSqlServer
 builder.Services.AddScoped<CloudinaryService>();
 builder.Services.AddScoped<SensitiveWordService>();
 builder.Services.AddScoped<CommentValidationService>();
+builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+builder.Services.Configure<GoogleAuthSettings>(
+    builder.Configuration.GetSection(GoogleAuthSettings.SectionName));
 
 builder.Services.AddHttpClient<GeminiModerationService>();
 #endregion
+var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()
+    ?? throw new InvalidOperationException("JwtSettings 設定遺失。");
+
+if (string.IsNullOrWhiteSpace(jwtSettings.SecretKey) ||
+    string.IsNullOrWhiteSpace(jwtSettings.Issuer) ||
+    string.IsNullOrWhiteSpace(jwtSettings.Audience))
+{
+    throw new InvalidOperationException("JwtSettings 的 SecretKey、Issuer 、 Audience 都必填。");
+}
+
+if (Encoding.UTF8.GetByteCount(jwtSettings.SecretKey) < 32)
+{
+    throw new InvalidOperationException(
+        "JwtSettings:SecretKey 至少需要 32 bytes，用 User Secrets 或部署環境變數設定安全的隨機金鑰。");
+}
+
 // Add services to the container.
 
 // OpenAPI uses HTTP JSON options; match the existing MVC GeoJSON converter.
@@ -50,36 +73,29 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
+
+builder.Services.AddAuthentication(options =>
     {
-        options.LoginPath = "/Login";              // 未登入時重定向到登入頁面
-        options.LogoutPath = "/Login/Logout";      // 登出路徑
-        options.AccessDeniedPath = "/Login";       // 無權限時重定向
-        options.ExpireTimeSpan = TimeSpan.FromHours(8);  // Cookie 預設有效期
-        options.SlidingExpiration = true;          // 滑動過期時間（每次請求延長）
-
-        if (builder.Environment.IsDevelopment())
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
         {
-            options.Cookie.SameSite =
-                SameSiteMode.None;
-
-            options.Cookie.SecurePolicy =
-                CookieSecurePolicy.Always;
-        }
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
+            ValidateIssuer = true,
+            ValidIssuer = jwtSettings.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwtSettings.Audience,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero,
+            NameClaimType = System.Security.Claims.ClaimTypes.Name,
+            RoleClaimType = System.Security.Claims.ClaimTypes.Role
+        };
     });
 builder.Services.AddAuthorization();
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAngular",
-        policy =>
-        {
-            policy.WithOrigins("http://localhost:4200")
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
-        });
-});
 builder.Services.AddLogging(config =>
 {
     config.AddConsole();
@@ -110,26 +126,20 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
+    app.UseHttpsRedirection();
 }
 
-app.UseHttpsRedirection();
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.UseSwaggerUI(options =>
-    {
-        options.RoutePrefix = "swagger";
-        options.SwaggerEndpoint("../openapi/v1.json", "GoHike API v1");
-    });
-}
 app.UseRouting();
-app.UseCors("AllowAngular");
+app.UseCors("AngularDevelopment");
+app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseSession();
 app.UseCors("GroupJoin");
 app.UseAuthorization();
 
 app.MapStaticAssets();
+app.MapControllers();
 
 app.MapControllerRoute(
     name: "default",

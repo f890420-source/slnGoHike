@@ -106,6 +106,8 @@ public partial class GoHikeDataContext : DbContext
 
     public virtual DbSet<Tag> Tags { get; set; }
 
+    public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("Name=ConnectionStrings:GoHikeDataContext", x => x.UseNetTopologySuite());
 
@@ -119,6 +121,23 @@ public partial class GoHikeDataContext : DbContext
             .HasValue<Member>("一般會員")
             .HasValue<EventLeader>("團主")
             .HasValue<Admin>("管理員");
+
+        modelBuilder.Entity<Level>().HasData(
+        new Level { LevelId = 2, LevelName = "新手登山客", MinXp = 0, MaxXp = 100 },
+        new Level { LevelId = 3, LevelName = "初階登山客", MinXp = 101, MaxXp = 500 },
+        new Level { LevelId = 4, LevelName = "進階登山客", MinXp = 501, MaxXp = 1500 },
+        new Level { LevelId = 5, LevelName = "資深登山客", MinXp = 1501, MaxXp = 3000 },
+        new Level { LevelId = 6, LevelName = "登山達人", MinXp = 3001, MaxXp = 99999 });
+
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasIndex(e => e.Token).IsUnique();
+
+            entity.HasOne(e => e.User)
+                .WithMany() // User.txt不用加collection屬性，單向關聯
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
 
         modelBuilder.Entity<Achievement>(entity =>
         {
@@ -1164,6 +1183,7 @@ public partial class GoHikeDataContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("created_at");
             entity.Property(e => e.CurrentLevelId).HasColumnName("current_level_id");
+            entity.Property(e => e.DisplayedAchievementId).HasColumnName("displayed_achievement_id");
             entity.Property(e => e.DifficultyPreference)
                 .HasMaxLength(50)
                 .IsUnicode(false)
@@ -1197,6 +1217,11 @@ public partial class GoHikeDataContext : DbContext
                 .HasForeignKey(d => d.CurrentLevelId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_users_current_level_id");
+
+            entity.HasOne(d => d.DisplayedAchievement).WithMany()
+                .HasForeignKey(d => d.DisplayedAchievementId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_users_displayed_achievement_id");
         });
 
         modelBuilder.Entity<UserAchievement>(entity =>
@@ -1230,6 +1255,7 @@ public partial class GoHikeDataContext : DbContext
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.TagId).HasColumnName("tag_id");
+            entity.Property(e => e.IsDisplayed).HasColumnName("is_displayed");
             entity.Property(e => e.Source)
                 .HasMaxLength(20)
                 .IsUnicode(false)

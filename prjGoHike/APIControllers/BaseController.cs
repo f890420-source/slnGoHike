@@ -6,7 +6,6 @@ namespace prjGoHike.APIControllers
 
 {
     [ApiController]
-    [Route("api/v1/[controller]")]
     public abstract class BaseController : ControllerBase
     {
         /// 成功回應 (HTTP 200 OK)
