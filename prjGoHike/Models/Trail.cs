@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using NetTopologySuite.Geometries;
 
 namespace prjGoHike.Models;
 
@@ -23,8 +22,6 @@ public partial class Trail
     public bool GuideRequired { get; set; }
 
     public string? RegulationNote { get; set; }
-
-    public Geometry? TrailPath { get; set; }
 
     public bool IsPublished { get; set; }
 

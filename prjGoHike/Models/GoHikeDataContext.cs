@@ -1025,10 +1025,7 @@ public partial class GoHikeDataContext : DbContext
 
         modelBuilder.Entity<TrailSegment>(entity =>
         {
-            entity.HasIndex(e => e.TrailId, "IX_TrailSegments_Trail_Id");
-
             entity.Property(e => e.TrailSegmentId).HasColumnName("TrailSegment_Id");
-            entity.Property(e => e.RoutePath).HasColumnName("Route_Path");
             entity.Property(e => e.Source).HasMaxLength(50);
             entity.Property(e => e.SourceId)
                 .HasMaxLength(100)

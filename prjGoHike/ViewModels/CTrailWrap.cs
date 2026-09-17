@@ -94,13 +94,6 @@ public partial class CTrailWrap
     }
 
     [ScaffoldColumn(false)]
-    public Geometry? TrailPath
-    {
-        get { return _trail.TrailPath; }
-        set { _trail.TrailPath = value; }
-    }
-
-    [ScaffoldColumn(false)]
     [DisplayName("是否已發布")]
     public bool IsPublished
     {

@@ -64,12 +64,12 @@ public class AdminTrailsController : Controller
         {
             TrailId = trail.TrailId,
             TrailName = trail.TrailName,
-            Segments = segments.Where(s => s.RoutePath != null)
+            Segments = segments.Where(s => s.Shape != null)
                                .Select(s => new TrailSegmentMapViewModel
                                {
                                    TrailSegmentId = s.TrailSegmentId,
                                    Source = s.Source,
-                                   Coordinates = s.RoutePath.Coordinates
+                                   Coordinates = s.Shape.Coordinates
                                    .Select(c => new[] { c.X, c.Y })
                                    .ToArray()
                                })
@@ -134,7 +134,7 @@ public class AdminTrailsController : Controller
 
         trail.TrailSegments.Add(new TrailSegment()
         {
-            RoutePath = routePath,
+            Shape = routePath,
             Source = "Create Upload (GeoJSON)"
         });
 
@@ -172,7 +172,7 @@ public class AdminTrailsController : Controller
             RegulationNote = traildb.RegulationNote,
             IsPublished = traildb.IsPublished,
 
-            CurrentRouteCoordinates = segment?.RoutePath.Coordinates
+            CurrentRouteCoordinates = segment?.Shape.Coordinates
         .Select(c => new[] { c.X, c.Y })
         .ToArray()
         ?? Array.Empty<double[]>()
@@ -249,14 +249,14 @@ public class AdminTrailsController : Controller
                 trail.TrailSegments.Add(
                     new TrailSegment
                     {
-                        RoutePath = newRoutePath,
+                        Shape = newRoutePath,
                         Source = "Edit Upload (GeoJSON)"
                     }
                 );
             }
             else
             {
-                segment.RoutePath = newRoutePath;
+                segment.Shape = newRoutePath;
                 segment.Source = "Edit Upload (GeoJSON)";
             }
         }

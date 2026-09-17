@@ -39,7 +39,7 @@ namespace prjGoHike.APIControllers
                             {
                                 id = s.TrailSegmentId,
                                 Source = s.Source,
-                                Geometry = s.RoutePath
+                                Geometry = s.Shape
                             })
                 }
             );
