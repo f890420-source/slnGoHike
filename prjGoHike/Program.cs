@@ -1,14 +1,20 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using prjGoHike.Hubs;
 using prjGoHike.Models;
-
+using prjGoHike.Services.forum;
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("GoHikeDataContext") ?? throw new InvalidOperationException("Connection string 'GoHikeDataContext' not found.");
 
 builder.Services.AddDbContext<GoHikeDataContext>(options => options.UseSqlServer(connectionString));
+#region 討論區用的 Service
+builder.Services.AddScoped<CloudinaryService>();
+builder.Services.AddScoped<SensitiveWordService>();
+builder.Services.AddScoped<CommentValidationService>();
 
+builder.Services.AddHttpClient<GeminiModerationService>();
+#endregion
 // Add services to the container.
-builder.Services.AddControllersWithViews();
 
 builder.Services.AddCors(options =>
 {
@@ -41,12 +47,24 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         }
     });
 builder.Services.AddAuthorization();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngular",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:4200")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
+});
 builder.Services.AddLogging(config =>
 {
     config.AddConsole();
     config.AddDebug();
 });
 builder.Services.AddControllersWithViews();
+builder.Services.AddSignalR();
 builder.Services.AddSession();
 var app = builder.Build();
 
@@ -59,8 +77,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
-app.UseCors("AngularDevelopment");
-
+app.UseCors("AllowAngular");
 app.UseAuthentication();
 app.UseSession();
 
@@ -73,5 +90,5 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
-
+app.MapHub<CommentHub>("/commentHub");
 app.Run();
