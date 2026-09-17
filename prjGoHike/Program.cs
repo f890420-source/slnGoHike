@@ -28,7 +28,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 builder.Services.AddOpenApi("v1", options =>
 {
     options.ShouldInclude = description =>
-        description.RelativePath?.StartsWith("api/v1/", StringComparison.OrdinalIgnoreCase) == true;
+        description.RelativePath?.StartsWith("api/", StringComparison.OrdinalIgnoreCase) == true;
     options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
         document.Info.Title = "GoHike API";
