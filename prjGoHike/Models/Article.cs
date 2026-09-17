@@ -1,4 +1,5 @@
-﻿using System;
+﻿using prjGoHike.Models;
+using System;
 using System.Collections.Generic;
 
 namespace prjGoHike.Models;
@@ -25,13 +26,19 @@ public partial class Article
 
     public virtual ICollection<ArticleLike> ArticleLikes { get; set; } = new List<ArticleLike>();
 
+    public virtual ICollection<ArticleView> ArticleViews { get; set; } = new List<ArticleView>();
+
     public virtual Category Category { get; set; } = null!;
 
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
 
     public virtual ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
 
+    public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+
     public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
+
+    public virtual ICollection<Tag> Tags { get; set; } = new List<Tag>();
 
     public virtual User User { get; set; } = null!;
 }

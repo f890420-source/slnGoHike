@@ -1,6 +1,6 @@
 ﻿namespace prjGoHike.Models.Dtos
 {
-    public class SuspensionDto
+    public class HikeRecordDto
     {
     }
 }

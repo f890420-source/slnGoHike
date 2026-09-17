@@ -1,0 +1,15 @@
+﻿namespace prjGoHike.Dtos
+{
+    public class UpdateArticleDto
+    {
+        public int CategoryId { get; set; }
+
+        public string Title { get; set; } = string.Empty;
+
+        public string Content { get; set; } = string.Empty;
+
+        public List<string> KeepImagePaths { get; set; } = new();
+
+        public List<IFormFile> ImageFiles { get; set; } = new();
+    }
+}
