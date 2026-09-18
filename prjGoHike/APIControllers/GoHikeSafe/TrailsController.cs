@@ -9,7 +9,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
 
 {
     [ApiController]
-    [Route("api/v1/trails")]
+    [Route("api/trails")]
     public class TrailsController : BaseController
     {
         private GoHikeDataContext _context;
