@@ -5,7 +5,7 @@ using prjGoHike.DTO.GoHikeSafe;
 using prjGoHike.Models;
 using NetTopologySuite.Geometries;
 
-namespace prjGoHike.APIControllers
+namespace prjGoHike.APIControllers.GoHikeSafe
 
 {
     [ApiController]
