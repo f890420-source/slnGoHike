@@ -1,9 +1,8 @@
 
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using prjGoHike.Models;
 using prjGoHike.ViewModels;
+using prjGoHike.Models;
 
 public class AdminDisAlertController : Controller
 {
@@ -15,7 +14,6 @@ public class AdminDisAlertController : Controller
     }
 
     // GET: CDISASTERALERTWRAPS
-    [Authorize]
     public async Task<IActionResult> Index()    
     {
         var disasterAlert = await _context.DisasterAlerts.ToListAsync();
@@ -24,7 +22,6 @@ public class AdminDisAlertController : Controller
     }
 
     // GET: CDISASTERALERTWRAPS/Create
-    [Authorize]
     public IActionResult Create()
     {
         return View();
@@ -35,7 +32,6 @@ public class AdminDisAlertController : Controller
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize]
     public async Task<IActionResult> Create([Bind("disasterAlert,AlertId,AlertType,AlertTitle,AlertDescription,SeverityLevel,EffectiveFrom,EffectiveTo,SourceAgency,SourceUrl,IsActive")] DisasterAlert disasterAlert)
     {
         if (ModelState.IsValid)
@@ -48,7 +44,6 @@ public class AdminDisAlertController : Controller
     }
 
     // GET: CDISASTERALERTWRAPS/Edit/5
-    [Authorize]
     public async Task<IActionResult> Edit(long? id)
     {
         if (id == null)
@@ -73,7 +68,6 @@ public class AdminDisAlertController : Controller
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize]
     public async Task<IActionResult> Edit(long? id, [Bind("disasterAlert,AlertId,AlertType,AlertTitle,AlertDescription,SeverityLevel,EffectiveFrom,EffectiveTo,SourceAgency,SourceUrl,IsActive")] DisasterAlert disasterAlert)
     {
         if (id != disasterAlert.AlertId || !ModelState.IsValid)
@@ -101,7 +95,6 @@ public class AdminDisAlertController : Controller
     }
 
     // GET: CDISASTERALERTWRAPS/Delete/5
-    [Authorize]
     public async Task<IActionResult> Delete(long? id)
     {
         if (id == null)
@@ -125,7 +118,6 @@ public class AdminDisAlertController : Controller
     // POST: CDISASTERALERTWRAPS/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    [Authorize]
     public async Task<IActionResult> DeleteConfirmed(long? id)
     {
         var disalertdb = await _context.DisasterAlerts.FirstOrDefaultAsync(x => x.AlertId == id);
