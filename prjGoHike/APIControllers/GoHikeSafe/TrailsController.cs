@@ -4,19 +4,28 @@ using Microsoft.EntityFrameworkCore;
 using prjGoHike.DTO.GoHikeSafe;
 using prjGoHike.Models;
 using NetTopologySuite.Geometries;
+using Microsoft.AspNetCore.Authorization;
+using prjGoHike.APIControllers.User;
+using System.Security.Claims;
 
 namespace prjGoHike.APIControllers.GoHikeSafe
 
 {
     [ApiController]
     [Route("api/trails")]
+    [Authorize]
     public class TrailsController : BaseController
     {
         private GoHikeDataContext _context;
+        private readonly ILogger<LoginController> _logger;
         
-        public TrailsController (GoHikeDataContext context)
+        public TrailsController (
+            GoHikeDataContext context,
+            ILogger<LoginController> logger
+        )
         {
             _context = context;
+            _logger = logger;
         }
         
         [HttpGet]
@@ -27,6 +36,12 @@ namespace prjGoHike.APIControllers.GoHikeSafe
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> List()
         {
+            if (!long.TryParse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier),
+                out var userId))
+            {
+                return Unauthorized();
+            }   
             var trailsQuery = _context.Trails.Where(x => x.IsPublished == true).Select(
                 x => new TrailPublicDto()
                 {
@@ -50,12 +65,14 @@ namespace prjGoHike.APIControllers.GoHikeSafe
                     .ToListAsync();
                 if (trailsResult is not null)
                 {
+                    _logger.LogInformation($"使用者 {userId} 索取步道清單一次");
                     return SuccessResponse(trailsResult);
                 }
             }
             catch (Exception ex)
             {
-                return ErrorResponse(ex.Message);
+                _logger.LogError($"{ex.GetType()} (UserId: {userId}): {ex.Message}");
+                return ErrorResponse("發生錯誤，請洽管理員。");
             }
             return NotFoundResponse("找不到步道!");
         }
