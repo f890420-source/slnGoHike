@@ -7,6 +7,8 @@ using prjGoHike.Services;
 using System.Text;
 
 using prjGoHike.Services.forum;
+using Microsoft.OpenApi;
+using Microsoft.AspNetCore.Authorization;
 
 string GroupJoinRoute = "http://localhost:4200";
 
@@ -56,6 +58,40 @@ builder.Services.AddOpenApi("v1", options =>
     {
         document.Info.Title = "GoHike API";
         document.Info.Version = "v1";
+        // 讓 Swagger UI 顯示 Authorize 按鈕。
+        document.Components ??= new OpenApiComponents();
+        document.Components.SecuritySchemes ??=
+            new Dictionary<string, IOpenApiSecurityScheme>();
+
+        document.Components.SecuritySchemes["Bearer"] =
+            new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT",
+                Description = "貼上登入取得的 Access Token，不需加 Bearer 前綴。"
+            };
+        return Task.CompletedTask;
+    });
+    options.AddOperationTransformer((operation, context, cancellationToken) =>
+    {
+        var metadata = context.Description.ActionDescriptor.EndpointMetadata;
+
+        var requiresAuthorization = metadata.OfType<IAuthorizeData>().Any();
+        var allowsAnonymous = metadata.OfType<IAllowAnonymous>().Any();
+
+        // 只有需要授權的 API 才顯示鎖頭。
+        if (requiresAuthorization && !allowsAnonymous)
+        {
+            operation.Security ??= [];
+
+            operation.Security.Add(new OpenApiSecurityRequirement
+            {
+                [new OpenApiSecuritySchemeReference(
+                    "Bearer", context.Document)] = []
+            });
+        }
+
         return Task.CompletedTask;
     });
     options.AddSchemaTransformer<GeoJsonSchemaTransformer>();
@@ -135,6 +171,7 @@ if (app.Environment.IsDevelopment())
     {
         options.RoutePrefix = "swagger";
         options.SwaggerEndpoint("../openapi/v1.json", "GoHike API v1");
+
     });
 }
 app.UseRouting();
