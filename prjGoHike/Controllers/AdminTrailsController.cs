@@ -1,5 +1,4 @@
 
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite;
@@ -20,7 +19,6 @@ public class AdminTrailsController : Controller
     }
 
     // GET: AdminTrails
-    [Authorize]
     public async Task<IActionResult> Index(CKeywordViewModel vm)
     {
         List<Trail>? trails = null;
@@ -41,7 +39,6 @@ public class AdminTrailsController : Controller
         return View(twList);
     }
 
-    [Authorize]
     // GET: AdminTrails/Details/5
     public async Task<IActionResult> Map(long? id)
     {
@@ -82,7 +79,6 @@ public class AdminTrailsController : Controller
         return View(viewModel);
     }
 
-    [Authorize]
     // GET: AdminTrails/Create
     public IActionResult Create()
     {
@@ -94,7 +90,6 @@ public class AdminTrailsController : Controller
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize]
     public async Task<IActionResult> Create(TrailCreateViewModel vm)
     {
         if (!ModelState.IsValid)
@@ -149,7 +144,6 @@ public class AdminTrailsController : Controller
     }
 
     // GET: AdminTrails/Edit/5
-    [Authorize]
     public async Task<IActionResult> Edit(long? id)
     {
         if (id == null)
@@ -191,7 +185,6 @@ public class AdminTrailsController : Controller
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize]
     public async Task<IActionResult> Edit(int? id, TrailEditViewModel vm)
     {
         if (id != vm.TrailId || !ModelState.IsValid)
@@ -286,7 +279,6 @@ public class AdminTrailsController : Controller
     }
 
     // GET: AdminTrails/Delete/5
-    [Authorize]
     public async Task<IActionResult> Delete(long? id)
     {
         if (id == null)
@@ -311,7 +303,6 @@ public class AdminTrailsController : Controller
     // POST: AdminTrails/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    [Authorize]
     public async Task<IActionResult> DeleteConfirmed(long? id)
     {
         var trail = await _context.Trails
