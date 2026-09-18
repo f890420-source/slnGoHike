@@ -2,6 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.Dtos.Forum;
 using prjGoHike.Models;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace prjGoHike.Controllers
 {
@@ -18,11 +20,22 @@ namespace prjGoHike.Controllers
         }
         #region 取得未讀通知
         // GET: api/Notifications/unread
+        [Authorize]
         [HttpGet("unread")]
         public async Task<ActionResult<IEnumerable<NotificationDto>>>
             GetUnreadNotifications()
         {
-            const long userId = 15;
+            // =========================
+            // 取得目前登入會員
+            // =========================
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized("無法取得登入會員資料");
+            }
 
             var notifications = await _context.Notifications
 
@@ -67,10 +80,21 @@ namespace prjGoHike.Controllers
 
         #region 標記通知為已讀
         // PUT: api/Notifications/{id}/read
+        [Authorize]
         [HttpPut("{id}/read")]
         public async Task<IActionResult> MarkAsRead(long id)
         {
-            const long userId = 15;
+            // =========================
+            // 取得目前登入會員
+            // =========================
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized("無法取得登入會員資料");
+            }
 
             var notification = await _context.Notifications
                 .FirstOrDefaultAsync(n =>
@@ -82,7 +106,7 @@ namespace prjGoHike.Controllers
                 return NotFound("找不到通知");
             }
 
-            // 已讀
+            // 標記為已讀
             notification.IsRead = true;
 
             await _context.SaveChangesAsync();

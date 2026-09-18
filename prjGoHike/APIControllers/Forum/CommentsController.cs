@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.SignalR;
 using prjGoHike.Hubs;
 using prjGoHike.Services.forum;
 using prjGoHike.Dtos.Forum;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 namespace prjGoHike.Controllers
 {
     [Route("api/[controller]")]
@@ -81,10 +83,23 @@ namespace prjGoHike.Controllers
 
         #region 發布留言
         // POST: api/Comments
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<CommentDto>> CreateComment(
             [FromForm] CreateCommentDto dto)
         {
+            // =========================
+            // 取得目前登入會員
+            // =========================
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized("無法取得登入會員資料");
+            }
+
             // =========================
             // 留言圖片驗證
             // =========================
@@ -139,8 +154,7 @@ namespace prjGoHike.Controllers
             {
                 ArticleId = dto.ArticleId,
 
-                // TODO: 之後改成從登入會員 Claims 取得
-                UserId = 15,
+                UserId = userId,
 
                 Content = dto.Content,
 
@@ -204,24 +218,16 @@ namespace prjGoHike.Controllers
             // 建立留言回覆通知
             // Type 2 = 我的留言收到回覆
             // =========================
-            if (comment.ParentCommentId != null)
+            if (comment.ParentCommentId != null &&
+                comment.ReplyToUserId != null)
             {
-                var parentComment = await _context.Comments
-                    .Where(c => c.CommentId == comment.ParentCommentId)
-                    .Select(c => new
-                    {
-                        c.UserId
-                    })
-                    .FirstOrDefaultAsync();
-
-                // 被回覆的留言存在，而且不是自己回覆自己
-                if (parentComment != null &&
-                    parentComment.UserId != comment.UserId)
+                // 不是自己回覆自己才建立通知
+                if (comment.ReplyToUserId != comment.UserId)
                 {
                     var notification = new Notification
                     {
-                        // 收到通知的人 = 被回覆留言的作者
-                        UserId = parentComment.UserId,
+                        // 收到通知的人 = 被回覆的會員
+                        UserId = comment.ReplyToUserId.Value,
 
                         // 發送通知的人 = 回覆者
                         SenderUserId = comment.UserId,

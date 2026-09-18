@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.Models;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace prjGoHike.Controllers
 {
@@ -15,14 +17,25 @@ namespace prjGoHike.Controllers
         {
             _context = context;
         }
+
         #region 新增文章按讚
-        // POST: api/ArticleLikes/10
+        // POST: api/ArticleLikes/{articleId}
+        [Authorize]
         [HttpPost("{articleId}")]
         public async Task<IActionResult> LikeArticle(
             int articleId)
         {
-            // TODO: 之後改成登入會員 Claims
-            long userId = 15;
+            // =========================
+            // 取得目前登入會員
+            // =========================
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized("無法取得登入會員資料");
+            }
 
             var exists = await _context.ArticleLikes
                 .AnyAsync(x =>
@@ -45,6 +58,7 @@ namespace prjGoHike.Controllers
             _context.ArticleLikes.Add(like);
 
             await _context.SaveChangesAsync();
+
             // =========================
             // 建立文章按讚通知
             // Type 3 = 我的文章收到按讚
@@ -104,13 +118,23 @@ namespace prjGoHike.Controllers
         #endregion
 
         #region 取消文章按讚
-        // DELETE: api/ArticleLikes/2
+        // DELETE: api/ArticleLikes/{articleId}
+        [Authorize]
         [HttpDelete("{articleId}")]
         public async Task<IActionResult> UnlikeArticle(
             int articleId)
         {
-            // TODO: 之後改成登入會員 Claims
-            long userId = 15;
+            // =========================
+            // 取得目前登入會員
+            // =========================
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized("無法取得登入會員資料");
+            }
 
             var like = await _context.ArticleLikes
                 .FirstOrDefaultAsync(x =>
@@ -132,13 +156,23 @@ namespace prjGoHike.Controllers
         #endregion
 
         #region 取得文章按讚狀態
-        // GET: api/ArticleLikes/2
+        // GET: api/ArticleLikes/{articleId}
+        [Authorize]
         [HttpGet("{articleId}")]
         public async Task<IActionResult> GetLikeStatus(
             int articleId)
         {
-            // TODO: 之後改成登入會員 Claims
-            long userId = 15;
+            // =========================
+            // 取得目前登入會員
+            // =========================
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized("無法取得登入會員資料");
+            }
 
             var likeCount = await _context.ArticleLikes
                 .CountAsync(x =>

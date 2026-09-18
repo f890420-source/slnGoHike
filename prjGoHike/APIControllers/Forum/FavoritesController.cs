@@ -2,6 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.Dtos.Forum;
 using prjGoHike.Models;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace prjGoHike.Controllers
 {
@@ -18,15 +20,24 @@ namespace prjGoHike.Controllers
         }
 
 
-
         #region 新增收藏
-        // POST: api/Favorites/7
+        // POST: api/Favorites/{articleId}
+        [Authorize]
         [HttpPost("{articleId}")]
         public async Task<IActionResult> AddFavorite(
             int articleId)
         {
-            // TODO: 之後改成登入會員 Claims
-            long userId = 15;
+            // =========================
+            // 取得目前登入會員
+            // =========================
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized("無法取得登入會員資料");
+            }
 
             var exists = await _context.Favorites
                 .AnyAsync(x =>
@@ -55,13 +66,23 @@ namespace prjGoHike.Controllers
         #endregion
 
         #region 取消收藏
-        // DELETE: api/Favorites/7
+        // DELETE: api/Favorites/{articleId}
+        [Authorize]
         [HttpDelete("{articleId}")]
         public async Task<IActionResult> RemoveFavorite(
             int articleId)
         {
-            // TODO: 之後改成登入會員 Claims
-            long userId = 15;
+            // =========================
+            // 取得目前登入會員
+            // =========================
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized("無法取得登入會員資料");
+            }
 
             var favorite = await _context.Favorites
                 .FirstOrDefaultAsync(x =>
@@ -83,13 +104,23 @@ namespace prjGoHike.Controllers
         #endregion
 
         #region 取得收藏狀態
-        // GET: api/Favorites/7
+        // GET: api/Favorites/{articleId}
+        [Authorize]
         [HttpGet("{articleId}")]
         public async Task<IActionResult> GetFavoriteStatus(
             int articleId)
         {
-            // TODO: 之後改成登入會員 Claims
-            long userId = 15;
+            // =========================
+            // 取得目前登入會員
+            // =========================
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized("無法取得登入會員資料");
+            }
 
             var isFavorited = await _context.Favorites
                 .AnyAsync(x =>
@@ -106,10 +137,21 @@ namespace prjGoHike.Controllers
 
         #region 取得收藏的文章
         // GET: api/Favorites
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ArticleDto>>> GetFavorites()
         {
-            const long userId = 15; // TODO: 之後改成從 Claims 取得
+            // =========================
+            // 取得目前登入會員
+            // =========================
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized("無法取得登入會員資料");
+            }
 
             var articles = await _context.Favorites
                 .Where(f => f.UserId == userId)

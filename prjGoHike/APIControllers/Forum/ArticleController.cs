@@ -4,6 +4,9 @@ using prjGoHike.Dtos;
 using prjGoHike.Dtos.Forum;
 using prjGoHike.Models;
 using prjGoHike.Services.forum;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+
 namespace prjGoHike.Controllers
 {
     [Route("api/[controller]")]
@@ -116,10 +119,30 @@ namespace prjGoHike.Controllers
 
         #region 發文
         // POST: api/Articles
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<ArticleDto>> CreateArticle(
             [FromForm] CreateArticleDto dto)
         {
+
+            var userIdClaim =
+    User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized("無法取得登入會員資料");
+            }
+
+            Console.WriteLine(
+                $"目前登入會員 UserId = {userId}"
+            );
+
+            Console.WriteLine(
+                $"收到的 CategoryId = {dto.CategoryId}"
+            );
+
+
             Console.WriteLine($"收到的 CategoryId = {dto.CategoryId}");
             // =========================
             // 文章資料驗證
@@ -174,8 +197,7 @@ namespace prjGoHike.Controllers
             // 1. 建立文章
             var article = new Article
             {
-                // TODO: 之後改成從登入會員 Claims 取得
-                UserId = 15,
+                UserId = userId,
 
                 CategoryId = dto.CategoryId,
                 Title = dto.Title.Trim(),
@@ -369,10 +391,19 @@ namespace prjGoHike.Controllers
 
         #region 取得登入者的發文
         // GET: api/Articles/my
+        [Authorize]
         [HttpGet("my")]
         public async Task<ActionResult<IEnumerable<ArticleDto>>> GetMyArticles()
         {
-            const long userId = 15;
+            // 從 JWT Claims 取得目前登入會員 UserId
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized("無法取得登入會員資料");
+            }
 
             var articles = await _context.Articles
                 .Where(a => a.UserId == userId)
@@ -417,12 +448,21 @@ namespace prjGoHike.Controllers
 
         #region 修改文章
         // PUT: api/Articles/{id}
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateArticle(
             int id,
             [FromForm] UpdateArticleDto dto)
         {
-            const long userId = 15;
+            // 從 JWT Claims 取得目前登入會員 UserId
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized("無法取得登入會員資料");
+            }
 
             var article = await _context.Articles
                 .Include(a => a.ArticleImages)
@@ -501,16 +541,25 @@ namespace prjGoHike.Controllers
 
         #region 刪除文章
         // DELETE: api/Articles/{id}
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteArticle(int id)
         {
-            const long userId = 15;
+            // 從 JWT Claims 取得目前登入會員 UserId
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized("無法取得登入會員資料");
+            }
 
             var article = await _context.Articles
-      .Include(a => a.Tags)
-      .FirstOrDefaultAsync(a =>
-          a.ArticleId == id &&
-          a.UserId == userId);
+                .Include(a => a.Tags)
+                .FirstOrDefaultAsync(a =>
+                    a.ArticleId == id &&
+                    a.UserId == userId);
 
             if (article == null)
             {
@@ -640,8 +689,6 @@ namespace prjGoHike.Controllers
         [HttpPost("{id}/view")]
         public async Task<IActionResult> RecordArticleView(int id)
         {
-            const long userId = 15;
-
             // 確認文章存在
             var articleExists = await _context.Articles
                 .AnyAsync(a =>
@@ -651,6 +698,17 @@ namespace prjGoHike.Controllers
             if (!articleExists)
             {
                 return NotFound("找不到文章");
+            }
+
+            // 從 JWT Claims 取得目前登入會員 UserId
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            // 未登入使用者不記錄瀏覽紀錄
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Ok();
             }
 
             // 30 分鐘內的時間
