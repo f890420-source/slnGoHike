@@ -1,13 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using static prjGoHike.Models.UserPermissions;
+using Microsoft.EntityFrameworkCore;
 
 namespace prjGoHike.Models;
 
 public partial class GoHikeDataContext : DbContext
 {
-    public DbSet<prjGoHike.Models.CEventDataWarp> CEventDataWarp { get; set; } = default!;
     public GoHikeDataContext()
     {
     }
@@ -30,6 +28,8 @@ public partial class GoHikeDataContext : DbContext
     public virtual DbSet<ArticleImage> ArticleImages { get; set; }
 
     public virtual DbSet<ArticleLike> ArticleLikes { get; set; }
+
+    public virtual DbSet<ArticleView> ArticleViews { get; set; }
 
     public virtual DbSet<Category> Categories { get; set; }
 
@@ -69,11 +69,15 @@ public partial class GoHikeDataContext : DbContext
 
     public virtual DbSet<MountainEquipmentSuggestion> MountainEquipmentSuggestions { get; set; }
 
+    public virtual DbSet<Notification> Notifications { get; set; }
+
     public virtual DbSet<Notify> Notifies { get; set; }
 
     public virtual DbSet<PersonalEquipmentDetail> PersonalEquipmentDetails { get; set; }
 
     public virtual DbSet<PersonalEquipmentList> PersonalEquipmentLists { get; set; }
+
+    public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
 
     public virtual DbSet<Report> Reports { get; set; }
 
@@ -82,6 +86,8 @@ public partial class GoHikeDataContext : DbContext
     public virtual DbSet<SkillTag> SkillTags { get; set; }
 
     public virtual DbSet<SuspensionSchedule> SuspensionSchedules { get; set; }
+
+    public virtual DbSet<Tag> Tags { get; set; }
 
     public virtual DbSet<Trail> Trails { get; set; }
 
@@ -100,45 +106,12 @@ public partial class GoHikeDataContext : DbContext
     public virtual DbSet<UserAchievement> UserAchievements { get; set; }
 
     public virtual DbSet<UserSkillTag> UserSkillTags { get; set; }
-    public virtual DbSet<ArticleView> ArticleViews { get; set; }
-
-    public virtual DbSet<Notification> Notifications { get; set; }
-
-    public virtual DbSet<Tag> Tags { get; set; }
-
-    public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("Name=ConnectionStrings:GoHikeDataContext", x => x.UseNetTopologySuite());
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        base.OnModelCreating(modelBuilder);
-
-        // TPH 繼承設定:用 Role 欄位的值決定要 new 成哪個子類
-        modelBuilder.Entity<User>()
-            .HasDiscriminator<string>("Role")
-            .HasValue<Member>("一般會員")
-            .HasValue<EventLeader>("團主")
-            .HasValue<Admin>("管理員");
-
-        modelBuilder.Entity<Level>().HasData(
-        new Level { LevelId = 2, LevelName = "新手登山客", MinXp = 0, MaxXp = 100 },
-        new Level { LevelId = 3, LevelName = "初階登山客", MinXp = 101, MaxXp = 500 },
-        new Level { LevelId = 4, LevelName = "進階登山客", MinXp = 501, MaxXp = 1500 },
-        new Level { LevelId = 5, LevelName = "資深登山客", MinXp = 1501, MaxXp = 3000 },
-        new Level { LevelId = 6, LevelName = "登山達人", MinXp = 3001, MaxXp = 99999 });
-
-        modelBuilder.Entity<RefreshToken>(entity =>
-        {
-            entity.HasIndex(e => e.Token).IsUnique();
-
-            entity.HasOne(e => e.User)
-                .WithMany() // User.txt不用加collection屬性，單向關聯
-                .HasForeignKey(e => e.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-
         modelBuilder.Entity<Achievement>(entity =>
         {
             entity.ToTable("achievements");
@@ -168,8 +141,6 @@ public partial class GoHikeDataContext : DbContext
 
         modelBuilder.Entity<AlertSegment>(entity =>
         {
-            entity.HasIndex(e => e.Shape, "SIX_AlertSegments_Shape");
-
             entity.Property(e => e.Description).HasMaxLength(1000);
             entity.Property(e => e.SegmentName).HasMaxLength(200);
             entity.Property(e => e.SourceFeatureId).HasMaxLength(100);
@@ -205,7 +176,7 @@ public partial class GoHikeDataContext : DbContext
 
         modelBuilder.Entity<Announcement>(entity =>
         {
-            entity.HasKey(e => e.AnnouncementId).HasName("PK__Announce__853AB7CFB653CA76");
+            entity.HasKey(e => e.AnnouncementId).HasName("PK__Announce__853AB7CF270BFE7D");
 
             entity.ToTable("Announcement");
 
@@ -257,12 +228,8 @@ public partial class GoHikeDataContext : DbContext
                     {
                         j.HasKey("ArticleId", "TagId");
                         j.ToTable("ArticleTag");
-
-                        j.IndexerProperty<int>("ArticleId")
-                            .HasColumnName("Article_ID");
-
-                        j.IndexerProperty<int>("TagId")
-                            .HasColumnName("Tag_ID");
+                        j.IndexerProperty<int>("ArticleId").HasColumnName("Article_ID");
+                        j.IndexerProperty<int>("TagId").HasColumnName("Tag_ID");
                     });
         });
 
@@ -277,7 +244,7 @@ public partial class GoHikeDataContext : DbContext
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
-            entity.Property(e => e.ImagePath).HasMaxLength(255);
+            entity.Property(e => e.ImagePath).HasMaxLength(500);
             entity.Property(e => e.SortOrder).HasDefaultValue(1);
 
             entity.HasOne(d => d.Article).WithMany(p => p.ArticleImages)
@@ -318,27 +285,19 @@ public partial class GoHikeDataContext : DbContext
 
             entity.ToTable("ArticleView");
 
-            entity.Property(e => e.ViewId)
-                .HasColumnName("View_ID");
-
-            entity.Property(e => e.ArticleId)
-                .HasColumnName("Article_ID");
-
-            entity.Property(e => e.UserId)
-                .HasColumnName("User_ID");
-
+            entity.Property(e => e.ViewId).HasColumnName("View_ID");
+            entity.Property(e => e.ArticleId).HasColumnName("Article_ID");
+            entity.Property(e => e.UserId).HasColumnName("User_ID");
             entity.Property(e => e.ViewedDate)
                 .HasDefaultValueSql("(getdate())", "DF_ArticleView_ViewedDate")
                 .HasColumnType("datetime");
 
-            entity.HasOne(d => d.Article)
-                .WithMany(p => p.ArticleViews)
+            entity.HasOne(d => d.Article).WithMany(p => p.ArticleViews)
                 .HasForeignKey(d => d.ArticleId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ArticleView_Article");
 
-            entity.HasOne(d => d.User)
-                .WithMany(p => p.ArticleViews)
+            entity.HasOne(d => d.User).WithMany(p => p.ArticleViews)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("FK_ArticleView_User");
         });
@@ -397,7 +356,7 @@ public partial class GoHikeDataContext : DbContext
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
-            entity.Property(e => e.ImagePath).HasMaxLength(255);
+            entity.Property(e => e.ImagePath).HasMaxLength(500);
 
             entity.HasOne(d => d.Comment).WithMany(p => p.CommentImages)
                 .HasForeignKey(d => d.CommentId)
@@ -459,30 +418,24 @@ public partial class GoHikeDataContext : DbContext
             entity.Property(e => e.EventDate)
                 .HasColumnType("datetime")
                 .HasColumnName("Event_Date");
-
-            entity.Property(e => e.EventStartTime)
-                .HasColumnType("datetime")
-                .HasColumnName("Event_Start_Time");
-
             entity.Property(e => e.EventEndTime)
                 .HasColumnType("datetime")
                 .HasColumnName("Event_End_Time");
             entity.Property(e => e.EventName)
                 .HasMaxLength(50)
                 .HasColumnName("Event_Name");
+            entity.Property(e => e.EventStartTime)
+                .HasColumnType("datetime")
+                .HasColumnName("Event_Start_Time");
             entity.Property(e => e.HasActiveReport).HasColumnName("Has_Active_Report");
             entity.Property(e => e.LeaderUserId).HasColumnName("Leader_User_Id");
             entity.Property(e => e.MaximumNumber).HasColumnName("Maximum_Number");
             entity.Property(e => e.MountainId).HasColumnName("Mountain_Id");
             entity.Property(e => e.ReviewRequired).HasColumnName("Review_Required");
+
             entity.Property(e => e.ReviewStatus)
                 .HasMaxLength(10)
                 .HasColumnName("Review_Status");
-
-            entity.HasOne(d => d.LeaderUser).WithMany(p => p.EventData)
-                .HasForeignKey(d => d.LeaderUserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_EventData_LeaderUser");
 
             entity.HasOne(d => d.Mountain).WithMany(p => p.EventData)
                 .HasForeignKey(d => d.MountainId)
@@ -566,10 +519,6 @@ public partial class GoHikeDataContext : DbContext
                 .HasMaxLength(10)
                 .HasColumnName("Report_Status");
             entity.Property(e => e.UserId).HasColumnName("User_Id");
-            entity.Property(e => e.ReportTitle)
-    .HasMaxLength(100)
-    .HasColumnName("Report_Title");
-
 
             entity.HasOne(d => d.Event).WithMany(p => p.EventReportComplaints)
                 .HasForeignKey(d => d.EventId)
@@ -580,6 +529,7 @@ public partial class GoHikeDataContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Event_Report_Complaint_User_Id");
+            entity.Property(e => e.ReportTitle).HasColumnName("Report_Title");
         });
 
         modelBuilder.Entity<Favorite>(entity =>
@@ -697,10 +647,6 @@ public partial class GoHikeDataContext : DbContext
 
         modelBuilder.Entity<IndicatorSegment>(entity =>
         {
-            entity.HasIndex(e => e.IndicatorId, "IX_IndicatorSegments_IndicatorId");
-
-            entity.HasIndex(e => e.Shape, "SIX_IndicatorSegments_Shape");
-
             entity.Property(e => e.Description).HasMaxLength(1000);
             entity.Property(e => e.SegmentName).HasMaxLength(200);
             entity.Property(e => e.SourceFeatureId).HasMaxLength(100);
@@ -727,14 +673,14 @@ public partial class GoHikeDataContext : DbContext
         {
             entity.Property(e => e.MountainId).HasColumnName("Mountain_Id");
             entity.Property(e => e.DifficultyLevel).HasColumnName("Difficulty_Level");
+            entity.Property(e => e.Latitude).HasColumnType("decimal(9, 6)");
             entity.Property(e => e.Location).HasMaxLength(50);
+            entity.Property(e => e.Longitude).HasColumnType("decimal(9, 6)");
             entity.Property(e => e.MountainName)
                 .HasMaxLength(100)
                 .HasColumnName("Mountain_Name");
             entity.Property(e => e.MountainsPermitRequired).HasColumnName("Mountains_Permit_Required");
             entity.Property(e => e.NationalParkPermitRequired).HasColumnName("National_Park_Permit_Required");
-            entity.Property(e => e.Longitude).HasPrecision(9, 6);
-            entity.Property(e => e.Latitude).HasPrecision(9, 6);
         });
 
         modelBuilder.Entity<MountainEquipmentSuggestion>(entity =>
@@ -758,6 +704,39 @@ public partial class GoHikeDataContext : DbContext
                 .HasForeignKey(d => d.MountainId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_MountainEquipmentSuggestions_MountainId");
+        });
+
+        modelBuilder.Entity<Notification>(entity =>
+        {
+            entity.ToTable("Notification");
+
+            entity.Property(e => e.NotificationId).HasColumnName("Notification_ID");
+            entity.Property(e => e.ArticleId).HasColumnName("Article_ID");
+            entity.Property(e => e.CommentId).HasColumnName("Comment_ID");
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())", "DF_Notification_CreatedDate")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Message).HasMaxLength(300);
+            entity.Property(e => e.SenderUserId).HasColumnName("Sender_User_ID");
+            entity.Property(e => e.UserId).HasColumnName("User_ID");
+
+            entity.HasOne(d => d.Article).WithMany(p => p.Notifications)
+                .HasForeignKey(d => d.ArticleId)
+                .HasConstraintName("FK_Notification_Article");
+
+            entity.HasOne(d => d.Comment).WithMany(p => p.Notifications)
+                .HasForeignKey(d => d.CommentId)
+                .HasConstraintName("FK_Notification_Comment");
+
+            entity.HasOne(d => d.SenderUser).WithMany(p => p.NotificationSenderUsers)
+                .HasForeignKey(d => d.SenderUserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Notification_SenderUser");
+
+            entity.HasOne(d => d.User).WithMany(p => p.NotificationUsers)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Notification_User");
         });
 
         modelBuilder.Entity<Notify>(entity =>
@@ -792,58 +771,6 @@ public partial class GoHikeDataContext : DbContext
                 .HasConstraintName("FK_Notify_User_Id");
         });
 
-
-        modelBuilder.Entity<Notification>(entity =>
-        {
-            entity.ToTable("Notification");
-
-            entity.Property(e => e.NotificationId)
-                .HasColumnName("Notification_ID");
-
-            entity.Property(e => e.UserId)
-                .HasColumnName("User_ID");
-
-            entity.Property(e => e.SenderUserId)
-                .HasColumnName("Sender_User_ID");
-
-            entity.Property(e => e.ArticleId)
-                .HasColumnName("Article_ID");
-
-            entity.Property(e => e.CommentId)
-                .HasColumnName("Comment_ID");
-
-            entity.Property(e => e.Message)
-                .HasMaxLength(300);
-
-            entity.Property(e => e.IsRead)
-                .HasDefaultValue(false);
-
-            entity.Property(e => e.CreatedDate)
-                .HasDefaultValueSql("(getdate())", "DF_Notification_CreatedDate")
-                .HasColumnType("datetime");
-
-            entity.HasOne(d => d.Article)
-                .WithMany(p => p.Notifications)
-                .HasForeignKey(d => d.ArticleId)
-                .HasConstraintName("FK_Notification_Article");
-
-            entity.HasOne(d => d.Comment)
-                .WithMany(p => p.Notifications)
-                .HasForeignKey(d => d.CommentId)
-                .HasConstraintName("FK_Notification_Comment");
-
-            entity.HasOne(d => d.SenderUser)
-                .WithMany(p => p.NotificationSenderUsers)
-                .HasForeignKey(d => d.SenderUserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Notification_SenderUser");
-
-            entity.HasOne(d => d.User)
-                .WithMany(p => p.NotificationUsers)
-                .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Notification_User");
-        });
         modelBuilder.Entity<PersonalEquipmentDetail>(entity =>
         {
             entity.HasKey(e => e.DetailId);
@@ -886,6 +813,24 @@ public partial class GoHikeDataContext : DbContext
                 .HasForeignKey(d => d.MountainId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_PersonalEquipmentLists_MountainId");
+        });
+
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.Property(e => e.CreatedAt).HasPrecision(0);
+            entity.Property(e => e.ExpiresAt).HasPrecision(0);
+            entity.Property(e => e.ReplacedByToken)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+            entity.Property(e => e.RevokedAt).HasPrecision(0);
+            entity.Property(e => e.Token)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+
+            entity.HasOne(d => d.User).WithMany(p => p.RefreshTokens)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_RefreshTokens_UserId");
         });
 
         modelBuilder.Entity<Report>(entity =>
@@ -1015,13 +960,10 @@ public partial class GoHikeDataContext : DbContext
             entity.HasIndex(e => e.TagName, "UQ_Tag_TagName").IsUnique();
 
             entity.Property(e => e.TagId).HasColumnName("Tag_ID");
-
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())", "DF_Tag_CreatedDate")
                 .HasColumnType("datetime");
-
-            entity.Property(e => e.TagName)
-                .HasMaxLength(30);
+            entity.Property(e => e.TagName).HasMaxLength(30);
         });
 
         modelBuilder.Entity<Trail>(entity =>
@@ -1063,8 +1005,6 @@ public partial class GoHikeDataContext : DbContext
         {
             entity.HasKey(e => new { e.TrailId, e.IndicatorId });
 
-            entity.HasIndex(e => e.IndicatorId, "IX_TrailIndicators_IndicatorId");
-
             entity.Property(e => e.TrailId).HasColumnName("Trail_Id");
             entity.Property(e => e.DistanceMeters).HasColumnType("decimal(12, 2)");
             entity.Property(e => e.EvaluatedAt)
@@ -1087,8 +1027,6 @@ public partial class GoHikeDataContext : DbContext
 
         modelBuilder.Entity<TrailSegment>(entity =>
         {
-            entity.HasIndex(e => e.Shape, "SIX_TrailSegments_Shape");
-
             entity.Property(e => e.TrailSegmentId).HasColumnName("TrailSegment_Id");
             entity.Property(e => e.Source).HasMaxLength(50);
             entity.Property(e => e.SourceId)
@@ -1160,7 +1098,7 @@ public partial class GoHikeDataContext : DbContext
         {
             entity.ToTable("users");
 
-            entity.HasIndex(e => e.Email, "UQ__users__AB6E616496713F0A").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__users__AB6E6164F6B68D47").IsUnique();
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.AccountStatus)
@@ -1183,11 +1121,11 @@ public partial class GoHikeDataContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("created_at");
             entity.Property(e => e.CurrentLevelId).HasColumnName("current_level_id");
-            entity.Property(e => e.DisplayedAchievementId).HasColumnName("displayed_achievement_id");
             entity.Property(e => e.DifficultyPreference)
                 .HasMaxLength(50)
                 .IsUnicode(false)
                 .HasColumnName("difficulty_preference");
+            entity.Property(e => e.DisplayedAchievementId).HasColumnName("displayed_achievement_id");
             entity.Property(e => e.Email)
                 .HasMaxLength(255)
                 .IsUnicode(false)
@@ -1218,7 +1156,7 @@ public partial class GoHikeDataContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_users_current_level_id");
 
-            entity.HasOne(d => d.DisplayedAchievement).WithMany()
+            entity.HasOne(d => d.DisplayedAchievement).WithMany(p => p.Users)
                 .HasForeignKey(d => d.DisplayedAchievementId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("FK_users_displayed_achievement_id");

@@ -1,5 +1,4 @@
-﻿using prjGoHike.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace prjGoHike.Models;
@@ -38,7 +37,7 @@ public partial class Article
 
     public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
 
-    public virtual ICollection<Tag> Tags { get; set; } = new List<Tag>();
-
     public virtual User User { get; set; } = null!;
+
+    public virtual ICollection<Tag> Tags { get; set; } = new List<Tag>();
 }
