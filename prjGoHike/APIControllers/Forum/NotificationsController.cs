@@ -114,5 +114,42 @@ namespace prjGoHike.Controllers
             return NoContent();
         }
         #endregion
+
+        #region 全部通知標記為已讀
+        // PUT: api/Notifications/read-all
+        [Authorize]
+        [HttpPut("read-all")]
+        public async Task<IActionResult> MarkAllAsRead()
+        {
+            // =========================
+            // 取得目前登入會員
+            // =========================
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized("無法取得登入會員資料");
+            }
+
+            // 取得目前會員所有未讀通知
+            var notifications = await _context.Notifications
+                .Where(n =>
+                    n.UserId == userId &&
+                    !n.IsRead)
+                .ToListAsync();
+
+            // 全部標記為已讀
+            foreach (var notification in notifications)
+            {
+                notification.IsRead = true;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+        #endregion
     }
 }
