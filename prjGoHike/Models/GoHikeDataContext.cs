@@ -129,16 +129,6 @@ public partial class GoHikeDataContext : DbContext
         new Level { LevelId = 5, LevelName = "資深登山客", MinXp = 1501, MaxXp = 3000 },
         new Level { LevelId = 6, LevelName = "登山達人", MinXp = 3001, MaxXp = 99999 });
 
-        modelBuilder.Entity<RefreshToken>(entity =>
-        {
-            entity.HasIndex(e => e.Token).IsUnique();
-
-            entity.HasOne(e => e.User)
-                .WithMany() // User.txt不用加collection屬性，單向關聯
-                .HasForeignKey(e => e.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-
         modelBuilder.Entity<Achievement>(entity =>
         {
             entity.ToTable("achievements");
@@ -478,11 +468,6 @@ public partial class GoHikeDataContext : DbContext
             entity.Property(e => e.ReviewStatus)
                 .HasMaxLength(10)
                 .HasColumnName("Review_Status");
-
-            entity.HasOne(d => d.LeaderUser).WithMany(p => p.EventData)
-                .HasForeignKey(d => d.LeaderUserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_EventData_LeaderUser");
 
             entity.HasOne(d => d.Mountain).WithMany(p => p.EventData)
                 .HasForeignKey(d => d.MountainId)
@@ -886,6 +871,24 @@ public partial class GoHikeDataContext : DbContext
                 .HasForeignKey(d => d.MountainId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_PersonalEquipmentLists_MountainId");
+        });
+
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.Property(e => e.CreatedAt).HasPrecision(0);
+            entity.Property(e => e.ExpiresAt).HasPrecision(0);
+            entity.Property(e => e.ReplacedByToken)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+            entity.Property(e => e.RevokedAt).HasPrecision(0);
+            entity.Property(e => e.Token)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+
+            entity.HasOne(d => d.User).WithMany(p => p.RefreshTokens)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_RefreshTokens_UserId");
         });
 
         modelBuilder.Entity<Report>(entity =>

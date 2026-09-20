@@ -15,22 +15,23 @@ public partial class EventData
 
     public string ActivityStatus { get; set; } = null!;
 
-    public string? ActivityPhoto { get; set; } = null!;
+    public string? ActivityPhoto { get; set; }
 
-    public string? Description { get; set; } = null!;
+    public string? Description { get; set; }
 
     public DateTime EventDate { get; set; }
 
     public bool? ReviewRequired { get; set; }
 
-    public string? ReviewStatus { get; set; } = null!;
+    public string? ReviewStatus { get; set; }
 
     public bool? HasActiveReport { get; set; }
 
     public long LeaderUserId { get; set; }
 
-    public DateTime? EventStartTime {  get; set; }
-    public DateTime? EventEndTime {  get; set; }
+    public DateTime? EventStartTime { get; set; }
+
+    public DateTime? EventEndTime { get; set; }
 
     public virtual ICollection<EventLeaderRating> EventLeaderRatings { get; set; } = new List<EventLeaderRating>();
 
@@ -39,8 +40,6 @@ public partial class EventData
     public virtual ICollection<EventReportComplaint> EventReportComplaints { get; set; } = new List<EventReportComplaint>();
 
     public virtual ICollection<GroupAttendance> GroupAttendances { get; set; } = new List<GroupAttendance>();
-
-    public virtual User LeaderUser { get; set; } = null!;
 
     public virtual Mountain Mountain { get; set; } = null!;
 

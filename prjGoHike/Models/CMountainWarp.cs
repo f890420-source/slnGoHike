@@ -53,14 +53,14 @@ namespace prjGoHike.Models
         }
 
         [DisplayName("入山證")]
-        public bool MountainsPermitRequired
+        public bool? MountainsPermitRequired
         {
             get { return _Mountain.MountainsPermitRequired; }
             set { _Mountain.MountainsPermitRequired = value; }
         }
         
         [DisplayName("入園證")] 
-        public bool NationalParkPermitRequired
+        public bool? NationalParkPermitRequired
         {
             get { return _Mountain.NationalParkPermitRequired; }
             set { _Mountain.NationalParkPermitRequired = value; }

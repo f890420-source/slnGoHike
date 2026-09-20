@@ -9,8 +9,8 @@ namespace prjGoHike.DTO.GroupJoinDTO
         public string? Location {  get; set; }
         public int Altitude { get; set; }
         public int DifficultyLevel { get; set; }
-        public bool MountainsPermitRequired { get; set; }
-        public bool NationalParkPermitRequired { get; set; }
+        public bool? MountainsPermitRequired { get; set; }
+        public bool? NationalParkPermitRequired { get; set; }
         public decimal? Longitude { get; set; }
         public decimal? Latitude { get; set; }
     }
