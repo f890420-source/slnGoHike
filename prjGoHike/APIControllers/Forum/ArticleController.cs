@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using prjGoHike.Dtos;
 using prjGoHike.Dtos.Forum;
 using prjGoHike.Models;
 using prjGoHike.Services.forum;
@@ -465,10 +464,11 @@ namespace prjGoHike.Controllers
             }
 
             var article = await _context.Articles
-                .Include(a => a.ArticleImages)
-                .FirstOrDefaultAsync(a =>
-                    a.ArticleId == id &&
-                    a.UserId == userId);
+    .Include(a => a.ArticleImages)
+    .Include(a => a.Tags)
+    .FirstOrDefaultAsync(a =>
+        a.ArticleId == id &&
+        a.UserId == userId);
 
             if (article == null)
             {
@@ -480,6 +480,44 @@ namespace prjGoHike.Controllers
             article.Title = dto.Title;
             article.Content = dto.Content;
             article.UpdateDate = DateTime.Now;
+
+            // =========================
+            // 更新文章標籤
+            // =========================
+
+            // 清除原本文章與 Tag 的關聯
+            article.Tags.Clear();
+
+            // 清除空白、空字串以及重複標籤
+            var cleanTagNames = dto.Tags
+                .Select(tagName => tagName.Trim())
+                .Where(tagName =>
+                    !string.IsNullOrWhiteSpace(tagName))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            foreach (var cleanTagName in cleanTagNames)
+            {
+                // 尋找資料庫中是否已有相同標籤
+                var tag = await _context.Tags
+                    .FirstOrDefaultAsync(t =>
+                        t.TagName == cleanTagName);
+
+                // 沒有才建立新的 Tag
+                if (tag == null)
+                {
+                    tag = new Tag
+                    {
+                        TagName = cleanTagName,
+                        CreatedDate = DateTime.Now
+                    };
+
+                    _context.Tags.Add(tag);
+                }
+
+                // 重新建立文章與 Tag 的關聯
+                article.Tags.Add(tag);
+            }
 
             // 找出被刪除的舊圖片
             var imagesToDelete = article.ArticleImages
