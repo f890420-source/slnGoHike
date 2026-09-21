@@ -159,7 +159,7 @@ public class EventDataAPIController : BaseController
                 //DifficultyLevel = 0,
                 //MountainsPermitRequired = false,
                 //NationalParkPermitRequired = false
-
+                
             };
 
         _db.EventData.Add(Event);
