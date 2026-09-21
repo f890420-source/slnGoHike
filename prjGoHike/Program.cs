@@ -7,6 +7,7 @@ using prjGoHike.Services;
 using System.Text;
 
 using prjGoHike.Services.forum;
+using prjGoHike.Services.PersonalEquipment;
 
 string GroupJoinRoute = "http://localhost:4200";
 
@@ -14,6 +15,9 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("GoHikeDataContext") ?? throw new InvalidOperationException("Connection string 'GoHikeDataContext' not found.");
 
 builder.Services.AddDbContext<GoHikeDataContext>(options => options.UseSqlServer(connectionString));
+// 個人裝備：提供配重計算服務，由 Controller 注入使用。
+builder.Services.AddScoped<EquipmentWeightService>();
+
 #region 討論區用的 Service
 builder.Services.AddScoped<CloudinaryService>();
 builder.Services.AddScoped<SensitiveWordService>();
