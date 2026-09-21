@@ -14,12 +14,12 @@ namespace prjGoHike.APIControllers.GoHikeSafe
     [ApiController]
     [Route("api/trails")]
     [Authorize]
-    public class TrailsController : BaseController
+    public class TrailsApiController : BaseController
     {
         private GoHikeDataContext _context;
         private readonly ILogger<LoginController> _logger;
         
-        public TrailsController (
+        public TrailsApiController (
             GoHikeDataContext context,
             ILogger<LoginController> logger
         )
@@ -54,7 +54,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
                             {
                                 id = s.TrailSegmentId,
                                 Source = s.Source,
-                                Geometry = s.Shape
+                                Shape = s.Shape
                             })
                 }
             );
