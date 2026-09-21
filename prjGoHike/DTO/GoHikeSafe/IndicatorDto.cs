@@ -12,7 +12,7 @@ namespace prjGoHike.DTO.GoHikeSafe
 
         public decimal Weight { get; set; }
 
-        public byte IndicatorLevel { get; set; }
+        public byte? IndicatorLevel { get; set; }
 
         public string? IndicatorDescription { get; set; }
 

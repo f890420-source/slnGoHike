@@ -19,7 +19,7 @@ namespace prjGoHike.DTO.GoHikeSafe
 
         public string IndicatorType { get; set; } = null!;
 
-        public IEnumerable<IndicatorSegmentPublicDto>? IndiSegDtos { get; set; }
+        public IEnumerable<IndicatorSegmentPublicDto>? IndiSegments { get; set; } = [];
     }
 
     public class IndicatorSegmentPublicDto
