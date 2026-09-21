@@ -2,9 +2,9 @@
 
 namespace prjGoHike.DTO.GoHikeSafe
 {
-    public class RiskInDto
+    public class IndicatorDto
     {
-        public long indicatorId { get; set; }
+        public long id { get; set; }
 
         public string IndicatorName { get; set; } = null!;
 
@@ -12,15 +12,9 @@ namespace prjGoHike.DTO.GoHikeSafe
 
         public decimal Weight { get; set; }
 
-        public byte RiskLevel { get; set; }
+        public byte IndicatorLevel { get; set; }
 
         public string? IndicatorDescription { get; set; }
-
-        public Geometry? SpatialArea { get; set; }
-
-        public DateTime? ValidFrom { get; set; }
-
-        public DateTime? ValidTo { get; set; }
 
         public string? DataSource { get; set; }
 
