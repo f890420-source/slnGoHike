@@ -1,12 +1,15 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.DTO.GroupJoinDTO;
 using prjGoHike.Models;
+using System.Security.Claims;
 
 namespace prjGoHike.APIControllers
 {
+    
     [Route("api/[controller]")]
     [ApiController]
     public class EventRegistrationAndMemberListAPIController : BaseController
@@ -19,9 +22,11 @@ namespace prjGoHike.APIControllers
         }
 
         // GET: api/EventRegistrationAndMemberListsAPI
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetAllregistration()
         {
+
             if (_db.EventRegistrationAndMemberLists == null)
             {
                 return NotFoundResponse("查無資料表");
@@ -33,7 +38,7 @@ namespace prjGoHike.APIControllers
                 EventId = r.EventId,
                 RegistrationStatus = r.RegistrationStatus,
                 EmergencyContact = r.EmergencyContact,
-                CreatedAt = r.CreatedAt
+                CreatedAt = DateTime.Now
             }).ToListAsync();
 
             var data = await eventRegistration;
@@ -61,10 +66,24 @@ namespace prjGoHike.APIControllers
         //}
 
         // POST: api/EventRegistrationAndMemberListsAPI
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> Postregistration(EventRegistrationAndMemberList registrationData)
         {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userIdClaim == null || !long.TryParse(userIdClaim, out long userId))
+            {
+                return Unauthorized();
+            }
 
+            var entity = new EventRegistrationAndMemberList
+            {
+                UserId = userId,
+                EventId = registrationData.EventId,
+                RegistrationStatus = 1,
+                EmergencyContact = registrationData.EmergencyContact,
+                CreatedAt = DateTime.Now
+            };
 
             EventRegistrationAndMemberList reg = new EventRegistrationAndMemberList
             {
