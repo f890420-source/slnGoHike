@@ -19,5 +19,7 @@
         public decimal? Longitude { get; set; }
         public decimal? Latitude { get; set; }
         public long LeaderUserId { get; set; }
+        public int CurrentParticipants { get; set; }
+
     }
 }

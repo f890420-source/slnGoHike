@@ -2,8 +2,10 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.DTO.GroupJoinDTO;
+using prjGoHike.Hubs;
 using prjGoHike.Models;
 using System.Security.Claims;
 
@@ -15,10 +17,12 @@ namespace prjGoHike.APIControllers
     public class EventRegistrationAndMemberListAPIController : BaseController
     {
         private readonly GoHikeDataContext _db;
+        private readonly IHubContext<EventHub> _hubContext;
 
-        public EventRegistrationAndMemberListAPIController(GoHikeDataContext db)
+        public EventRegistrationAndMemberListAPIController(GoHikeDataContext db,IHubContext<EventHub>hubContext)
         {
             _db = db;
+            _hubContext = hubContext;
         }
 
         // GET: api/EventRegistrationAndMemberListsAPI
@@ -31,6 +35,9 @@ namespace prjGoHike.APIControllers
             {
                 return NotFoundResponse("查無資料表");
             }
+
+            
+
             var eventRegistration = _db.EventRegistrationAndMemberLists.Select(r => new EventRegistrationAndMemberListDTO
             {
                 SignUpId = r.SignUpId,
@@ -68,12 +75,31 @@ namespace prjGoHike.APIControllers
         // POST: api/EventRegistrationAndMemberListsAPI
         [Authorize]
         [HttpPost]
-        public async Task<IActionResult> Postregistration(EventRegistrationAndMemberList registrationData)
+        public async Task<IActionResult> Postregistration(EventRegistrationAndMemberListDTO registrationData)
         {
+
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            //找發出http請求的使用者的id
+            
             if (userIdClaim == null || !long.TryParse(userIdClaim, out long userId))
             {
                 return Unauthorized();
+            }
+            var RepeatP = await _db.EventRegistrationAndMemberLists.AnyAsync(e => e.UserId == userId && e.EventId == registrationData.EventId && e.RegistrationStatus == 1);
+            if (RepeatP)
+            {
+                return ErrorResponse("無法重複報名", null, 400);
+            }
+            var limitPeople = await _db.EventData.FirstOrDefaultAsync(e => e.EventId == registrationData.EventId);
+
+            var currentCount = await _db.EventRegistrationAndMemberLists
+                .CountAsync(r => r.EventId == registrationData.EventId && r.RegistrationStatus == 1);
+
+            int limit = limitPeople.MaximumNumber;
+
+            if(currentCount >= limit)
+            {
+                return ErrorResponse("報名人數已超過上限", null, 400);
             }
 
             var entity = new EventRegistrationAndMemberList
@@ -81,27 +107,22 @@ namespace prjGoHike.APIControllers
                 UserId = userId,
                 EventId = registrationData.EventId,
                 RegistrationStatus = 1,
-                EmergencyContact = registrationData.EmergencyContact,
+                EmergencyContact = "",
                 CreatedAt = DateTime.Now
             };
 
-            EventRegistrationAndMemberList reg = new EventRegistrationAndMemberList
-            {
+            currentCount++;
 
-                SignUpId = registrationData.SignUpId,
-                UserId = registrationData.UserId,
-                EventId = registrationData.EventId,
-                RegistrationStatus = registrationData.RegistrationStatus,
-                EmergencyContact = registrationData.EmergencyContact,
-                CreatedAt = registrationData.CreatedAt
-            };
-
-            var data = reg;
-            
-            
-            _db.EventRegistrationAndMemberLists.Add(data);
+            _db.EventRegistrationAndMemberLists.Add(entity);
             await _db.SaveChangesAsync();
-            return SuccessResponse(data);
+
+
+
+            var mountainEvent = 0;
+            //代表山的變化 為了signalR
+
+            await _hubContext.Clients.All.SendAsync("EventDataChanged", mountainEvent, currentCount);
+            return SuccessResponse(entity);
         }
 
         // PUT: api/EventRegistrationAndMemberListsAPI/5
