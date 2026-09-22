@@ -779,5 +779,59 @@ namespace prjGoHike.Controllers
             return Ok();
         }
         #endregion
+
+        #region 取得要編輯的文章
+
+        // GET: api/Articles/2/edit
+        [Authorize]
+        [HttpGet("{id}/edit")]
+        public async Task<ActionResult<ArticleDto>> GetArticleForEdit(int id)
+        {
+            // 從 JWT Claims 取得目前登入會員 UserId
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized("無法取得登入會員資料");
+            }
+
+            var article = await _context.Articles
+                .Where(a =>
+                    a.ArticleId == id &&
+                    a.UserId == userId)
+                .Select(a => new ArticleDto
+                {
+                    ArticleId = a.ArticleId,
+                    UserId = a.UserId,
+                    CategoryId = a.CategoryId,
+                    Title = a.Title,
+                    Content = a.Content,
+                    CreatedDate = a.CreatedDate,
+                    UpdateDate = a.UpdateDate,
+                    Status = a.Status,
+                    CategoryName = a.Category.CategoryName,
+
+                    ImagePaths = a.ArticleImages
+                        .OrderBy(image => image.SortOrder)
+                        .Select(image => image.ImagePath)
+                        .ToList(),
+
+                    Tags = a.Tags
+                        .Select(tag => tag.TagName)
+                        .ToList()
+                })
+                .FirstOrDefaultAsync();
+
+            if (article == null)
+            {
+                return NotFound("找不到文章或你沒有編輯權限");
+            }
+
+            return Ok(article);
+        }
+
+        #endregion
     }
 }
