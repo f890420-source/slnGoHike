@@ -176,7 +176,7 @@ public partial class GoHikeDataContext : DbContext
 
         modelBuilder.Entity<Announcement>(entity =>
         {
-            entity.HasKey(e => e.AnnouncementId).HasName("PK__Announce__853AB7CF270BFE7D");
+            entity.HasKey(e => e.AnnouncementId).HasName("PK__Announce__853AB7CFBFC68516");
 
             entity.ToTable("Announcement");
 
@@ -432,7 +432,6 @@ public partial class GoHikeDataContext : DbContext
             entity.Property(e => e.MaximumNumber).HasColumnName("Maximum_Number");
             entity.Property(e => e.MountainId).HasColumnName("Mountain_Id");
             entity.Property(e => e.ReviewRequired).HasColumnName("Review_Required");
-
             entity.Property(e => e.ReviewStatus)
                 .HasMaxLength(10)
                 .HasColumnName("Review_Status");
@@ -518,6 +517,9 @@ public partial class GoHikeDataContext : DbContext
             entity.Property(e => e.ReportStatus)
                 .HasMaxLength(10)
                 .HasColumnName("Report_Status");
+            entity.Property(e => e.ReportTitle)
+                .HasMaxLength(100)
+                .HasColumnName("Report_Title");
             entity.Property(e => e.UserId).HasColumnName("User_Id");
 
             entity.HasOne(d => d.Event).WithMany(p => p.EventReportComplaints)
@@ -529,7 +531,6 @@ public partial class GoHikeDataContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Event_Report_Complaint_User_Id");
-            entity.Property(e => e.ReportTitle).HasColumnName("Report_Title");
         });
 
         modelBuilder.Entity<Favorite>(entity =>
@@ -1199,7 +1200,7 @@ public partial class GoHikeDataContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("source");
 
-            entity.HasOne(d => d.SkillTag).WithMany(p => p.UserSkillTags)
+            entity.HasOne(d => d.Tag).WithMany(p => p.UserSkillTags)
                 .HasForeignKey(d => d.TagId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_user_skill_tags_tag_id");
