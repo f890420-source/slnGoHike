@@ -72,6 +72,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             catch (Exception ex)
             {
                 _logger.LogError($"{ex.GetType()} (UserId: {userId}): {ex.Message}");
+                _logger.LogError(ex.StackTrace);
                 return ErrorResponse("發生錯誤，請洽管理員。");
             }
             return NotFoundResponse("找不到步道!");
