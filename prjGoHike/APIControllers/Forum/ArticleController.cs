@@ -65,7 +65,10 @@ namespace prjGoHike.Controllers
                     ViewCount = a.ArticleViews.Count(),
 
                     CommentCount = _context.Comments
-                       .Count(c => c.ArticleId == a.ArticleId),
+    .Count(c =>
+        c.ArticleId == a.ArticleId &&
+        c.Status == 1
+    ),
 
                     FavoriteCount = _context.Favorites
                        .Count(f => f.ArticleId == a.ArticleId)
@@ -350,7 +353,10 @@ namespace prjGoHike.Controllers
                         .Count(f => f.ArticleId == a.ArticleId),
 
                     CommentCount = _context.Comments
-                        .Count(c => c.ArticleId == a.ArticleId),
+    .Count(c =>
+        c.ArticleId == a.ArticleId &&
+        c.Status == 1
+    ),
 
                     ViewCount = a.ArticleViews.Count()
                 })
@@ -436,8 +442,11 @@ namespace prjGoHike.Controllers
                     FavoriteCount = _context.Favorites.Count(f =>
                         f.ArticleId == a.ArticleId),
 
-                    CommentCount = _context.Comments.Count(c =>
-                        c.ArticleId == a.ArticleId)
+                    CommentCount = _context.Comments
+    .Count(c =>
+        c.ArticleId == a.ArticleId &&
+        c.Status == 1
+    ),
                 })
                 .ToListAsync();
 

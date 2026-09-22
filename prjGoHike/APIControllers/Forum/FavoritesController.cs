@@ -191,9 +191,11 @@ namespace prjGoHike.Controllers
                         _context.Favorites.Count(x =>
                             x.ArticleId == f.ArticleId),
 
-                    CommentCount =
-                        _context.Comments.Count(c =>
-                            c.ArticleId == f.ArticleId)
+                    CommentCount = _context.Comments
+    .Count(c =>
+        c.ArticleId == f.ArticleId &&
+        c.Status == 1
+    ),
                 })
                 .ToListAsync();
 
