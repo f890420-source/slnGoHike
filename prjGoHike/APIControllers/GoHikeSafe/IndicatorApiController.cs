@@ -85,6 +85,7 @@ public class IndicatorApiController : BaseController
         catch (Exception ex)
         {
             _logger.LogError($"{ex.GetType()}: {ex.Message}");
+            _logger.LogError(ex.StackTrace);
             return ErrorResponse("發生錯誤，請洽管理員。",
     statusCode: StatusCodes.Status500InternalServerError);
         }
