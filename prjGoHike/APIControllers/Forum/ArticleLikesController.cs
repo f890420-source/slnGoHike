@@ -1,7 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using prjGoHike.Hubs;
 using prjGoHike.Models;
-using Microsoft.AspNetCore.Authorization;
+using prjGoHike.Services;
 using System.Security.Claims;
 
 namespace prjGoHike.Controllers
@@ -11,11 +14,14 @@ namespace prjGoHike.Controllers
     public class ArticleLikesController : ControllerBase
     {
         private readonly GoHikeDataContext _context;
+        private readonly NotificationRealtimeService _notificationRealtimeService;
 
         public ArticleLikesController(
-            GoHikeDataContext context)
+       GoHikeDataContext context,
+       NotificationRealtimeService notificationRealtimeService)
         {
             _context = context;
+            _notificationRealtimeService = notificationRealtimeService;
         }
 
         #region 新增文章按讚
@@ -37,6 +43,10 @@ namespace prjGoHike.Controllers
                 return Unauthorized("無法取得登入會員資料");
             }
 
+
+            // =========================
+            // 檢查是否已按讚
+            // =========================
             var exists = await _context.ArticleLikes
                 .AnyAsync(x =>
                     x.ArticleId == articleId &&
@@ -48,6 +58,10 @@ namespace prjGoHike.Controllers
                 return BadRequest("你已經按過讚了");
             }
 
+
+            // =========================
+            // 建立按讚
+            // =========================
             var like = new ArticleLike
             {
                 ArticleId = articleId,
@@ -58,6 +72,7 @@ namespace prjGoHike.Controllers
             _context.ArticleLikes.Add(like);
 
             await _context.SaveChangesAsync();
+
 
             // =========================
             // 建立文章按讚通知
@@ -86,6 +101,7 @@ namespace prjGoHike.Controllers
                             n.Type == 3
                         );
 
+
                 // 沒有通知過才建立
                 if (!notificationExists)
                 {
@@ -111,8 +127,14 @@ namespace prjGoHike.Controllers
                     _context.Notifications.Add(notification);
 
                     await _context.SaveChangesAsync();
+
+
+                    // SignalR 即時推送通知
+                    await _notificationRealtimeService
+                        .SendNotificationAsync(notification);
                 }
             }
+
             return Ok();
         }
         #endregion

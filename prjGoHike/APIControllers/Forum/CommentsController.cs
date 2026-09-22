@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using prjGoHike.Models;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using prjGoHike.Hubs;
-using prjGoHike.Services.forum;
+using Microsoft.EntityFrameworkCore;
 using prjGoHike.Dtos.Forum;
-using Microsoft.AspNetCore.Authorization;
+using prjGoHike.Hubs;
+using prjGoHike.Models;
+using prjGoHike.Services;
+using prjGoHike.Services.forum;
 using System.Security.Claims;
 namespace prjGoHike.Controllers
 {
@@ -15,6 +16,7 @@ namespace prjGoHike.Controllers
     {
         private readonly GoHikeDataContext _context;
         private readonly IHubContext<CommentHub> _hubContext;
+        private readonly NotificationRealtimeService _notificationRealtimeService;
         private readonly CloudinaryService _cloudinaryService;
         private readonly SensitiveWordService _sensitiveWordService;
         private readonly CommentValidationService _commentValidationService;
@@ -24,6 +26,7 @@ namespace prjGoHike.Controllers
             GoHikeDataContext context,
             CloudinaryService cloudinaryService,
             IHubContext<CommentHub> hubContext,
+            NotificationRealtimeService notificationRealtimeService,
             SensitiveWordService sensitiveWordService,
             GeminiModerationService geminiModerationService,
             CommentValidationService commentValidationService)
@@ -31,6 +34,7 @@ namespace prjGoHike.Controllers
             _context = context;
             _cloudinaryService = cloudinaryService;
             _hubContext = hubContext;
+            _notificationRealtimeService = notificationRealtimeService;
             _sensitiveWordService = sensitiveWordService;
             _geminiModerationService = geminiModerationService;
             _commentValidationService = commentValidationService;
@@ -211,6 +215,10 @@ namespace prjGoHike.Controllers
                     _context.Notifications.Add(notification);
 
                     await _context.SaveChangesAsync();
+
+                    // SignalR 即時推送通知
+                    await _notificationRealtimeService
+                        .SendNotificationAsync(notification);
                 }
             }
 
@@ -246,6 +254,10 @@ namespace prjGoHike.Controllers
                     _context.Notifications.Add(notification);
 
                     await _context.SaveChangesAsync();
+
+                    // SignalR 即時推送通知
+                    await _notificationRealtimeService
+                        .SendNotificationAsync(notification);
                 }
             }
 

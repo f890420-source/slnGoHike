@@ -18,6 +18,7 @@ builder.Services.AddDbContext<GoHikeDataContext>(options => options.UseSqlServer
 builder.Services.AddScoped<CloudinaryService>();
 builder.Services.AddScoped<SensitiveWordService>();
 builder.Services.AddScoped<CommentValidationService>();
+builder.Services.AddScoped<NotificationRealtimeService>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
@@ -25,6 +26,7 @@ builder.Services.Configure<GoogleAuthSettings>(
     builder.Configuration.GetSection(GoogleAuthSettings.SectionName));
 
 builder.Services.AddHttpClient<GeminiModerationService>();
+
 #endregion
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()
     ?? throw new InvalidOperationException("JwtSettings 設定遺失。");
@@ -155,6 +157,7 @@ app.MapControllerRoute(
     .WithStaticAssets();
 
 app.MapHub<CommentHub>("/commentHub");
+app.MapHub<NotificationHub>("/notificationHub");
 app.MapHub<prjGoHike.Hubs.EventHub>("/eventHub");
 
 app.Run();
