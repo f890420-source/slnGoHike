@@ -77,5 +77,54 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             }
             return NotFoundResponse("找不到步道!");
         }
+
+        [HttpGet("{id:long}")]
+        [Authorize]
+        public async Task<IActionResult> List(long id)
+        {
+            if (!long.TryParse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier),
+                out var userId))
+            {
+                return Unauthorized();
+            }
+            var trailsQuery = _context.Trails.Where(x => 
+                x.IsPublished == true 
+                && x.TrailId == id
+                ).Select(
+                x => new TrailPublicDto()
+                {
+                    id = x.TrailId,
+                    TrailName = x.TrailName,
+                    Region = x.Region,
+                    DifficultyLevel = x.DifficultyLevel,
+                    DistanceKm = x.DistanceKm,
+                    TrailSegDtos = x.TrailSegments.Select(s => new TrailSegmentPublicDto()
+                            {
+                                id = s.TrailSegmentId,
+                                Source = s.Source,
+                                Shape = s.Shape
+                            })
+                }
+            );
+
+            try
+            {
+                var trailsResult = await trailsQuery
+                    .FirstOrDefaultAsync();
+                if (trailsResult is not null)
+                {
+                    _logger.LogInformation($"使用者 {userId} 索取步道編號 {id} 一次");
+                    return SuccessResponse(trailsResult);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"{ex.GetType()} (UserId: {userId}): {ex.Message}");
+                _logger.LogError(ex.StackTrace);
+                return ErrorResponse("發生錯誤，請洽管理員。");
+            }
+            return NotFoundResponse("找不到步道!");
+        }
     }
 }
