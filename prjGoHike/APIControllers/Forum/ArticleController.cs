@@ -547,16 +547,29 @@ namespace prjGoHike.Controllers
                 imagesToDelete
             );
 
-            // 計算下一張圖片排序
-            var nextSortOrder =
-                article.ArticleImages
-                    .Where(image =>
-                        !imagesToDelete.Contains(image))
-                    .Select(image => image.SortOrder)
-                    .DefaultIfEmpty(0)
-                    .Max() + 1;
+            // =========================
+            // 重新設定保留圖片的排序
+            // =========================
+            var sortOrder = 1;
 
+            foreach (var imagePath in dto.KeepImagePaths)
+            {
+                var existingImage = article.ArticleImages
+                    .FirstOrDefault(image =>
+                        image.ImagePath == imagePath &&
+                        !imagesToDelete.Contains(image)
+                    );
+
+                if (existingImage != null)
+                {
+                    existingImage.SortOrder = sortOrder;
+                    sortOrder++;
+                }
+            }
+
+            // =========================
             // 上傳新圖片
+            // =========================
             foreach (var imageFile in dto.ImageFiles)
             {
                 var imageUrl =
@@ -569,7 +582,7 @@ namespace prjGoHike.Controllers
                 {
                     ArticleId = article.ArticleId,
                     ImagePath = imageUrl,
-                    SortOrder = nextSortOrder,
+                    SortOrder = sortOrder,
                     CreatedDate = DateTime.Now
                 };
 
@@ -577,7 +590,7 @@ namespace prjGoHike.Controllers
                     articleImage
                 );
 
-                nextSortOrder++;
+                sortOrder++;
             }
 
             await _context.SaveChangesAsync();
