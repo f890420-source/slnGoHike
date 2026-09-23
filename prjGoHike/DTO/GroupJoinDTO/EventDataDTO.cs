@@ -9,6 +9,7 @@
         public IFormFile? ActivityPhoto { get; set; }
         //使用來自前端圖片的格式
         public string? Description { get; set; }
+        //可能要考慮加入ai判斷有無一些敏感資訊
         public DateTime? EventStartTime { get; set; }
         public DateTime? EventEndTime { get; set; }
         public long MountainId { get; set; }

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -5,6 +6,7 @@ using prjGoHike.APIControllers;
 using prjGoHike.DTO.GroupJoinDTO;
 using prjGoHike.Hubs;
 using prjGoHike.Models;
+using System.Security.Claims;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -112,6 +114,7 @@ public class EventDataAPIController : BaseController
 
     //// POST: api/CEventDataWarp
     //// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> PostCEventDataWarp([FromForm] EventDataDTO eventdata)
     {
@@ -119,6 +122,45 @@ public class EventDataAPIController : BaseController
         string UploadsFolder = "";
         string BaseUrl = $"{Request.Scheme}://{Request.Host}";
         //得到請求端使用的協定/得到請求端的路由
+        string checkExtension = Path.GetExtension(eventdata.ActivityPhoto.FileName);
+        string[] allowtExtension = { ".jpg", ".png", ".GIF", ".jpeg" };
+        var userValidClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (!ModelState.IsValid)
+        {
+            return ErrorResponse("欄位驗證失敗", null, 400);
+        }
+        if (userValidClaim == null || !long.TryParse(userValidClaim, out long currentUserID))
+        {
+            return Unauthorized();
+        }
+        if(eventdata.MaximumNumber == 0)
+        {
+            return ErrorResponse("請選擇可參與人數", null, 400);
+        }
+
+        if(eventdata.ActivityPhoto.Length > 0)
+        {
+            if(eventdata.ActivityPhoto.Length > 10 * 1024* 1024)
+            {
+                return ErrorResponse("請上傳檔案大小10MB以內的圖片");
+            }
+            if (!allowtExtension.Contains(checkExtension))
+            {
+                return ErrorResponse("請上傳副檔名為：jpg、png、GIF、jpeg的圖片檔案");
+            }
+        }
+        if(eventdata.EventStartTime < DateTime.Now)
+        {
+            return ErrorResponse("請選擇大於當前日期的時間", null, 400);
+        }
+        if(eventdata.EventEndTime > eventdata.EventStartTime && eventdata.EventEndTime > DateTime.Now)
+        {
+            return ErrorResponse("無法選擇小於當前日期的時間", null, 400);
+        }
+
+
+
         if (eventdata.ActivityPhoto != null)
         {
             UploadsFolder = Path.Combine(_environment.WebRootPath, "assets", "JoinGroup_Images");
@@ -152,7 +194,7 @@ public class EventDataAPIController : BaseController
                 ReviewRequired = true,
                 ReviewStatus = "",
                 HasActiveReport = false,
-                LeaderUserId = eventdata.LeaderUserId,
+                LeaderUserId = currentUserID
                 //其實在自動生成的eventdata Class裡面 已經有關連到mountain這張表 所以不用擔心的是 沒有加就代表沒資料
                 //而是會透過mountainID去找到對應的山的資料
                 //MountainName = "",
