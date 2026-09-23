@@ -52,7 +52,7 @@ public class EventDataAPIController : BaseController
                 MountainName = e.Mountain.MountainName,
                 Longitude = e.Mountain.Longitude,
                 Latitude = e.Mountain.Latitude,
-
+                CurrentParticipants = e.EventRegistrationAndMemberLists.Count(e=>e.RegistrationStatus == 1),
                 LeaderUserId = e.LeaderUserId
                 //先做假資料測試
             }).ToListAsync();
@@ -203,14 +203,15 @@ public class EventDataAPIController : BaseController
                 //NationalParkPermitRequired = false
                 
             };
-
+        int CurrentPeople = 0;
+        //現在的活動報名人數 用來充數用 為了signalR
         _db.EventData.Add(Event);
 
         await _db.SaveChangesAsync();
 
-        await _hubContext.Clients.All.SendAsync("EventDataChanged", Event.MountainId);
-        //對著所有request的那方進行廣播? 然後傳送一個自訂的事件名,加上剛剛才熱騰騰從前端傳來的
-        //使用者所選擇的山的id
+        await _hubContext.Clients.All.SendAsync("EventDataChanged", Event.MountainId, CurrentPeople);
+        //對著所有request的那方進行廣播 然後傳送一個自訂的事件名,加上剛剛才熱騰騰從前端傳來的
+        //使用者所選擇的山的id 傳過去的其實就是當改變時會有通知的欄位
 
         return SuccessResponse(Event);
     }
