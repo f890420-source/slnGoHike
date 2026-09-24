@@ -152,7 +152,8 @@ namespace prjGoHike.APIControllers.GoHikeSafe
                 DifficultyLevel = payload.DifficultyLevel,
                 DistanceKm = payload.DistanceKm
             };
-            return Ok(payload);
+            await _context.AddAsync(newTrail, cancellationToken);
+            return CreatedResponse(newTrail);
         }
 
         [HttpPut]
