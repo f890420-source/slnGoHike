@@ -34,7 +34,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
         [ProducesResponseType(typeof(ApiResponse<List<TrailPublicDto>>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> List()
+        public async Task<IActionResult> List(CancellationToken cancellationToken)
         {
             if (!long.TryParse(
                 User.FindFirstValue(ClaimTypes.NameIdentifier),
@@ -63,7 +63,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             {
                 var trailsResult = await trailsQuery
                     .AsNoTracking()
-                    .ToListAsync();
+                    .ToListAsync(cancellationToken);
                 if (trailsResult is not null)
                 {
                     _logger.LogInformation($"使用者 {userId} 索取步道清單一次");
@@ -81,7 +81,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
 
         [HttpGet("{id:long}")]
         [Authorize]
-        public async Task<IActionResult> List(long id)
+        public async Task<IActionResult> List(long id, CancellationToken cancellationToken)
         {
             if (!long.TryParse(
                 User.FindFirstValue(ClaimTypes.NameIdentifier),
@@ -113,7 +113,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             {
                 var trailsResult = await trailsQuery
                     .AsNoTracking()
-                    .FirstOrDefaultAsync();
+                    .FirstOrDefaultAsync(cancellationToken);
                 if (trailsResult is not null)
                 {
                     _logger.LogInformation($"使用者 {userId} 索取步道編號 {id} 一次");
@@ -131,7 +131,10 @@ namespace prjGoHike.APIControllers.GoHikeSafe
 
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> Create(TrailPublicDto payload)
+        public async Task<IActionResult> Create(
+            TrailPublicDto payload,
+            CancellationToken cancellationToken
+            )
         {
             if (!long.TryParse(
                 User.FindFirstValue(ClaimTypes.NameIdentifier),
@@ -149,7 +152,11 @@ namespace prjGoHike.APIControllers.GoHikeSafe
 
         [HttpPut]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Update(long id, TrailPublicDto payload)
+        public async Task<IActionResult> Update(
+            long id,
+            TrailPublicDto payload,
+            CancellationToken cancellationToken
+            )
         {
             if (!ModelState.IsValid)
             {
