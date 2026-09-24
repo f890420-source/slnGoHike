@@ -138,7 +138,7 @@ namespace prjGoHike.Controllers
             //    if (!isSafe)
             //    {
             //        return BadRequest(
-            //            "留言內容可能包含不適當文字"
+            //            "AI 判斷留言內容有不雅文字"
             //        );
             //    }
             //}
