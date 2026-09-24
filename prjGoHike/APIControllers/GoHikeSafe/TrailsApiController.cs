@@ -195,7 +195,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
                 trail.DifficultyLevel = payload.DifficultyLevel;
                 trail.DistanceKm = payload.DistanceKm;
                 trail.IsPublished = true; //之後在 api 層控管是否公開
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync(cancellationToken);
             }
             catch (Exception ex)
             {
@@ -210,7 +210,10 @@ namespace prjGoHike.APIControllers.GoHikeSafe
 
         [HttpDelete]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Delete(long id)
+        public async Task<IActionResult> Delete(
+long id,
+            CancellationToken cancellationToken
+)
         {
             if (!long.TryParse(
                 User.FindFirstValue(ClaimTypes.NameIdentifier),
@@ -228,7 +231,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             _context.Trails.Remove(trailIdDb);
             try
             {
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync(cancellationToken);
                 _logger.LogInformation($"編號 {id} 資料已遭刪除");
                 return SuccessResponse<string>("", message: "刪除資料成功！");
             }
