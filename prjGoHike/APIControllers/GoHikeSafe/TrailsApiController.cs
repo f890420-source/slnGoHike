@@ -73,7 +73,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             {
                 _logger.LogError($"{ex.GetType()} (UserId: {userId}): {ex.Message}");
                 _logger.LogError(ex.StackTrace);
-                return ErrorResponse("發生錯誤，請洽管理員。");
+                return ErrorResponse("發生錯誤，請洽管理員。", statusCode: StatusCodes.Status500InternalServerError);
             }
             return NotFoundResponse("找不到步道!");
         }
@@ -122,7 +122,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             {
                 _logger.LogError($"{ex.GetType()} (UserId: {userId}): {ex.Message}");
                 _logger.LogError(ex.StackTrace);
-                return ErrorResponse("發生錯誤，請洽管理員。");
+                return ErrorResponse("發生錯誤，請洽管理員。", statusCode: StatusCodes.Status500InternalServerError);
             }
             return NotFoundResponse("找不到步道!");
         }
