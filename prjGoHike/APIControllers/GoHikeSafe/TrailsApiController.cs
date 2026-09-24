@@ -150,7 +150,13 @@ namespace prjGoHike.APIControllers.GoHikeSafe
                 TrailName = payload.TrailName.Trim(),
                 Region = payload.Region.Trim(),
                 DifficultyLevel = payload.DifficultyLevel,
-                DistanceKm = payload.DistanceKm
+                DistanceKm = payload.DistanceKm,
+                TrailSegments = (payload.TrailSegDtos ?? [])
+                    .Select(x => new TrailSegment
+                    {
+                        Source = "User Uploaded",
+                        Shape = x.Shape
+                    }).ToList()
             };
             await _context.AddAsync(newTrail, cancellationToken);
             return CreatedResponse(newTrail);
@@ -162,7 +168,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             long id,
             TrailPublicDto payload,
             CancellationToken cancellationToken
-            )
+        )
         {
             if (!long.TryParse(
                 User.FindFirstValue(ClaimTypes.NameIdentifier),
@@ -195,6 +201,12 @@ namespace prjGoHike.APIControllers.GoHikeSafe
                 trail.DifficultyLevel = payload.DifficultyLevel;
                 trail.DistanceKm = payload.DistanceKm;
                 trail.IsPublished = true; //之後在 api 層控管是否公開
+                trail.TrailSegments = (payload.TrailSegDtos ?? [])
+                    .Select(x => new TrailSegment
+                    {
+                        Source = "User Uploaded",
+                        Shape = x.Shape
+                    }).ToList();
                 await _context.SaveChangesAsync(cancellationToken);
             }
             catch (Exception ex)
@@ -211,9 +223,9 @@ namespace prjGoHike.APIControllers.GoHikeSafe
         [HttpDelete]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(
-long id,
+            long id,
             CancellationToken cancellationToken
-)
+        )
         {
             if (!long.TryParse(
                 User.FindFirstValue(ClaimTypes.NameIdentifier),
