@@ -137,7 +137,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
         [Authorize(Roles = "Admin")]
         [EndpointSummary("新增步道")]
         [EndpointDescription("僅限管理員。以請求本文中的步道及路段資料新增步道；路段 Shape 使用 GeoJSON 格式，路段來源由伺服器設定。")]
-        [ProducesResponseType(typeof(ApiResponse<Trail>), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ApiResponse<TrailPublicDto>), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -173,7 +173,21 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             };
             _context.Trails.Add(newTrail);
             await _context.SaveChangesAsync();
-            return CreatedResponse(newTrail);
+            var createdInfo = new TrailPublicDto
+            {
+                id = newTrail.TrailId,
+                TrailName = newTrail.TrailName,
+                Region = newTrail.Region,
+                DifficultyLevel = newTrail.DifficultyLevel,
+                DistanceKm = newTrail.DistanceKm,
+                TrailSegDtos = newTrail.TrailSegments.Select(segment => new TrailSegmentPublicDto
+                {
+                    id = segment.TrailSegmentId,
+                    Source = segment.Source,
+                    Shape = segment.Shape
+                }).ToList()
+            };
+            return CreatedResponse(createdInfo);
         }
 
         [HttpPut]
