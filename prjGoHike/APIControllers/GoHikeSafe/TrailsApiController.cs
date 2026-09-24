@@ -62,6 +62,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             try
             {
                 var trailsResult = await trailsQuery
+                    .AsNoTracking()
                     .ToListAsync();
                 if (trailsResult is not null)
                 {
@@ -111,6 +112,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             try
             {
                 var trailsResult = await trailsQuery
+                    .AsNoTracking()
                     .FirstOrDefaultAsync();
                 if (trailsResult is not null)
                 {
