@@ -13,7 +13,6 @@ namespace prjGoHike.APIControllers.GoHikeSafe
 {
     [ApiController]
     [Route("api/trails")]
-    [Authorize]
     public class TrailsApiController : BaseController
     {
         private GoHikeDataContext _context;
@@ -74,13 +73,12 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             {
                 _logger.LogError($"{ex.GetType()} (UserId: {userId}): {ex.Message}");
                 _logger.LogError(ex.StackTrace);
-                return ErrorResponse("發生錯誤，請洽管理員。", statusCode: StatusCodes.Status500InternalServerError);
+                return ErrorResponse("發生錯誤，請洽系統管理員。", statusCode: StatusCodes.Status500InternalServerError);
             }
             return NotFoundResponse("找不到步道!");
         }
 
         [HttpGet("{id:long}")]
-        [Authorize]
         public async Task<IActionResult> List(long id, CancellationToken cancellationToken)
         {
             if (!long.TryParse(
@@ -124,13 +122,13 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             {
                 _logger.LogError($"{ex.GetType()} (UserId: {userId}): {ex.Message}");
                 _logger.LogError(ex.StackTrace);
-                return ErrorResponse("發生錯誤，請洽管理員。", statusCode: StatusCodes.Status500InternalServerError);
+                return ErrorResponse("發生錯誤，請洽系統管理員。", statusCode: StatusCodes.Status500InternalServerError);
             }
             return NotFoundResponse("找不到步道!");
         }
 
         [HttpPost]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create(
             TrailPublicDto payload,
             CancellationToken cancellationToken
@@ -142,11 +140,18 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             {
                 return Unauthorized();
             }
-        if (!ModelState.IsValid)
-        {
-            _logger.LogError("格式錯誤");
-            return BadRequest();
-        }
+            if (!ModelState.IsValid)
+            {
+                _logger.LogError("格式錯誤");
+                return BadRequest();
+            }
+            var newTrail = new Trail()
+            {
+                TrailName = payload.TrailName.Trim(),
+                Region = payload.Region.Trim(),
+                DifficultyLevel = payload.DifficultyLevel,
+                DistanceKm = payload.DistanceKm
+            };
             return Ok(payload);
         }
 
@@ -158,20 +163,48 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             CancellationToken cancellationToken
             )
         {
-            if (!ModelState.IsValid)
-            {
-                _logger.LogError("input 格式錯誤");
-                return ErrorResponse("請檢查輸入格式",
- statusCode: StatusCodes.Status400BadRequest);
-            }
             if (!long.TryParse(
                 User.FindFirstValue(ClaimTypes.NameIdentifier),
                 out var userId))
             {
                 return Unauthorized();
             }
-            _logger.LogInformation(id.ToString());
-            return Ok(payload);
+            if (id != payload.id || !ModelState.IsValid)
+            {
+                _logger.LogError("input 格式錯誤");
+                return ErrorResponse("請檢查輸入格式",
+ statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            var trailquery = _context.Trails
+                .Where(t => t.TrailId == id);
+            
+            try
+            {
+                var trail = await trailquery.FirstOrDefaultAsync(cancellationToken);
+
+                if (trail is null)
+                {
+                    return NotFoundResponse();
+                }
+
+                // 更新 Trail 的一般欄位。
+                trail.TrailName = payload.TrailName.Trim();
+                trail.Region = payload.Region.Trim();
+                trail.DifficultyLevel = payload.DifficultyLevel;
+                trail.DistanceKm = payload.DistanceKm;
+                trail.IsPublished = true; //之後在 api 層控管是否公開
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"{ex.GetType()} (UserId: {userId}): {ex.Message}");
+                _logger.LogError(ex.StackTrace);
+                return ErrorResponse("發生錯誤，請洽系統管理員。", statusCode: StatusCodes.Status500InternalServerError);
+            }
+
+            _logger.LogInformation($"編號 {id} 資料已經更新");
+            return SuccessResponse(payload);
         }
 
         [HttpDelete]
@@ -184,8 +217,26 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             {
                 return Unauthorized();
             }
-            _logger.LogInformation(id.ToString());
-            return Ok(id.ToString());
+            var trailIdDb = await _context.Trails
+                .FirstOrDefaultAsync(m => m.TrailId == id);
+            if(trailIdDb is null)
+            {
+                return NotFoundResponse();
+            }
+            _context.TrailSegments.RemoveRange(trailIdDb.TrailSegments);
+            _context.Trails.Remove(trailIdDb);
+            try
+            {
+                await _context.SaveChangesAsync();
+                _logger.LogInformation($"編號 {id} 資料已遭刪除");
+                return SuccessResponse<string>("", message: "刪除資料成功！");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"{ex.GetType()} (UserId: {userId}): {ex.Message}");
+                _logger.LogError(ex.StackTrace);
+                return ErrorResponse("發生錯誤，請洽系統管理員。", statusCode: StatusCodes.Status500InternalServerError);
+            }
         }
     }
 }
