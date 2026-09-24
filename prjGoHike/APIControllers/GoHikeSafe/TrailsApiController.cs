@@ -79,6 +79,12 @@ namespace prjGoHike.APIControllers.GoHikeSafe
         }
 
         [HttpGet("{id:long}")]
+        [EndpointSummary("取得指定的已發布步道")]
+        [EndpointDescription("依路由中的步道 ID 取得已發布步道及其路段資料，路段 Shape 使用 GeoJSON 格式；找不到時回傳 404。")]
+        [ProducesResponseType(typeof(ApiResponse<TrailPublicDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> List(long id, CancellationToken cancellationToken)
         {
             if (!long.TryParse(
@@ -129,6 +135,13 @@ namespace prjGoHike.APIControllers.GoHikeSafe
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
+        [EndpointSummary("新增步道")]
+        [EndpointDescription("僅限管理員。以請求本文中的步道及路段資料新增步道；路段 Shape 使用 GeoJSON 格式，路段來源由伺服器設定。")]
+        [ProducesResponseType(typeof(ApiResponse<Trail>), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Create(
             TrailPublicDto payload,
             CancellationToken cancellationToken
@@ -164,6 +177,14 @@ namespace prjGoHike.APIControllers.GoHikeSafe
 
         [HttpPut]
         [Authorize(Roles = "Admin")]
+        [EndpointSummary("更新步道")]
+        [EndpointDescription("僅限管理員。以查詢參數 id 指定步道，且必須與請求本文中的 id 相同；更新步道欄位、取代路段資料，並將步道設為已發布。路段 Shape 使用 GeoJSON 格式。")]
+        [ProducesResponseType(typeof(ApiResponse<TrailPublicDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Update(
             long id,
             TrailPublicDto payload,
@@ -222,6 +243,13 @@ namespace prjGoHike.APIControllers.GoHikeSafe
 
         [HttpDelete]
         [Authorize(Roles = "Admin")]
+        [EndpointSummary("刪除步道")]
+        [EndpointDescription("僅限管理員。以查詢參數 id 指定步道，刪除該步道及其路段；成功時回傳訊息與空字串資料。")]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Delete(
             long id,
             CancellationToken cancellationToken
