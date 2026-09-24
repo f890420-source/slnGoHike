@@ -171,7 +171,8 @@ namespace prjGoHike.APIControllers.GoHikeSafe
                         Shape = x.Shape
                     }).ToList()
             };
-            await _context.AddAsync(newTrail, cancellationToken);
+            _context.Trails.Add(newTrail);
+            await _context.SaveChangesAsync();
             return CreatedResponse(newTrail);
         }
 
