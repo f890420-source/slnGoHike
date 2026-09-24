@@ -126,5 +126,57 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             }
             return NotFoundResponse("找不到步道!");
         }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> Create(TrailPublicDto payload)
+        {
+            if (!long.TryParse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier),
+                out var userId))
+            {
+                return Unauthorized();
+            }
+        if (!ModelState.IsValid)
+        {
+            _logger.LogError("格式錯誤");
+            return BadRequest();
+        }
+            return Ok(payload);
+        }
+
+        [HttpPut]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Update(long id, TrailPublicDto payload)
+        {
+            if (!ModelState.IsValid)
+            {
+                _logger.LogError("input 格式錯誤");
+                return ErrorResponse("請檢查輸入格式",
+ statusCode: StatusCodes.Status400BadRequest);
+            }
+            if (!long.TryParse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier),
+                out var userId))
+            {
+                return Unauthorized();
+            }
+            _logger.LogInformation(id.ToString());
+            return Ok(payload);
+        }
+
+        [HttpDelete]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(long id)
+        {
+            if (!long.TryParse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier),
+                out var userId))
+            {
+                return Unauthorized();
+            }
+            _logger.LogInformation(id.ToString());
+            return Ok(id.ToString());
+        }
     }
 }
