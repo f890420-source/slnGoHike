@@ -158,7 +158,10 @@ public class EventDataAPIController : BaseController
         {
             return ErrorResponse("無法選擇小於當前日期的時間", null, 400);
         }
-
+        if(eventdata.EventName == null)
+        {
+            return ErrorResponse("活動名稱無法為空", null, 400);
+        }
 
 
         if (eventdata.ActivityPhoto != null)
