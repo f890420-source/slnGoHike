@@ -28,7 +28,6 @@
   <ItemGroup>
     <Folder Include="ViewModels_user\Admin\" />
     <Folder Include="ViewModels_user\Dto\" />
-    <Folder Include="wwwroot\assets\JoinGroup_Images\" />
     <Folder Include="wwwroot\uploads\articles\" />
     <Folder Include="wwwroot\uploads\comments\" />
   </ItemGroup>

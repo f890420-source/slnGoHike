@@ -38,13 +38,15 @@ namespace prjGoHike.APIControllers
 
             
 
-            var eventRegistration = _db.EventRegistrationAndMemberLists.Select(r => new EventRegistrationAndMemberListDTO
+            var eventRegistration = _db.EventRegistrationAndMemberLists.Select(r => new EventRegistrationAndMemberListResponseDTO
             {
                 SignUpId = r.SignUpId,
                 UserId = r.UserId,
                 EventId = r.EventId,
                 RegistrationStatus = r.RegistrationStatus,
                 EmergencyContact = r.EmergencyContact,
+                AvatarUrl = r.User.AvatarUrl,
+                AvatarBlurState = r.User.AvatarBlurState,
                 CreatedAt = DateTime.Now
             }).ToListAsync();
 
@@ -118,8 +120,8 @@ namespace prjGoHike.APIControllers
 
 
 
-            var mountainEvent = 0;
-            //代表山的變化 為了signalR
+            var mountainEvent = limitPeople.Mountain.MountainId;
+            
 
             await _hubContext.Clients.All.SendAsync("EventDataChanged", mountainEvent, currentCount);
             return SuccessResponse(entity);

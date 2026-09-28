@@ -21,5 +21,6 @@
         public long LeaderUserId { get; set; }
         public int CurrentParticipants { get; set; }
 
+        public List<EventRegistrationAndMemberListResponseDTO>? eventRegistrationAndMemberListResponsesdto { get; set; }
     }
 }

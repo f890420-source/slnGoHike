@@ -52,9 +52,22 @@ public class EventDataAPIController : BaseController
                 MountainName = e.Mountain.MountainName,
                 Longitude = e.Mountain.Longitude,
                 Latitude = e.Mountain.Latitude,
-                CurrentParticipants = e.EventRegistrationAndMemberLists.Count(e=>e.RegistrationStatus == 1),
-                LeaderUserId = e.LeaderUserId
-                //先做假資料測試
+                CurrentParticipants = e.EventRegistrationAndMemberLists.Count(r => r.RegistrationStatus == 1),
+                LeaderUserId = e.LeaderUserId,
+                eventRegistrationAndMemberListResponsesdto = e.EventRegistrationAndMemberLists.Where(r => r.RegistrationStatus == 1)
+                .Select(r => new EventRegistrationAndMemberListResponseDTO{
+                    SignUpId = r.SignUpId,
+                    UserId = r.UserId,
+                    EventId = r.EventId,
+                    RegistrationStatus = r.RegistrationStatus,
+                    EmergencyContact = r.EmergencyContact,
+                    CreatedAt = r.CreatedAt,
+                    AvatarBlurState = r.User.AvatarBlurState,
+                    AvatarUrl = r.User.AvatarUrl
+
+                }).ToList()
+                
+                
             }).ToListAsync();
 
             return SuccessResponse(eventdata);
@@ -122,9 +135,9 @@ public class EventDataAPIController : BaseController
         string UploadsFolder = "";
         string BaseUrl = $"{Request.Scheme}://{Request.Host}";
         //得到請求端使用的協定/得到請求端的路由
-        string checkExtension = Path.GetExtension(eventdata.ActivityPhoto.FileName);
         string[] allowtExtension = { ".jpg", ".png", ".GIF", ".jpeg" };
         var userValidClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
 
         if (!ModelState.IsValid)
         {
@@ -139,22 +152,11 @@ public class EventDataAPIController : BaseController
             return ErrorResponse("請選擇可參與人數", null, 400);
         }
 
-        if(eventdata.ActivityPhoto.Length > 0)
-        {
-            if(eventdata.ActivityPhoto.Length > 10 * 1024* 1024)
-            {
-                return ErrorResponse("請上傳檔案大小10MB以內的圖片");
-            }
-            if (!allowtExtension.Contains(checkExtension))
-            {
-                return ErrorResponse("請上傳副檔名為：jpg、png、GIF、jpeg的圖片檔案");
-            }
-        }
         if(eventdata.EventStartTime < DateTime.Now)
         {
             return ErrorResponse("請選擇大於當前日期的時間", null, 400);
         }
-        if(eventdata.EventEndTime > eventdata.EventStartTime && eventdata.EventEndTime > DateTime.Now)
+        if(eventdata.EventEndTime < eventdata.EventStartTime || eventdata.EventEndTime < DateTime.Now)
         {
             return ErrorResponse("無法選擇小於當前日期的時間", null, 400);
         }
@@ -164,8 +166,22 @@ public class EventDataAPIController : BaseController
         }
 
 
-        if (eventdata.ActivityPhoto != null)
+
+        if (eventdata.ActivityPhoto != null && eventdata.ActivityPhoto.Length > 0)
         {
+            string checkExtension = Path.GetExtension(eventdata.ActivityPhoto.FileName);
+
+            if (eventdata.ActivityPhoto.Length > 0)
+            {
+                if (eventdata.ActivityPhoto.Length > 10 * 1024 * 1024)
+                {
+                    return ErrorResponse("請上傳檔案大小10MB以內的圖片");
+                }
+                if (!allowtExtension.Contains(checkExtension))
+                {
+                    return ErrorResponse("請上傳副檔名為：jpg、png、GIF、jpeg的圖片檔案");
+                }
+            }
             UploadsFolder = Path.Combine(_environment.WebRootPath, "assets", "JoinGroup_Images");
             //把上傳路徑存到一個變數裡
             string FileExtension = Path.GetExtension(eventdata.ActivityPhoto.FileName);
