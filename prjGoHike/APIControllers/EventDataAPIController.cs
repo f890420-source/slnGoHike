@@ -164,8 +164,12 @@ public class EventDataAPIController : BaseController
         {
             return ErrorResponse("活動名稱無法為空", null, 400);
         }
-
-
+        
+        var repeatName = _db.EventData.FirstOrDefault(e => e.EventName == eventdata.EventName);
+        if(repeatName != null && repeatName.EventName == eventdata.EventName)
+        {
+            return ErrorResponse("無法輸入相同活動名稱",null, 400);
+        }
 
         if (eventdata.ActivityPhoto != null && eventdata.ActivityPhoto.Length > 0)
         {
