@@ -35,12 +35,6 @@ namespace prjGoHike.APIControllers.GoHikeSafe
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> List(CancellationToken cancellationToken)
         {
-            if (!long.TryParse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier),
-                out var userId))
-            {
-                return Unauthorized();
-            }   
             var trailsQuery = _context.Trails.Where(x => x.IsPublished == true).Select(
                 x => new TrailPublicDto()
                 {
@@ -65,13 +59,12 @@ namespace prjGoHike.APIControllers.GoHikeSafe
                     .ToListAsync(cancellationToken);
                 if (trailsResult is not null)
                 {
-                    _logger.LogInformation($"使用者 {userId} 索取步道清單一次");
                     return SuccessResponse(trailsResult);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError($"{ex.GetType()} (UserId: {userId}): {ex.Message}");
+                _logger.LogError($"{ex.GetType()}: {ex.Message}");
                 _logger.LogError(ex.StackTrace);
                 return ErrorResponse("發生錯誤，請洽系統管理員。", statusCode: StatusCodes.Status500InternalServerError);
             }
@@ -87,12 +80,6 @@ namespace prjGoHike.APIControllers.GoHikeSafe
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> List(long id, CancellationToken cancellationToken)
         {
-            if (!long.TryParse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier),
-                out var userId))
-            {
-                return Unauthorized();
-            }
             var trailsQuery = _context.Trails.Where(x => 
                 x.IsPublished == true 
                 && x.TrailId == id
@@ -120,13 +107,12 @@ namespace prjGoHike.APIControllers.GoHikeSafe
                     .FirstOrDefaultAsync(cancellationToken);
                 if (trailsResult is not null)
                 {
-                    _logger.LogInformation($"使用者 {userId} 索取步道編號 {id} 一次");
                     return SuccessResponse(trailsResult);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError($"{ex.GetType()} (UserId: {userId}): {ex.Message}");
+                _logger.LogError($"{ex.GetType()}: {ex.Message}");
                 _logger.LogError(ex.StackTrace);
                 return ErrorResponse("發生錯誤，請洽系統管理員。", statusCode: StatusCodes.Status500InternalServerError);
             }
