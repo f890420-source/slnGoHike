@@ -26,7 +26,7 @@ builder.Services.Configure<GoogleAuthSettings>(
     builder.Configuration.GetSection(GoogleAuthSettings.SectionName));
 
 builder.Services.AddHttpClient<GeminiModerationService>();
-
+builder.Services.AddHttpClient<GeminiSummaryService>();
 #endregion
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()
     ?? throw new InvalidOperationException("JwtSettings 設定遺失。");

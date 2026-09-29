@@ -15,15 +15,18 @@ namespace prjGoHike.Controllers
         private readonly GoHikeDataContext _context;
         private readonly CloudinaryService _cloudinaryService;
         private readonly CommentValidationService _commentValidationService;
+        private readonly GeminiSummaryService _geminiSummaryService;
 
         public ArticlesController(
             GoHikeDataContext context,
             CloudinaryService cloudinaryService,
-            CommentValidationService commentValidationService)
+            CommentValidationService commentValidationService,
+            GeminiSummaryService geminiSummaryService)
         {
             _context = context;
             _cloudinaryService = cloudinaryService;
             _commentValidationService = commentValidationService;
+            _geminiSummaryService = geminiSummaryService;
         }
         #region 取得所有文章
         // GET: api/Articles
@@ -852,6 +855,63 @@ namespace prjGoHike.Controllers
             }
 
             return Ok(article);
+        }
+
+        #endregion
+
+        #region AI文章摘要
+
+        // GET: api/Articles/{id}/summary
+        [HttpGet("{id}/summary")]
+        public async Task<IActionResult> GetArticleSummary(int id)
+        {
+            // =========================
+            // 取得文章
+            // =========================
+            var article = await _context.Articles
+                .Where(a =>
+                    a.ArticleId == id &&
+                    (a.Status == 1 || a.Status == 3))
+                .Select(a => new
+                {
+                    a.Title,
+                    a.Content
+                })
+                .FirstOrDefaultAsync();
+
+            if (article == null)
+            {
+                return NotFound("找不到此文章");
+            }
+
+            // =========================
+            // Gemini AI 產生摘要
+            // =========================
+            try
+            {
+                var summary =
+                    await _geminiSummaryService
+                        .GenerateSummaryAsync(
+                            article.Title,
+                            article.Content
+                        );
+
+                return Ok(new
+                {
+                    summary
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(
+                    $"Gemini 文章摘要產生失敗：{ex.Message}"
+                );
+
+                return StatusCode(
+                    500,
+                    "AI 摘要產生失敗，請稍後再試"
+                );
+            }
         }
 
         #endregion
