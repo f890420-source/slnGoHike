@@ -219,7 +219,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             return CreatedResponse(ToAdminDto(newTrail));
         }
 
-        [HttpPut]
+        [HttpPut("{id:long}")]
         [Authorize(Roles = "Admin")]
         [EndpointSummary("更新步道")]
         [EndpointDescription("僅限管理員。查詢參數 id 須與本文 id 相同；省略路段時保留原路線，提供路段時以有效 GeoJSON 路線取代。")]
@@ -297,7 +297,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
 
         }
 
-        [HttpDelete]
+        [HttpDelete("{id:long}")]
         [Authorize(Roles = "Admin")]
         [EndpointSummary("刪除步道")]
         [EndpointDescription("僅限管理員。以查詢參數 id 指定步道，刪除該步道及其路段；成功時回傳訊息與空字串資料。")]
@@ -318,6 +318,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
                 return Unauthorized();
             }
             var trailIdDb = await _context.Trails
+                .Include(t => t.TrailSegments)
                 .FirstOrDefaultAsync(m => m.TrailId == id);
             if(trailIdDb is null)
             {
