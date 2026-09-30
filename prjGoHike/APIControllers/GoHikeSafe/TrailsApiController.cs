@@ -26,6 +26,59 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             _context = context;
             _logger = logger;
         }
+
+        private static TrailAdminDto ToAdminDto(Trail trail) => new()
+        {
+            id = trail.TrailId,
+            TrailName = trail.TrailName,
+            Region = trail.Region,
+            DifficultyLevel = trail.DifficultyLevel,
+            DistanceKm = trail.DistanceKm,
+            PermitRequired = trail.PermitRequired,
+            GuideRequired = trail.GuideRequired,
+            RegulationNote = trail.RegulationNote,
+            IsPublished = trail.IsPublished,
+            TrailSegDtos = trail.TrailSegments.Select(segment => new TrailAdminSegmentDto
+            {
+                id = segment.TrailSegmentId,
+                Shape = segment.Shape
+            }).ToList()
+        };
+
+        private static bool HasValidSegments(IEnumerable<TrailAdminSegmentDto>? segments) =>
+            segments is not null && segments.Any() && segments.All(segment =>
+                segment is not null && segment.Shape is LineString or MultiLineString &&
+                !segment.Shape.IsEmpty && segment.Shape.IsValid &&
+                segment.Shape.Coordinates.All(point => double.IsFinite(point.X) &&
+                    double.IsFinite(point.Y) && Math.Abs(point.X) <= 180 && Math.Abs(point.Y) <= 90));
+
+        [HttpGet("admin")]
+        [Authorize(Roles = "Admin")]
+        [EndpointSummary("取得所有步道管理資料")]
+        [ProducesResponseType(typeof(ApiResponse<List<TrailAdminDto>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> AdminList(CancellationToken cancellationToken)
+        {
+            var trails = await _context.Trails.AsNoTracking()
+                .Include(trail => trail.TrailSegments)
+                .OrderBy(trail => trail.TrailId)
+                .ToListAsync(cancellationToken);
+            return SuccessResponse(trails.Select(ToAdminDto).ToList());
+        }
+
+        [HttpGet("admin/{id:long}")]
+        [Authorize(Roles = "Admin")]
+        [EndpointSummary("取得指定步道管理資料")]
+        [ProducesResponseType(typeof(ApiResponse<TrailAdminDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> AdminDetail(long id, CancellationToken cancellationToken)
+        {
+            var trail = await _context.Trails.AsNoTracking()
+                .Include(item => item.TrailSegments)
+                .FirstOrDefaultAsync(item => item.TrailId == id, cancellationToken);
+            return trail is null ? NotFoundResponse() : SuccessResponse(ToAdminDto(trail));
+        }
         
         [HttpGet]
         [EndpointSummary("取得已發布的步道")]
@@ -122,14 +175,14 @@ namespace prjGoHike.APIControllers.GoHikeSafe
         [HttpPost]
         [Authorize(Roles = "Admin")]
         [EndpointSummary("新增步道")]
-        [EndpointDescription("僅限管理員。以請求本文中的步道及路段資料新增步道；路段 Shape 使用 GeoJSON 格式，路段來源由伺服器設定。")]
-        [ProducesResponseType(typeof(ApiResponse<TrailPublicDto>), StatusCodes.Status201Created)]
+        [EndpointDescription("僅限管理員。以 JSON 新增所有步道欄位及至少一段有效 GeoJSON 路線。")]
+        [ProducesResponseType(typeof(ApiResponse<TrailAdminDto>), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Create(
-            TrailPublicDto payload,
+            TrailAdminDto payload,
             CancellationToken cancellationToken
             )
         {
@@ -139,10 +192,10 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             {
                 return Unauthorized();
             }
-            if (!ModelState.IsValid)
+            if (!ModelState.IsValid || string.IsNullOrWhiteSpace(payload.TrailName)
+                || string.IsNullOrWhiteSpace(payload.Region) || !HasValidSegments(payload.TrailSegDtos))
             {
-                _logger.LogError("格式錯誤");
-                return BadRequest();
+                return ErrorResponse("請檢查步道欄位與 GeoJSON 路線。");
             }
             var newTrail = new Trail()
             {
@@ -150,6 +203,10 @@ namespace prjGoHike.APIControllers.GoHikeSafe
                 Region = payload.Region.Trim(),
                 DifficultyLevel = payload.DifficultyLevel,
                 DistanceKm = payload.DistanceKm,
+                PermitRequired = payload.PermitRequired,
+                GuideRequired = payload.GuideRequired,
+                RegulationNote = payload.RegulationNote?.Trim(),
+                IsPublished = payload.IsPublished,
                 TrailSegments = (payload.TrailSegDtos ?? [])
                     .Select(x => new TrailSegment
                     {
@@ -159,28 +216,14 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             };
             _context.Trails.Add(newTrail);
             await _context.SaveChangesAsync();
-            var createdInfo = new TrailPublicDto
-            {
-                id = newTrail.TrailId,
-                TrailName = newTrail.TrailName,
-                Region = newTrail.Region,
-                DifficultyLevel = newTrail.DifficultyLevel,
-                DistanceKm = newTrail.DistanceKm,
-                TrailSegDtos = newTrail.TrailSegments.Select(segment => new TrailSegmentPublicDto
-                {
-                    id = segment.TrailSegmentId,
-                    Source = segment.Source,
-                    Shape = segment.Shape
-                }).ToList()
-            };
-            return CreatedResponse(createdInfo);
+            return CreatedResponse(ToAdminDto(newTrail));
         }
 
         [HttpPut]
         [Authorize(Roles = "Admin")]
         [EndpointSummary("更新步道")]
-        [EndpointDescription("僅限管理員。以查詢參數 id 指定步道，且必須與請求本文中的 id 相同；更新步道欄位、取代路段資料，並將步道設為已發布。路段 Shape 使用 GeoJSON 格式。")]
-        [ProducesResponseType(typeof(ApiResponse<TrailPublicDto>), StatusCodes.Status200OK)]
+        [EndpointDescription("僅限管理員。查詢參數 id 須與本文 id 相同；省略路段時保留原路線，提供路段時以有效 GeoJSON 路線取代。")]
+        [ProducesResponseType(typeof(ApiResponse<TrailAdminDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -188,7 +231,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Update(
             long id,
-            TrailPublicDto payload,
+            TrailAdminDto payload,
             CancellationToken cancellationToken
         )
         {
@@ -198,7 +241,9 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             {
                 return Unauthorized();
             }
-            if (id != payload.id || !ModelState.IsValid)
+            if (id != payload.id || !ModelState.IsValid || string.IsNullOrWhiteSpace(payload.TrailName)
+                || string.IsNullOrWhiteSpace(payload.Region)
+                || (payload.TrailSegDtos is not null && !HasValidSegments(payload.TrailSegDtos)))
             {
                 _logger.LogError("input 格式錯誤");
                 return ErrorResponse("請檢查輸入格式",
@@ -206,6 +251,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             }
 
             var trailquery = _context.Trails
+                .Include(t => t.TrailSegments)
                 .Where(t => t.TrailId == id);
             
             try
@@ -222,14 +268,25 @@ namespace prjGoHike.APIControllers.GoHikeSafe
                 trail.Region = payload.Region.Trim();
                 trail.DifficultyLevel = payload.DifficultyLevel;
                 trail.DistanceKm = payload.DistanceKm;
-                trail.IsPublished = true; //之後在 api 層控管是否公開
-                trail.TrailSegments = (payload.TrailSegDtos ?? [])
-                    .Select(x => new TrailSegment
+                trail.PermitRequired = payload.PermitRequired;
+                trail.GuideRequired = payload.GuideRequired;
+                trail.RegulationNote = payload.RegulationNote?.Trim();
+                trail.IsPublished = payload.IsPublished;
+                if (payload.TrailSegDtos is not null)
+                {
+                    _context.TrailSegments.RemoveRange(trail.TrailSegments);
+                    trail.TrailSegments.Clear();
+                    foreach (var segment in payload.TrailSegDtos)
                     {
-                        Source = "User Uploaded",
-                        Shape = x.Shape
-                    }).ToList();
+                        trail.TrailSegments.Add(new TrailSegment
+                        {
+                            Source = "User Uploaded",
+                            Shape = segment.Shape
+                        });
+                    }
+                }
                 await _context.SaveChangesAsync(cancellationToken);
+                return SuccessResponse(ToAdminDto(trail));
             }
             catch (Exception ex)
             {
@@ -238,8 +295,6 @@ namespace prjGoHike.APIControllers.GoHikeSafe
                 return ErrorResponse("發生錯誤，請洽系統管理員。", statusCode: StatusCodes.Status500InternalServerError);
             }
 
-            _logger.LogInformation($"編號 {id} 資料已經更新");
-            return SuccessResponse(payload);
         }
 
         [HttpDelete]
