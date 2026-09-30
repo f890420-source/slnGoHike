@@ -3,10 +3,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.DTO.GroupJoinDTO;
 using prjGoHike.Hubs;
 using prjGoHike.Models;
+using System.Data;
 using System.Security.Claims;
 
 namespace prjGoHike.APIControllers
@@ -54,119 +56,82 @@ namespace prjGoHike.APIControllers
             return SuccessResponse(data);
         }
 
-        // GET: api/EventRegistrationAndMemberListsAPI/5
-        //[HttpGet("{id}")]
-        //public async Task<IActionResult> GetById(long id)
-        //{
-        //    if (_db.EventRegistrationAndMemberLists == null)
-        //    {
-        //        return NotFoundResponse("查無資料表");
-        //    }
-
-        //    var entity = await _db.EventRegistrationAndMemberLists
-        //        .FirstOrDefaultAsync(e => e.SignUpId == id);
-
-        //    if (entity == null)
-        //    {
-        //        return NotFoundResponse("查無此筆報名資料");
-        //    }
-
-        //    return SuccessResponse(entity);
-        //}
-
-        // POST: api/EventRegistrationAndMemberListsAPI
+        
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> Postregistration(EventRegistrationAndMemberListDTO registrationData)
         {
-
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            //找發出http請求的使用者的id
-            
             if (userIdClaim == null || !long.TryParse(userIdClaim, out long userId))
             {
                 return Unauthorized();
             }
-            var RepeatP = await _db.EventRegistrationAndMemberLists.AnyAsync(e => e.UserId == userId && e.EventId == registrationData.EventId && e.RegistrationStatus == 1);
-            if (RepeatP)
+
+            try
             {
-                return ErrorResponse("無法重複報名", null, 400);
+                
+                await using var tx = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+
+                var ev = await _db.EventData.FirstOrDefaultAsync(e => e.EventId == registrationData.EventId);
+                if (ev == null)
+                {
+                    return ErrorResponse("查無此活動", null, 404);
+                }
+
+                if (ev.LeaderUserId == userId)
+                {
+                    return ErrorResponse("發起人無法報名自己的活動", null, 400);
+                }
+
+                if (ev.EventEndTime < DateTime.Now)
+                {
+                    return ErrorResponse("活動已結束，無法報名", null, 400);
+                }
+
+                var repeat = await _db.EventRegistrationAndMemberLists
+                    .AnyAsync(e => e.UserId == userId && e.EventId == ev.EventId && e.RegistrationStatus == 1);
+                if (repeat)
+                {
+                    return ErrorResponse("無法重複報名", null, 400);
+                }
+
+                var currentCount = await _db.EventRegistrationAndMemberLists
+                    .CountAsync(r => r.EventId == ev.EventId && r.RegistrationStatus == 1);
+                if (currentCount >= ev.MaximumNumber)
+                {
+                    return ErrorResponse("報名人數已超過上限", null, 400);
+                }
+
+                var entity = new EventRegistrationAndMemberList
+                {
+                    UserId = userId,
+                    EventId = ev.EventId,
+                    RegistrationStatus = 1,
+                    EmergencyContact = "",
+                    CreatedAt = DateTime.Now
+                };
+                _db.EventRegistrationAndMemberLists.Add(entity);
+
+                currentCount++;
+                if (currentCount >= ev.MaximumNumber)
+                {
+                    ev.ActivityStatus = "已額滿";
+                }
+
+                await _db.SaveChangesAsync();
+                await tx.CommitAsync();
+
+                await _hubContext.Clients.All.SendAsync("EventDataChanged", ev.MountainId, currentCount);
+                return SuccessResponse(new { entity.SignUpId, entity.EventId, entity.UserId });
             }
-            var limitPeople = await _db.EventData.FirstOrDefaultAsync(e => e.EventId == registrationData.EventId);
-
-            var currentCount = await _db.EventRegistrationAndMemberLists
-                .CountAsync(r => r.EventId == registrationData.EventId && r.RegistrationStatus == 1);
-
-            int limit = limitPeople.MaximumNumber;
-
-            if(currentCount >= limit)
+            catch (Exception ex) when (ex is DbUpdateException || ex is SqlException)
             {
-                return ErrorResponse("報名人數已超過上限", null, 400);
+                
+                return ErrorResponse("報名人數眾多，請稍後再試一次", null, 409);
             }
-
-            var entity = new EventRegistrationAndMemberList
-            {
-                UserId = userId,
-                EventId = registrationData.EventId,
-                RegistrationStatus = 1,
-                EmergencyContact = "",
-                CreatedAt = DateTime.Now
-            };
-
-            currentCount++;
-
-            _db.EventRegistrationAndMemberLists.Add(entity);
-            await _db.SaveChangesAsync();
-
-
-
-            var mountainEvent = limitPeople.Mountain.MountainId;
-            
-
-            await _hubContext.Clients.All.SendAsync("EventDataChanged", mountainEvent, currentCount);
-            return SuccessResponse(entity);
         }
 
-        // PUT: api/EventRegistrationAndMemberListsAPI/5
-        //[HttpPut("{id}")]
-        //public async Task<IActionResult> Update(long id, [FromBody] EventRegistrationAndMemberList entity)
-        //{
-        //    if (id != entity.SignUpId)
-        //    {
-        //        return BadRequest("Id 不符");
-        //    }
-
-        //    var existing = await _db.EventRegistrationAndMemberLists.FindAsync(id);
-        //    if (existing == null)
-        //    {
-        //        return NotFoundResponse("查無此筆報名資料");
-        //    }
-
-        //    existing.UserId = entity.UserId;
-        //    existing.EventId = entity.EventId;
-        //    existing.RegistrationStatus = entity.RegistrationStatus;
-        //    existing.EmergencyContact = entity.EmergencyContact;
-
-        //    await _db.SaveChangesAsync();
-
-        //    return SuccessResponse(existing);
-        //}
-
-        // DELETE: api/EventRegistrationAndMemberListsAPI/5
-        //[HttpDelete("{id}")]
-        //public async Task<IActionResult> Delete(long id)
-        //{
-        //    var entity = await _db.EventRegistrationAndMemberLists.FindAsync(id);
-        //    if (entity == null)
-        //    {
-        //        return NotFoundResponse("查無此筆報名資料");
-        //    }
-
-        //    _db.EventRegistrationAndMemberLists.Remove(entity);
-        //    await _db.SaveChangesAsync();
-
-        //    return SuccessResponse("刪除成功");
-        //}
+       
     }
 }
 

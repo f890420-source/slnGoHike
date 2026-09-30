@@ -22,7 +22,7 @@
         public decimal? Latitude { get; set; }
 
         public long LeaderUserId {  get; set; }
-        //先用假資料做測試
+
 
 
     }

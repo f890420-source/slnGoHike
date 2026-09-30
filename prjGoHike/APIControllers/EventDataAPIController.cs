@@ -25,10 +25,10 @@ public class EventDataAPIController : BaseController
     
 
 
-    // GET: api/CEventDataWarp
-    //活動欄位的部分
+
+    
     [HttpGet]
-    public async Task<IActionResult> GetCEventDataWarp()
+    public async Task<IActionResult> GetEventData()
     {
         var eventCount = _db.EventData.Select(e => e.EventId).Count();
         
@@ -40,7 +40,11 @@ public class EventDataAPIController : BaseController
                 MountainId = e.MountainId,
                 EventName = e.EventName,
                 MaximumNumber = e.MaximumNumber,
-                ActivityStatus = e.ActivityStatus,
+                ActivityStatus = e.EventEndTime < DateTime.Now
+                ? "已結束"
+                : (e.EventRegistrationAndMemberLists.Count(r => r.RegistrationStatus == 1) >= e.MaximumNumber
+                ? "已額滿"
+                : "招募中"),
                 ActivityPhoto = e.ActivityPhoto,
                 Description = e.Description,
                 MountainsPermitRequired = e.Mountain.MountainsPermitRequired,
@@ -55,6 +59,7 @@ public class EventDataAPIController : BaseController
                 CurrentParticipants = e.EventRegistrationAndMemberLists.Count(r => r.RegistrationStatus == 1),
                 LeaderUserId = e.LeaderUserId,
                 eventRegistrationAndMemberListResponsesdto = e.EventRegistrationAndMemberLists.Where(r => r.RegistrationStatus == 1)
+                .OrderBy(r => r.SignUpId)
                 .Select(r => new EventRegistrationAndMemberListResponseDTO{
                     SignUpId = r.SignUpId,
                     UserId = r.UserId,
@@ -63,8 +68,12 @@ public class EventDataAPIController : BaseController
                     EmergencyContact = r.EmergencyContact,
                     CreatedAt = r.CreatedAt,
                     AvatarBlurState = r.User.AvatarBlurState,
-                    AvatarUrl = r.User.AvatarUrl
-
+                    AvatarUrl = r.User.AvatarUrl,
+                    Nickname = r.User.Nickname,
+                    Skills = r.User.UserSkillTags
+                    .Where(t => t.IsDisplayed)
+                    .Select(t => t.SkillTag.TagName)
+                    .ToList()
                 }).ToList()
                 
                 
@@ -80,61 +89,104 @@ public class EventDataAPIController : BaseController
         
     }
 
-    // GET: api/CEventDataWarp/5
-    //[HttpGet("{eventid}")]
-    //public async Task<ActionResult<CEventDataWarp>> GetCEventDataWarp(long eventid)
-    //{
-    //    var ceventdatawarp = await _db.CEventDataWarp.FindAsync(eventid);
+    [Authorize]
+    [HttpPut("{eventid}")]
+    public async Task<IActionResult> PutEventData(long eventid, [FromForm] EventDataUpdateDTO eventdata)
+    {
+        var currentUserID = GetCurrentUserId();
+        if (currentUserID == null)
+        {
+            return Unauthorized();
+        }
+        if (!ModelState.IsValid)
+        {
+            return ErrorResponse("欄位驗證失敗", null, 400);
+        }
 
-    //    if (ceventdatawarp == null)
-    //    {
-    //        return NotFound();
-    //    }
+        var Event = await _db.EventData.FirstOrDefaultAsync(e => e.EventId == eventid);
+        if (Event == null)
+        {
+            return ErrorResponse("查無此活動", null, 404);
+        }
+        if (Event.LeaderUserId != currentUserID)
+        {
+            return ErrorResponse("只有發起人可以修改活動", null, 403);
+        }
+        if (Event.EventEndTime < DateTime.Now)
+        {
+            return ErrorResponse("活動已結束，無法修改", null, 400);
+        }
 
-    //    return ceventdatawarp;
-    //}
+        if (string.IsNullOrWhiteSpace(eventdata.EventName))
+        {
+            return ErrorResponse("活動名稱無法為空", null, 400);
+        }
+        if (eventdata.MaximumNumber <= 0)
+        {
+            return ErrorResponse("請選擇可參與人數", null, 400);
+        }
+        
+        if (eventdata.EventStartTime != Event.EventStartTime && eventdata.EventStartTime < DateTime.Now)
+        {
+            return ErrorResponse("請選擇大於當前日期的時間", null, 400);
+        }
+        if (eventdata.EventEndTime <= eventdata.EventStartTime)
+        {
+            return ErrorResponse("結束時間必須晚於開始時間", null, 400);
+        }
 
-    // PUT: api/CEventDataWarp/5
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-    //[HttpPut("{eventid}")]
-    //public async Task<IActionResult> PutCEventDataWarp(long? eventid, CEventDataWarp ceventdatawarp)
-    //{
-    //    if (eventid != ceventdatawarp.EventId)
-    //    {
-    //        return BadRequest();
-    //    }
+        string newName = eventdata.EventName.Trim();
+        
+        bool repeatName = await _db.EventData.AnyAsync(e => e.EventName == newName && e.EventId != eventid);
+        if (repeatName)
+        {
+            return ErrorResponse("無法輸入相同活動名稱", null, 400);
+        }
 
-    //    _db.Entry(ceventdatawarp).State = EntityState.Modified;
+        int currentPeople = await _db.EventRegistrationAndMemberLists
+            .CountAsync(r => r.EventId == eventid && r.RegistrationStatus == 1);
+        if (eventdata.MaximumNumber < currentPeople)
+        {
+            return ErrorResponse($"上限人數不能少於目前已報名的 {currentPeople} 人", null, 400);
+        }
 
-    //    try
-    //    {
-    //        await _db.SaveChangesAsync();
-    //    }
-    //    catch (DbUpdateConcurrencyException)
-    //    {
-    //        if (!CEventDataWarpExists(eventid))
-    //        {
-    //            return NotFound();
-    //        }
-    //        else
-    //        {
-    //            throw;
-    //        }
-    //    }
+        
+        string? oldPhoto = null;
+        if (eventdata.ActivityPhoto != null && eventdata.ActivityPhoto.Length > 0)
+        {
+            var (url, error) = await SaveActivityPhotoAsync(eventdata.ActivityPhoto);
+            if (error != null)
+            {
+                return ErrorResponse(error);
+            }
+            oldPhoto = Event.ActivityPhoto;
+            Event.ActivityPhoto = url!;
+        }
 
-    //    return NoContent();
-    //}
+        Event.EventName = newName;
+        Event.MaximumNumber = eventdata.MaximumNumber;
+        Event.EventStartTime = eventdata.EventStartTime;
+        Event.EventEndTime = eventdata.EventEndTime;
+        Event.Description = eventdata.Description ?? "";
 
-    //// POST: api/CEventDataWarp
-    //// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        await _db.SaveChangesAsync();
+
+        DeleteActivityPhotoFile(oldPhoto);
+
+        await _hubContext.Clients.All.SendAsync("EventDataChanged", Event.MountainId, currentPeople);
+
+        return SuccessResponse(new { Event.EventId, Event.EventName, Event.ActivityPhoto });
+    }
+
+ 
     [Authorize]
     [HttpPost]
-    public async Task<IActionResult> PostCEventDataWarp([FromForm] EventDataDTO eventdata)
+    public async Task<IActionResult> PostEventData([FromForm] EventDataDTO eventdata)
     {
         string SavedFilePath = "";
-        string UploadsFolder = "";
-        string BaseUrl = $"{Request.Scheme}://{Request.Host}";
-        //得到請求端使用的協定/得到請求端的路由
+        
+        
+        
         string[] allowtExtension = { ".jpg", ".png", ".GIF", ".jpeg" };
         var userValidClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -173,35 +225,14 @@ public class EventDataAPIController : BaseController
 
         if (eventdata.ActivityPhoto != null && eventdata.ActivityPhoto.Length > 0)
         {
-            string checkExtension = Path.GetExtension(eventdata.ActivityPhoto.FileName);
-
-            if (eventdata.ActivityPhoto.Length > 0)
+            var (url, error) = await SaveActivityPhotoAsync(eventdata.ActivityPhoto);
+            if (error != null)
             {
-                if (eventdata.ActivityPhoto.Length > 10 * 1024 * 1024)
-                {
-                    return ErrorResponse("請上傳檔案大小10MB以內的圖片");
-                }
-                if (!allowtExtension.Contains(checkExtension))
-                {
-                    return ErrorResponse("請上傳副檔名為：jpg、png、GIF、jpeg的圖片檔案");
-                }
+                return ErrorResponse(error);
             }
-            UploadsFolder = Path.Combine(_environment.WebRootPath, "assets", "JoinGroup_Images");
-            //把上傳路徑存到一個變數裡
-            string FileExtension = Path.GetExtension(eventdata.ActivityPhoto.FileName);
-            //把傳進來的圖片副檔名存到一個變數
-            string UniqueFileName = $"{Guid.NewGuid()}{FileExtension}";
-            //使用guid方法創建一個全新的亂數名字加上副檔名
-            string FilePath = Path.Combine(UploadsFolder, UniqueFileName);
-            //跟轉成亂數的圖片與副檔名進行路徑名稱合併
-            using (var stream = new FileStream(FilePath, FileMode.Create))
-            {
-                await eventdata.ActivityPhoto.CopyToAsync(stream);
-            }
-
-            SavedFilePath = $"{BaseUrl}/assets/JoinGroup_Images/{UniqueFileName}";
+            SavedFilePath = url!;
         }
-        
+
         EventData Event =  new EventData
         {
 
@@ -226,37 +257,134 @@ public class EventDataAPIController : BaseController
                 //NationalParkPermitRequired = false
                 
             };
-        int CurrentPeople = 0;
+        
         //現在的活動報名人數 用來充數用 為了signalR
+        Event.EventRegistrationAndMemberLists.Add(new EventRegistrationAndMemberList
+        {
+            UserId = currentUserID,
+            RegistrationStatus = 1,
+            EmergencyContact = "",
+            CreatedAt = DateTime.Now
+        });
+
         _db.EventData.Add(Event);
 
         await _db.SaveChangesAsync();
-
+        int CurrentPeople = 1;
         await _hubContext.Clients.All.SendAsync("EventDataChanged", Event.MountainId, CurrentPeople);
         //對著所有request的那方進行廣播 然後傳送一個自訂的事件名,加上剛剛才熱騰騰從前端傳來的
         //使用者所選擇的山的id 傳過去的其實就是當改變時會有通知的欄位
 
-        return SuccessResponse(Event);
+        return SuccessResponse(new { Event.EventId, Event.EventName });
     }
 
-    // DELETE: api/CEventDataWarp/5
-    //[HttpDelete("{eventid}")]
-    //public async Task<IActionResult> DeleteCEventDataWarp(long? eventid)
-    //{
-    //    var ceventdatawarp = await _db.CEventDataWarp.FindAsync(eventid);
-    //    if (ceventdatawarp == null)
-    //    {
-    //        return NotFound();
-    //    }
 
-    //    _db.CEventDataWarp.Remove(ceventdatawarp);
-    //    await _db.SaveChangesAsync();
+    [Authorize]
+    [HttpDelete("{eventid}")]
+    public async Task<IActionResult> DeleteEventData(long eventid)
+    {
+        var currentUserID = GetCurrentUserId();
+        if (currentUserID == null)
+        {
+            return Unauthorized();
+        }
 
-    //    return NoContent();
-    //}
+        var Event = await _db.EventData.FirstOrDefaultAsync(e => e.EventId == eventid);
+        if (Event == null)
+        {
+            return ErrorResponse("查無此活動", null, 404);
+        }
+        if (Event.LeaderUserId != currentUserID)
+        {
+            return ErrorResponse("只有發起人可以刪除活動", null, 403);
+        }
 
-    //private bool CEventDataWarpExists(long? eventid)
-    //{
-    //    return _db.CEventDataWarp.Any(e => e.EventId == eventid);
-    //}
+        var mountainId = Event.MountainId;
+        string? photo = Event.ActivityPhoto;
+
+        
+        _db.GroupAttendances.RemoveRange(_db.GroupAttendances.Where(g => g.GroupId == eventid));
+        _db.EventLeaderRatings.RemoveRange(_db.EventLeaderRatings.Where(r => r.EventId == eventid));
+        _db.EventReportComplaints.RemoveRange(_db.EventReportComplaints.Where(r => r.EventId == eventid));
+        _db.EventRegistrationAndMemberLists.RemoveRange(_db.EventRegistrationAndMemberLists.Where(r => r.EventId == eventid));
+
+        
+        var suspensions = await _db.SuspensionSchedules.Where(s => s.EventId == eventid).ToListAsync();
+        foreach (var s in suspensions)
+        {
+            s.EventId = null;
+        }
+
+        _db.EventData.Remove(Event);
+
+       
+        await _db.SaveChangesAsync();
+
+        
+        DeleteActivityPhotoFile(photo);
+
+        await _hubContext.Clients.All.SendAsync("EventDataChanged", mountainId, 0);
+
+        return SuccessResponse("刪除成功");
+    }
+    private static readonly string[] AllowedExtensions = { ".jpg", ".jpeg", ".png", ".gif" };
+
+    private long? GetCurrentUserId()
+    {
+        var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return long.TryParse(claim, out long id) ? id : null;
+    }
+
+   
+    private async Task<(string? url, string? error)> SaveActivityPhotoAsync(IFormFile photo)
+    {
+        if (photo.Length > 10 * 1024 * 1024)
+        {
+            return (null, "請上傳檔案大小10MB以內的圖片");
+        }
+
+        string extension = Path.GetExtension(photo.FileName).ToLowerInvariant();
+      
+        if (!AllowedExtensions.Contains(extension))
+        {
+            return (null, "請上傳副檔名為：jpg、png、gif、jpeg的圖片檔案");
+        }
+
+        string uploadsFolder = Path.Combine(_environment.WebRootPath, "assets", "JoinGroup_Images");
+        Directory.CreateDirectory(uploadsFolder);
+       
+
+        string uniqueFileName = $"{Guid.NewGuid()}{extension}";
+        using (var stream = new FileStream(Path.Combine(uploadsFolder, uniqueFileName), FileMode.Create))
+        {
+            await photo.CopyToAsync(stream);
+        }
+
+        string baseUrl = $"{Request.Scheme}://{Request.Host}";
+        return ($"{baseUrl}/assets/JoinGroup_Images/{uniqueFileName}", null);
+    }
+
+    
+    private void DeleteActivityPhotoFile(string? photoUrl)
+    {
+        if (string.IsNullOrEmpty(photoUrl)) return;
+
+        try
+        {
+           
+            string fileName = Uri.TryCreate(photoUrl, UriKind.Absolute, out var uri)
+                ? Path.GetFileName(uri.LocalPath)
+                : Path.GetFileName(photoUrl);
+
+            string filePath = Path.Combine(_environment.WebRootPath, "assets", "JoinGroup_Images", fileName);
+            if (System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+            }
+        }
+        catch
+        {
+            
+        }
+    }
 }

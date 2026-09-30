@@ -17,5 +17,7 @@
         public string? AvatarBlurState { get; set; }
 
         public string? AvatarUrl { get; set; }
+        public string Nickname { get; set; } = null!;
+        public List<string> Skills { get; set; } = new();
     }
 }
