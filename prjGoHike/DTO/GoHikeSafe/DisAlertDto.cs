@@ -1,4 +1,5 @@
-﻿using NetTopologySuite.Geometries;
+using System.ComponentModel.DataAnnotations;
+using NetTopologySuite.Geometries;
 
 namespace prjGoHike.DTO.GoHikeSafe
 {
@@ -6,10 +7,13 @@ namespace prjGoHike.DTO.GoHikeSafe
     {
         public long AlertId { get; set; }
 
+        [Required, StringLength(30)]
         public string AlertType { get; set; } = null!;
 
+        [Required, StringLength(180)]
         public string AlertTitle { get; set; } = null!;
 
+        [StringLength(2000)]
         public string? AlertDescription { get; set; }
 
         public byte SeverityLevel { get; set; }
@@ -18,12 +22,33 @@ namespace prjGoHike.DTO.GoHikeSafe
 
         public DateTime? EffectiveTo { get; set; }
 
-        public Geometry? AffectedArea { get; set; }
-
+        [StringLength(150)]
         public string? SourceAgency { get; set; }
 
+        [StringLength(1000), Url]
         public string? SourceUrl { get; set; }
 
         public bool IsActive { get; set; }
+
+        public List<AlertSegmentDto>? AlertSegments { get; set; }
+    }
+
+    public class AlertSegmentDto
+    {
+        public long id { get; set; }
+
+        [StringLength(200)]
+        public string? SegmentName { get; set; }
+
+        [Required]
+        public Geometry Shape { get; set; } = null!;
+
+        [StringLength(100)]
+        public string? SourceFeatureId { get; set; }
+
+        public byte? SegmentLevel { get; set; }
+
+        [StringLength(1000)]
+        public string? Description { get; set; }
     }
 }
