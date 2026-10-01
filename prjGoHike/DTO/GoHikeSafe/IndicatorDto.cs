@@ -16,6 +16,7 @@ namespace prjGoHike.DTO.GoHikeSafe
         [Range(typeof(decimal), "0", "999.999")]
         public decimal Weight { get; set; }
 
+        [Range(1, 5, ErrorMessage = "指標等級必須介於 1～5。")]
         public byte? IndicatorLevel { get; set; }
 
         [StringLength(1500)]
@@ -42,6 +43,7 @@ namespace prjGoHike.DTO.GoHikeSafe
         [StringLength(100)]
         public string? SourceFeatureId { get; set; }
 
+        [Range(1, 5, ErrorMessage = "路段等級必須介於 1～5。")]
         public byte? SegmentLevel { get; set; }
 
         [StringLength(1000)]
