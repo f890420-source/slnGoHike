@@ -132,6 +132,48 @@ try
         Check((await Send(HttpMethod.Get, path, null, HttpStatusCode.OK))!["data"]!.AsArray().Count == 0, "Public list excludes inactive resources.");
         Authenticate("Admin");
         payload[resource.Id] = id;
+        if (resource.Route != "trails")
+        {
+            var levelField = resource.Route == "indicators" ? "indicatorLevel" : "severityLevel";
+            var savesBeforeInvalidLevels = context.Saves;
+            foreach (var invalidLevel in new[] { 0, 6 })
+            {
+                foreach (var nested in new[] { false, true })
+                {
+                    bad = payload.DeepClone().AsObject();
+                    var target = nested ? bad[resource.Segments]![0]!.AsObject() : bad;
+                    target[nested ? "segmentLevel" : levelField] = invalidLevel;
+                    await Send(HttpMethod.Post, path, bad, HttpStatusCode.BadRequest);
+                    await Send(HttpMethod.Put, path + "/" + id, bad, HttpStatusCode.BadRequest);
+                }
+            }
+            if (resource.Route == "disasteralerts")
+            {
+                bad = payload.DeepClone().AsObject(); bad.Remove(levelField);
+                await Send(HttpMethod.Post, path, bad, HttpStatusCode.BadRequest);
+                await Send(HttpMethod.Put, path + "/" + id, bad, HttpStatusCode.BadRequest);
+            }
+            Check(context.Saves == savesBeforeInvalidLevels, "Invalid or omitted required levels must not be saved.");
+            foreach (var validLevel in new[] { 1, 5 })
+            {
+                var valid = payload.DeepClone().AsObject();
+                valid[levelField] = validLevel;
+                valid[resource.Segments]![0]!["segmentLevel"] = validLevel;
+                var result = (await Send(HttpMethod.Put, path + "/" + id, valid, HttpStatusCode.OK))!["data"]!;
+                Check(result[levelField]!.GetValue<int>() == validLevel
+                    && result[resource.Segments]![0]!["segmentLevel"]!.GetValue<int>() == validLevel,
+                    "Both level boundaries are accepted and returned.");
+            }
+            var nullable = payload.DeepClone().AsObject();
+            if (resource.Route == "indicators") nullable[levelField] = null;
+            nullable[resource.Segments]![0]!["segmentLevel"] = null;
+            var nullableResult = (await Send(HttpMethod.Put, path + "/" + id, nullable, HttpStatusCode.OK))!["data"]!;
+            Check((resource.Route != "indicators" || nullableResult[levelField] is null)
+                && nullableResult[resource.Segments]![0]!["segmentLevel"] is null,
+                "Nullable levels accept null.");
+            // Level checks replaced the segments; use the current ID for the preservation check below.
+            segmentId = nullableResult[resource.Segments]![0]!["id"]!.GetValue<long>();
+        }
         await Send(HttpMethod.Put, path + "/99999", payload, HttpStatusCode.BadRequest);
         payload[resource.Id] = 99999;
         await Send(HttpMethod.Put, path + "/99999", payload, HttpStatusCode.NotFound);
