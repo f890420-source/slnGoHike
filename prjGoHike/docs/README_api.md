@@ -74,6 +74,17 @@ dotnet user-secrets set "ConnectionStrings:GoHikeDataContext" "<本機 SQL Serve
 更新時省略路段或傳入 null 會保留原路段；提供陣列會替換原路段，指標與警示可用空陣列清除路段。
 路段 ID 由伺服器產生，替換路段會產生新 ID。警示區域存放於 `alertSegments`，與資料庫模型一致。
 
+三個 API 的新增／更新 `shape` 會先檢查原始 JSON，再使用 NetTopologySuite 解析及驗證，錯誤回傳 400 與欄位路徑、中文原因，不寫入資料庫。
+此檢查只套用到 API 路段 DTO，不包含 MVC 後台檔案匯入。
+
+* RFC 7946 Geometry：接受七種幾何型別，`type` 區分大小寫、成員順序不限；不接受 Feature／FeatureCollection 包裝，幾何物件不可混入 `geometry`、`properties`、`features` 等其他型別的保留成員。
+* LineString 至少兩點；Polygon 每個環至少四點，首尾所有數值須相同，包含高度。有效 Polygon 自動修正為外環逆時針、內環順時針，涵蓋 MultiPolygon 及 GeometryCollection 內的 Polygon；保留高度，不修補自交或其他無效拓樸。
+* API 額外限制：只接受 2D／3D 有限數值，經度 -180～180、緯度 -90～90；拒絕空圖形及空子圖形，拒絕無效 NTS 拓樸、第四個以上座標數值及舊式 `crs`。所有圖形使用 SRID 4326；不執行投影轉換。
+* 可選 `bbox` 必須是四／六個有限數值，維度須與涵蓋的所有座標一致，緯度／高度下界不大於上界且須涵蓋所有座標；跨日期變更線允許 west > east。一般 foreign members 可接受，但與 `bbox` 一樣不保存。
+* 不自動切割跨日期變更線的圖形，也不將 RFC 的所有 SHOULD 建議升級為拒絕規則。NTS 平面拓樸驗證不保證涵蓋 SQL Server geography 的全部儲存限制。
+
+規範參考：[RFC 7946](https://www.rfc-editor.org/rfc/rfc7946)。
+
 步道管理 DTO 包含 `estimatedHours`。指標管理 DTO 包含權重、等級、來源、描述與啟用狀態。
 警示 DTO 包含類型、標題、描述、嚴重等級、有效起訖時間、來源與啟用狀態。
 公開指標的清單與明細維持既有 `IndicatorTextInfoDto`、`IndicatorPublicDto` 格式。

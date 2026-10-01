@@ -121,11 +121,7 @@ public class IndicatorApiController : BaseController
     };
 
     private static bool HasValidSegments(IEnumerable<IndicatorSegmentDto>? segments) =>
-        segments is null || segments.All(segment =>
-            segment is not null && segment.Shape is not null &&
-            !segment.Shape.IsEmpty && segment.Shape.IsValid &&
-            segment.Shape.Coordinates.All(point => double.IsFinite(point.X) &&
-                double.IsFinite(point.Y) && Math.Abs(point.X) <= 180 && Math.Abs(point.Y) <= 90));
+        segments is null || segments.All(segment => segment is not null && segment.Shape is not null);
 
     [HttpGet("admin")]
     [Authorize(Roles = "Admin")]
