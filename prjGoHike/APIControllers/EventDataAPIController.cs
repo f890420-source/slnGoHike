@@ -6,6 +6,7 @@ using prjGoHike.APIControllers;
 using prjGoHike.DTO.GroupJoinDTO;
 using prjGoHike.Hubs;
 using prjGoHike.Models;
+using prjGoHike.Services;
 using System.Security.Claims;
 
 [Route("api/[controller]")]
@@ -42,6 +43,8 @@ public class EventDataAPIController : BaseController
                 MaximumNumber = e.MaximumNumber,
                 ActivityStatus = e.EventEndTime < DateTime.Now
                 ? "已結束"
+                : (e.ActivityStatus == "進行中" || e.EventStartTime <= DateTime.Now)
+                ? "進行中"
                 : (e.EventRegistrationAndMemberLists.Count(r => r.RegistrationStatus == 1) >= e.MaximumNumber
                 ? "已額滿"
                 : "招募中"),
@@ -112,9 +115,9 @@ public class EventDataAPIController : BaseController
         {
             return ErrorResponse("只有發起人可以修改活動", null, 403);
         }
-        if (Event.EventEndTime < DateTime.Now)
+        if (Condition_observe_service.HasEnded(Event) || Condition_observe_service.HasStarted(Event))
         {
-            return ErrorResponse("活動已結束，無法修改", null, 400);
+            return ErrorResponse("活動已開始，無法修改", null, 400);
         }
 
         if (string.IsNullOrWhiteSpace(eventdata.EventName))
@@ -125,8 +128,8 @@ public class EventDataAPIController : BaseController
         {
             return ErrorResponse("請選擇可參與人數", null, 400);
         }
-        
-        if (eventdata.EventStartTime != Event.EventStartTime && eventdata.EventStartTime < DateTime.Now)
+
+        if (eventdata.EventStartTime < DateTime.Now)
         {
             return ErrorResponse("請選擇大於當前日期的時間", null, 400);
         }
@@ -223,6 +226,19 @@ public class EventDataAPIController : BaseController
             return ErrorResponse("無法輸入相同活動名稱",null, 400);
         }
 
+        int ledCount = await _db.EventData
+        .CountAsync(e => e.LeaderUserId == currentUserID && e.EventEndTime > DateTime.Now);
+        if (ledCount >= Condition_observe_service.MaxActiveEvents)
+        {
+            return ErrorResponse($"發起中的活動已達 {Condition_observe_service.MaxActiveEvents} 個上限，需等其中一個活動結束才能再發起", null, 400);
+        }
+
+        int activeCount = await Condition_observe_service.CountActiveParticipationAsync(_db, currentUserID);
+        if (activeCount >= Condition_observe_service.MaxActiveEvents)
+        {
+            return ErrorResponse($"參與中的活動已達 {Condition_observe_service.MaxActiveEvents} 個上限（發起的活動也算一個），需等其中一個活動結束才能再發起", null, 400);
+        }
+
         if (eventdata.ActivityPhoto != null && eventdata.ActivityPhoto.Length > 0)
         {
             var (url, error) = await SaveActivityPhotoAsync(eventdata.ActivityPhoto);
@@ -278,6 +294,44 @@ public class EventDataAPIController : BaseController
         return SuccessResponse(new { Event.EventId, Event.EventName });
     }
 
+    // POST: api/EventDataAPI/5/start
+    [Authorize]
+    [HttpPost("{eventid}/start")]
+    public async Task<IActionResult> StartEvent(long eventid)
+    {
+        var currentUserID = GetCurrentUserId();
+        if (currentUserID == null)
+        {
+            return Unauthorized();
+        }
+
+        var Event = await _db.EventData.FirstOrDefaultAsync(e => e.EventId == eventid);
+        if (Event == null)
+        {
+            return ErrorResponse("查無此活動", null, 404);
+        }
+        if (Event.LeaderUserId != currentUserID)
+        {
+            return ErrorResponse("只有發起人可以開始活動", null, 403);
+        }
+        if (Condition_observe_service.HasEnded(Event))
+        {
+            return ErrorResponse("活動已結束", null, 400);
+        }
+        if (Condition_observe_service.HasStarted(Event))
+        {
+            return ErrorResponse("活動已經開始了", null, 400);
+        }
+
+        Event.ActivityStatus = Condition_observe_service.Running;
+        await _db.SaveChangesAsync();
+
+        int currentPeople = await _db.EventRegistrationAndMemberLists
+            .CountAsync(r => r.EventId == eventid && r.RegistrationStatus == 1);
+        await _hubContext.Clients.All.SendAsync("EventDataChanged", Event.MountainId, currentPeople);
+
+        return SuccessResponse("活動已開始");
+    }
 
     [Authorize]
     [HttpDelete("{eventid}")]
@@ -297,6 +351,10 @@ public class EventDataAPIController : BaseController
         if (Event.LeaderUserId != currentUserID)
         {
             return ErrorResponse("只有發起人可以刪除活動", null, 403);
+        }
+        if (Condition_observe_service.HasEnded(Event) || Condition_observe_service.HasStarted(Event))
+        {
+            return ErrorResponse("活動已開始，無法刪除", null, 400);
         }
 
         var mountainId = Event.MountainId;

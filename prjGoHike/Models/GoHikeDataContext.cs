@@ -494,6 +494,9 @@ public partial class GoHikeDataContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Event_Registration_and_Member_List_User_Id");
+            entity.Property(e => e.CancelledAt)
+            .HasColumnType("datetime")
+            .HasColumnName("Cancelled_At");
         });
 
         modelBuilder.Entity<EventReportComplaint>(entity =>
