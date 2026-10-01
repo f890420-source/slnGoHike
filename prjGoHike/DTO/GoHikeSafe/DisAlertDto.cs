@@ -16,6 +16,7 @@ namespace prjGoHike.DTO.GoHikeSafe
         [StringLength(2000)]
         public string? AlertDescription { get; set; }
 
+        [Range(1, 5, ErrorMessage = "警示嚴重等級必須介於 1～5。")]
         public byte SeverityLevel { get; set; }
 
         public DateTime EffectiveFrom { get; set; }
@@ -46,6 +47,7 @@ namespace prjGoHike.DTO.GoHikeSafe
         [StringLength(100)]
         public string? SourceFeatureId { get; set; }
 
+        [Range(1, 5, ErrorMessage = "路段等級必須介於 1～5。")]
         public byte? SegmentLevel { get; set; }
 
         [StringLength(1000)]
