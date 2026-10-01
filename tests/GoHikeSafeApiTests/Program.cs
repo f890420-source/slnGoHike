@@ -46,6 +46,7 @@ await app.StartAsync();
 var address = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.Single();
 using var client = new HttpClient { BaseAddress = new Uri(address) };
 var checks = 0;
+GeoJsonValidationChecks.Run(Check);
 var definitions = new[]
 {
     new Resource("trails", "id", "trailSegDtos", "isPublished", "trailName", """
@@ -73,6 +74,8 @@ try
     {
         var path = "/api/" + resource.Route;
         var payload = JsonNode.Parse(resource.Json)!.AsObject();
+        if (resource.Route != "trails")
+            payload[resource.Segments]![0]!["shape"] = JsonNode.Parse(GeoJsonValidationChecks.ReversedPolygon);
         foreach (var role in new string?[] { null, "Member" })
         {
             Authenticate(role);
@@ -122,6 +125,7 @@ try
         Check(created[resource.Name]!.GetValue<string>() == payload[resource.Name]!.GetValue<string>().Trim(), "Names are trimmed.");
         var segmentId = created[resource.Segments]![0]!["id"]!.GetValue<long>();
         Check(segmentId > 0, "Created segments have IDs.");
+        if (resource.Route != "trails") CheckStoredPolygon(resource.Route, id);
         if (resource.Route == "trails") Check(created["estimatedHours"]!.GetValue<decimal>() == 5.5m, "EstimatedHours is persisted/returned.");
         var detail = (await Send(HttpMethod.Get, path + "/admin/" + id, null, HttpStatusCode.OK))!["data"]!;
         Check(JsonNode.DeepEquals(created, detail), "Admin detail includes every persisted DTO field and segment.");
@@ -132,6 +136,21 @@ try
         Check((await Send(HttpMethod.Get, path, null, HttpStatusCode.OK))!["data"]!.AsArray().Count == 0, "Public list excludes inactive resources.");
         Authenticate("Admin");
         payload[resource.Id] = id;
+        var savesBeforeInvalidGeometry = context.Saves;
+        bad = payload.DeepClone().AsObject();
+        bad[resource.Segments]![0]!["shape"] = JsonNode.Parse("""
+            {"type":"LineString","coordinates":[[121,24,10,20],[121.1,24.1]]}
+            """);
+        foreach (var method in new[] { HttpMethod.Post, HttpMethod.Put })
+        {
+            var geometryFailure = await Send(method, method == HttpMethod.Post ? path : path + "/" + id,
+                bad, HttpStatusCode.BadRequest);
+            var errors = geometryFailure!["errors"]!.AsObject();
+            Check(errors.Any(error => error.Key.Contains("shape", StringComparison.OrdinalIgnoreCase)
+                && error.Value!.AsArray().Any(message => message!.GetValue<string>().Contains("座標"))),
+                "GeoJSON errors identify the shape field and include a controlled Chinese reason.");
+        }
+        Check(context.Saves == savesBeforeInvalidGeometry, "Invalid GeoJSON must not be saved by POST or PUT.");
         if (resource.Route != "trails")
         {
             var levelField = resource.Route == "indicators" ? "indicatorLevel" : "severityLevel";
@@ -182,6 +201,7 @@ try
         payload.Remove(resource.Segments);
         var updated = (await Send(HttpMethod.Put, path + "/" + id, payload, HttpStatusCode.OK))!["data"]!;
         Check(updated[resource.Segments]![0]!["id"]!.GetValue<long>() == segmentId, "Omitted segments are preserved.");
+        if (resource.Route != "trails") CheckStoredPolygon(resource.Route, id);
         Authenticate(null);
         await Send(HttpMethod.Get, path + "/" + id, null, HttpStatusCode.OK);
         Check((await Send(HttpMethod.Get, path, null, HttpStatusCode.OK))!["data"]!.AsArray().Count == 1, "Public list includes active resources.");
@@ -269,6 +289,17 @@ void Check(bool condition, string message)
 {
     checks++;
     if (!condition) throw new InvalidOperationException(message);
+}
+void CheckStoredPolygon(string route, long id)
+{
+    var shape = route == "indicators"
+        ? context.Indicators.Single(x => x.IndicatorId == id).IndicatorSegments.Single().Shape
+        : context.DisasterAlerts.Single(x => x.AlertId == id).AlertSegments.Single().Shape;
+    GeoJsonValidationChecks.CheckOrientation(shape, Check);
+    var polygon = (NetTopologySuite.Geometries.Polygon)shape;
+    Check(polygon.ExteriorRing.CoordinateSequence.GetZ(0) == 10
+        && polygon.GetInteriorRingN(0).CoordinateSequence.GetZ(0) == 20,
+        "POST/PUT store corrected polygons with original heights.");
 }
 record Resource(string Route, string Id, string Segments, string Active, string Name, string Json);
 sealed class TranslationContext : GoHikeDataContext

@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+using prjGoHike.Services;
 using NetTopologySuite.Geometries;
 
 namespace prjGoHike.DTO.GoHikeSafe
@@ -41,7 +43,7 @@ namespace prjGoHike.DTO.GoHikeSafe
         [StringLength(200)]
         public string? SegmentName { get; set; }
 
-        [Required]
+        [Required, JsonConverter(typeof(GeoJsonGeometryConverter))]
         public Geometry Shape { get; set; } = null!;
 
         [StringLength(100)]

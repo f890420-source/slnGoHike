@@ -44,11 +44,7 @@ public class DisasterAlertsApiController : BaseController
     };
 
     private static bool HasValidSegments(IEnumerable<AlertSegmentDto>? segments) =>
-        segments is null || segments.All(segment =>
-            segment is not null && segment.Shape is not null &&
-            !segment.Shape.IsEmpty && segment.Shape.IsValid &&
-            segment.Shape.Coordinates.All(point => double.IsFinite(point.X) &&
-                double.IsFinite(point.Y) && Math.Abs(point.X) <= 180 && Math.Abs(point.Y) <= 90));
+        segments is null || segments.All(segment => segment is not null && segment.Shape is not null);
 
     [HttpGet]
     [EndpointSummary("取得所有啟用的災害警示")]
