@@ -1,11 +1,11 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Data.SqlClient;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.DTO.GoHikeSafe;
 using prjGoHike.Models;
 using NetTopologySuite.Geometries;
 using Microsoft.AspNetCore.Authorization;
-using prjGoHike.APIControllers.User;
 using System.Security.Claims;
 
 namespace prjGoHike.APIControllers.GoHikeSafe
@@ -15,12 +15,12 @@ namespace prjGoHike.APIControllers.GoHikeSafe
     [Route("api/trails")]
     public class TrailsApiController : BaseController
     {
-        private GoHikeDataContext _context;
-        private readonly ILogger<LoginController> _logger;
+        private readonly GoHikeDataContext _context;
+        private readonly ILogger<TrailsApiController> _logger;
         
         public TrailsApiController (
             GoHikeDataContext context,
-            ILogger<LoginController> logger
+            ILogger<TrailsApiController> logger
         )
         {
             _context = context;
@@ -34,6 +34,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             Region = trail.Region,
             DifficultyLevel = trail.DifficultyLevel,
             DistanceKm = trail.DistanceKm,
+            EstimatedHours = trail.EstimatedHours,
             PermitRequired = trail.PermitRequired,
             GuideRequired = trail.GuideRequired,
             RegulationNote = trail.RegulationNote,
@@ -60,11 +61,19 @@ namespace prjGoHike.APIControllers.GoHikeSafe
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> AdminList(CancellationToken cancellationToken)
         {
-            var trails = await _context.Trails.AsNoTracking()
-                .Include(trail => trail.TrailSegments)
-                .OrderBy(trail => trail.TrailId)
-                .ToListAsync(cancellationToken);
-            return SuccessResponse(trails.Select(ToAdminDto).ToList());
+            try
+            {
+                var trails = await _context.Trails.AsNoTracking()
+                    .Include(trail => trail.TrailSegments)
+                    .OrderBy(trail => trail.TrailId)
+                    .ToListAsync(cancellationToken);
+                return SuccessResponse(trails.Select(ToAdminDto).ToList());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "查詢步道管理資料失敗");
+                return ErrorResponse("發生錯誤，請洽系統管理員。", statusCode: StatusCodes.Status500InternalServerError);
+            }
         }
 
         [HttpGet("admin/{id:long}")]
@@ -74,10 +83,19 @@ namespace prjGoHike.APIControllers.GoHikeSafe
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> AdminDetail(long id, CancellationToken cancellationToken)
         {
-            var trail = await _context.Trails.AsNoTracking()
-                .Include(item => item.TrailSegments)
-                .FirstOrDefaultAsync(item => item.TrailId == id, cancellationToken);
-            return trail is null ? NotFoundResponse() : SuccessResponse(ToAdminDto(trail));
+            if (id <= 0) return ErrorResponse("步道 ID 必須大於 0。");
+            try
+            {
+                var trail = await _context.Trails.AsNoTracking()
+                    .Include(item => item.TrailSegments)
+                    .FirstOrDefaultAsync(item => item.TrailId == id, cancellationToken);
+                return trail is null ? NotFoundResponse() : SuccessResponse(ToAdminDto(trail));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "查詢步道管理資料失敗 (Id: {Id})", id);
+                return ErrorResponse("發生錯誤，請洽系統管理員。", statusCode: StatusCodes.Status500InternalServerError);
+            }
         }
         
         [HttpGet]
@@ -133,6 +151,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> List(long id, CancellationToken cancellationToken)
         {
+            if (id <= 0) return ErrorResponse("步道 ID 必須大於 0。");
             var trailsQuery = _context.Trails.Where(x => 
                 x.IsPublished == true 
                 && x.TrailId == id
@@ -203,6 +222,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
                 Region = payload.Region.Trim(),
                 DifficultyLevel = payload.DifficultyLevel,
                 DistanceKm = payload.DistanceKm,
+                EstimatedHours = payload.EstimatedHours,
                 PermitRequired = payload.PermitRequired,
                 GuideRequired = payload.GuideRequired,
                 RegulationNote = payload.RegulationNote?.Trim(),
@@ -214,15 +234,23 @@ namespace prjGoHike.APIControllers.GoHikeSafe
                         Shape = x.Shape
                     }).ToList()
             };
-            _context.Trails.Add(newTrail);
-            await _context.SaveChangesAsync();
-            return CreatedResponse(ToAdminDto(newTrail));
+            try
+            {
+                _context.Trails.Add(newTrail);
+                await _context.SaveChangesAsync(cancellationToken);
+                return CreatedResponse(ToAdminDto(newTrail));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "新增步道失敗 (UserId: {UserId})", userId);
+                return ErrorResponse("發生錯誤，請洽系統管理員。", statusCode: StatusCodes.Status500InternalServerError);
+            }
         }
 
         [HttpPut("{id:long}")]
         [Authorize(Roles = "Admin")]
         [EndpointSummary("更新步道")]
-        [EndpointDescription("僅限管理員。查詢參數 id 須與本文 id 相同；省略路段時保留原路線，提供路段時以有效 GeoJSON 路線取代。")]
+        [EndpointDescription("僅限管理員。路由參數 id 須與本文 id 相同；省略路段時保留原路線，提供路段時以有效 GeoJSON 路線取代。")]
         [ProducesResponseType(typeof(ApiResponse<TrailAdminDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -241,7 +269,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             {
                 return Unauthorized();
             }
-            if (id != payload.id || !ModelState.IsValid || string.IsNullOrWhiteSpace(payload.TrailName)
+            if (id <= 0 || id != payload.id || !ModelState.IsValid || string.IsNullOrWhiteSpace(payload.TrailName)
                 || string.IsNullOrWhiteSpace(payload.Region)
                 || (payload.TrailSegDtos is not null && !HasValidSegments(payload.TrailSegDtos)))
             {
@@ -268,6 +296,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
                 trail.Region = payload.Region.Trim();
                 trail.DifficultyLevel = payload.DifficultyLevel;
                 trail.DistanceKm = payload.DistanceKm;
+                trail.EstimatedHours = payload.EstimatedHours;
                 trail.PermitRequired = payload.PermitRequired;
                 trail.GuideRequired = payload.GuideRequired;
                 trail.RegulationNote = payload.RegulationNote?.Trim();
@@ -300,7 +329,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
         [HttpDelete("{id:long}")]
         [Authorize(Roles = "Admin")]
         [EndpointSummary("刪除步道")]
-        [EndpointDescription("僅限管理員。以查詢參數 id 指定步道，刪除該步道及其路段；成功時回傳訊息與空字串資料。")]
+        [EndpointDescription("僅限管理員。以路由參數 id 指定步道，刪除該步道及其路段；成功時回傳訊息與空字串資料。")]
         [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -317,20 +346,32 @@ namespace prjGoHike.APIControllers.GoHikeSafe
             {
                 return Unauthorized();
             }
-            var trailIdDb = await _context.Trails
-                .Include(t => t.TrailSegments)
-                .FirstOrDefaultAsync(m => m.TrailId == id);
-            if(trailIdDb is null)
-            {
-                return NotFoundResponse();
-            }
-            _context.TrailSegments.RemoveRange(trailIdDb.TrailSegments);
-            _context.Trails.Remove(trailIdDb);
+            if (id <= 0) return ErrorResponse("步道 ID 必須大於 0。");
             try
             {
+                var trailIdDb = await _context.Trails
+                    .Include(t => t.TrailSegments)
+                    .FirstOrDefaultAsync(t => t.TrailId == id, cancellationToken);
+                if (trailIdDb is null) return NotFoundResponse();
+                if (await _context.AlertsTrails.AnyAsync(x => x.TrailId == id, cancellationToken)
+                    || await _context.HikeRecordDetails.AnyAsync(x => x.TrailId == id, cancellationToken)
+                    || await _context.TrailFeatures.AnyAsync(x => x.TrailId == id, cancellationToken)
+                    || await _context.TrailIndicators.AnyAsync(x => x.TrailId == id, cancellationToken)
+                    || await _context.TrailSubscriptions.AnyAsync(x => x.TrailId == id, cancellationToken)
+                    || await _context.TripReports.AnyAsync(x => x.TrailId == id, cancellationToken))
+                {
+                    return ErrorResponse("步道仍有關聯資料，無法刪除。", statusCode: StatusCodes.Status409Conflict);
+                }
+                _context.TrailSegments.RemoveRange(trailIdDb.TrailSegments);
+                _context.Trails.Remove(trailIdDb);
                 await _context.SaveChangesAsync(cancellationToken);
                 _logger.LogInformation($"編號 {id} 資料已遭刪除");
                 return SuccessResponse<string>("", message: "刪除資料成功！");
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 547 })
+            {
+                _logger.LogError(ex, "刪除步道失敗 (Id: {Id})", id);
+                return ErrorResponse("資料目前無法刪除，請確認關聯資料。", statusCode: StatusCodes.Status409Conflict);
             }
             catch (Exception ex)
             {
