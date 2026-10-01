@@ -19,6 +19,9 @@ public class TrailAdminDto
     [Range(typeof(decimal), "0", "99999")]
     public decimal? DistanceKm { get; set; }
 
+    [Range(typeof(decimal), "0", "9999.99")]
+    public decimal? EstimatedHours { get; set; }
+
     public bool PermitRequired { get; set; }
     public bool GuideRequired { get; set; }
 
