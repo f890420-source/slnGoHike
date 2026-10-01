@@ -48,10 +48,7 @@ namespace prjGoHike.APIControllers.GoHikeSafe
 
         private static bool HasValidSegments(IEnumerable<TrailAdminSegmentDto>? segments) =>
             segments is not null && segments.Any() && segments.All(segment =>
-                segment is not null && segment.Shape is LineString or MultiLineString &&
-                !segment.Shape.IsEmpty && segment.Shape.IsValid &&
-                segment.Shape.Coordinates.All(point => double.IsFinite(point.X) &&
-                    double.IsFinite(point.Y) && Math.Abs(point.X) <= 180 && Math.Abs(point.Y) <= 90));
+                segment is not null && segment.Shape is LineString or MultiLineString);
 
         [HttpGet("admin")]
         [Authorize(Roles = "Admin")]
