@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.DTO.User;
 using prjGoHike.Models;
+using prjGoHike.Services;
 
 namespace prjGoHike.APIControllers.User;
 
@@ -10,12 +11,23 @@ namespace prjGoHike.APIControllers.User;
 public sealed class UserAchievementsController : UserApiControllerBase
 {
     private readonly GoHikeDataContext _context;
-    public UserAchievementsController(GoHikeDataContext context) => _context = context;
+    private readonly MemberAchievementService _memberAchievementService;
+
+    public UserAchievementsController(
+        GoHikeDataContext context,
+        MemberAchievementService memberAchievementService)
+    {
+        _context = context;
+        _memberAchievementService = memberAchievementService;
+    }
 
     [HttpGet("me")]
     public async Task<ActionResult> GetMine(CancellationToken ct)
     {
         if (!TryGetCurrentUserId(out var userId)) return Unauthorized();
+        // 兼容成就功能上線前就已註冊、登入的會員；重複讀取不會重複新增。
+        await _memberAchievementService.UnlockRegistrationAsync(userId, ct);
+        await _memberAchievementService.UnlockFirstLoginAsync(userId, ct);
         return Ok(await Query(userId).ToListAsync(ct));
     }
 
