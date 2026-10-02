@@ -18,6 +18,7 @@ public class LoginController : ControllerBase
     private readonly ILogger<LoginController> _logger;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenService _jwtTokenService;
+    private readonly MemberAchievementService _memberAchievementService;
     private readonly GoogleAuthSettings _googleAuthSettings;
 
     public LoginController(
@@ -25,12 +26,14 @@ public class LoginController : ControllerBase
         ILogger<LoginController> logger,
         IPasswordHasher passwordHasher,
         IJwtTokenService jwtTokenService,
+        MemberAchievementService memberAchievementService,
         IOptions<GoogleAuthSettings> googleAuthSettings)
     {
         _context = context;
         _logger = logger;
         _passwordHasher = passwordHasher;
         _jwtTokenService = jwtTokenService;
+        _memberAchievementService = memberAchievementService;
         _googleAuthSettings = googleAuthSettings.Value;
     }
 
@@ -68,6 +71,7 @@ public class LoginController : ControllerBase
 
         user.LastActiveAt = now;
         await _context.SaveChangesAsync(cancellationToken);
+        await _memberAchievementService.UnlockFirstLoginAsync(user.UserId, cancellationToken);
 
         var tokens = await _jwtTokenService.CreateTokenPairAsync(user, cancellationToken);
         _logger.LogInformation("使用者 {UserId} 登入成功", user.UserId);
@@ -150,6 +154,7 @@ public class LoginController : ControllerBase
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync(cancellationToken);
+            await _memberAchievementService.UnlockRegistrationAsync(user.UserId, cancellationToken);
             _logger.LogInformation("Google 帳號首次登入，已建立使用者 {UserId}", user.UserId);
         }
         else
@@ -171,6 +176,7 @@ public class LoginController : ControllerBase
             await _context.SaveChangesAsync(cancellationToken);
         }
 
+        await _memberAchievementService.UnlockFirstLoginAsync(user.UserId, cancellationToken);
         var tokens = await _jwtTokenService.CreateTokenPairAsync(user, cancellationToken);
         _logger.LogInformation("使用者 {UserId} 使用 Google 登入成功", user.UserId);
         return Ok(ToAuthResponse(tokens));
@@ -218,6 +224,7 @@ public class LoginController : ControllerBase
 
         _context.Users.Add(user);
         await _context.SaveChangesAsync(cancellationToken);
+        await _memberAchievementService.UnlockRegistrationAsync(user.UserId, cancellationToken);
 
         return StatusCode(StatusCodes.Status201Created, new { message = "註冊成功。" });
     }
