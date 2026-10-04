@@ -91,6 +91,25 @@ ALTER COLUMN EvaluatedScore decimal(10,4) NULL;
 
 本表不建立結果明細歷史，也不新增每列關聯的 RunId。它能說明一次工作的門檻與狀態，**不能單憑 Run 紀錄還原歷史結果，或證明已評分列使用相同門檻**。
 
+### 2.4 Schema 異動腳本與部署檢查
+
+依上述規劃新增 [20261004_add_spatial_join_job_runs.sql](../DatabaseScripts/20261004_add_spatial_join_job_runs.sql)，以 20260930 快照為基底進行增量異動；原始快照保留。本腳本尚未在 SQL Server 執行驗證。
+
+腳本在單一交易內將 `TrailIndicators.EvaluatedScore` 改為可空、建立 `BackgroundJobRuns`，以及第 2.3 節的主鍵、UTC 建立時間預設值、狀態／距離 CHECK 與查詢索引。它不回填、清空或重算任何業務資料；不包含第 3 節的 Job 同步 SQL。JobType、Status 由應用程式明確寫入，第一版建立請求時分別填 `SpatialJoin`、`Pending`。
+
+可在相同腳本建立的 schema 上重複執行；已可空的評分欄位、既有表與同名索引會跳過建立。遇到評分型別或工作表必要欄位不符時，停止並回滾。這不是通用 schema 修復工具：既有同名物件的 CHECK、主鍵、預設值與索引若曾被人工修改，部署前須比對並另行處理，不會自動刪除重建。
+
+部署與驗收順序：
+
+1. 選定目標資料庫並確認 `DB_NAME()`；在測試資料庫還原基底 schema，保留代表性的非零及零分資料作前後比對。
+2. 以獨立批次、無外層交易執行腳本；確認 EvaluatedScore 仍為 `decimal(10,4)` 且允許 NULL，既有評分、距離、權重、時間、主鍵及外鍵均保留。
+3. 確認 BackgroundJobRuns 的九個欄位、`Id` identity 主鍵、`SYSUTCDATETIME()` 預設值、兩個 CHECK，以及 `(JobType, Status, CreatedAt)` 索引；再次執行不新增重複物件、不改動資料。
+4. 在測試交易中驗證六種狀態都可寫入、非法狀態被拒絕；距離 `0.01`、`10000.00` 可寫入，`0`、`10000.01` 與 NULL 被拒絕；省略 CreatedAt 時填入 UTC。測試完回滾資料。
+5. 驗證 schema 不符時腳本停止，且同一交易內較早完成的異動回滾；同名表已存在的分支也須測試。
+6. 更新 EF Model 與讀取端以支援 nullable 分數，並完成 BackgroundJobRun 映射，再依第 6 節接入及啟用 Job。
+
+`decimal(12,2)` 與範圍 CHECK 只能保護儲存後的值；SQL Server 轉入較小 scale 時可能先四捨五入，因此它們不能拒絕所有「原始請求超過兩位小數」的情況。API／Service 必須在建立 SQL 參數前驗證原始 decimal，不能靠 CHECK 補回已失去的精度。參考 [Microsoft decimal／numeric 轉換規則](https://learn.microsoft.com/en-us/sql/t-sql/data-types/decimal-and-numeric-transact-sql?view=sql-server-ver17)。
+
 ## 3. 距離計算、驗證與同步範例
 
 ### 3.1 計算規則
