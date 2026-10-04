@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using prjGoHike.Models;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using prjGoHike.Hubs;
-using prjGoHike.Services.forum;
+using Microsoft.EntityFrameworkCore;
 using prjGoHike.Dtos.Forum;
+using prjGoHike.Hubs;
+using prjGoHike.Models;
+using prjGoHike.Services;
+using prjGoHike.Services.forum;
+using System.Security.Claims;
 namespace prjGoHike.Controllers
 {
     [Route("api/[controller]")]
@@ -13,6 +16,7 @@ namespace prjGoHike.Controllers
     {
         private readonly GoHikeDataContext _context;
         private readonly IHubContext<CommentHub> _hubContext;
+        private readonly NotificationRealtimeService _notificationRealtimeService;
         private readonly CloudinaryService _cloudinaryService;
         private readonly SensitiveWordService _sensitiveWordService;
         private readonly CommentValidationService _commentValidationService;
@@ -22,6 +26,7 @@ namespace prjGoHike.Controllers
             GoHikeDataContext context,
             CloudinaryService cloudinaryService,
             IHubContext<CommentHub> hubContext,
+            NotificationRealtimeService notificationRealtimeService,
             SensitiveWordService sensitiveWordService,
             GeminiModerationService geminiModerationService,
             CommentValidationService commentValidationService)
@@ -29,6 +34,7 @@ namespace prjGoHike.Controllers
             _context = context;
             _cloudinaryService = cloudinaryService;
             _hubContext = hubContext;
+            _notificationRealtimeService = notificationRealtimeService;
             _sensitiveWordService = sensitiveWordService;
             _geminiModerationService = geminiModerationService;
             _commentValidationService = commentValidationService;
@@ -42,9 +48,9 @@ namespace prjGoHike.Controllers
         {
             var comments = await _context.Comments
                 .Where(c =>
-                    c.ArticleId == articleId &&
-                    c.Status == 1
-                )
+    c.ArticleId == articleId &&
+    (c.Status == 1 || c.Status == 2)
+)
                 .OrderBy(c => c.CreatedDate)
            .Select(c => new CommentDto
            {
@@ -81,10 +87,23 @@ namespace prjGoHike.Controllers
 
         #region 發布留言
         // POST: api/Comments
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<CommentDto>> CreateComment(
             [FromForm] CreateCommentDto dto)
         {
+            // =========================
+            // 取得目前登入會員
+            // =========================
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized("無法取得登入會員資料");
+            }
+
             // =========================
             // 留言圖片驗證
             // =========================
@@ -119,7 +138,7 @@ namespace prjGoHike.Controllers
             //    if (!isSafe)
             //    {
             //        return BadRequest(
-            //            "留言內容可能包含不適當文字"
+            //            "AI 判斷留言內容有不雅文字"
             //        );
             //    }
             //}
@@ -139,8 +158,7 @@ namespace prjGoHike.Controllers
             {
                 ArticleId = dto.ArticleId,
 
-                // TODO: 之後改成從登入會員 Claims 取得
-                UserId = 15,
+                UserId = userId,
 
                 Content = dto.Content,
 
@@ -197,6 +215,10 @@ namespace prjGoHike.Controllers
                     _context.Notifications.Add(notification);
 
                     await _context.SaveChangesAsync();
+
+                    // SignalR 即時推送通知
+                    await _notificationRealtimeService
+                        .SendNotificationAsync(notification);
                 }
             }
 
@@ -204,24 +226,16 @@ namespace prjGoHike.Controllers
             // 建立留言回覆通知
             // Type 2 = 我的留言收到回覆
             // =========================
-            if (comment.ParentCommentId != null)
+            if (comment.ParentCommentId != null &&
+                comment.ReplyToUserId != null)
             {
-                var parentComment = await _context.Comments
-                    .Where(c => c.CommentId == comment.ParentCommentId)
-                    .Select(c => new
-                    {
-                        c.UserId
-                    })
-                    .FirstOrDefaultAsync();
-
-                // 被回覆的留言存在，而且不是自己回覆自己
-                if (parentComment != null &&
-                    parentComment.UserId != comment.UserId)
+                // 不是自己回覆自己才建立通知
+                if (comment.ReplyToUserId != comment.UserId)
                 {
                     var notification = new Notification
                     {
-                        // 收到通知的人 = 被回覆留言的作者
-                        UserId = parentComment.UserId,
+                        // 收到通知的人 = 被回覆的會員
+                        UserId = comment.ReplyToUserId.Value,
 
                         // 發送通知的人 = 回覆者
                         SenderUserId = comment.UserId,
@@ -240,6 +254,10 @@ namespace prjGoHike.Controllers
                     _context.Notifications.Add(notification);
 
                     await _context.SaveChangesAsync();
+
+                    // SignalR 即時推送通知
+                    await _notificationRealtimeService
+                        .SendNotificationAsync(notification);
                 }
             }
 
@@ -350,6 +368,186 @@ namespace prjGoHike.Controllers
 
             return Ok(result);
         }
+        #endregion
+
+        #region 編輯留言
+        // PUT: api/Comments/{id}
+        [Authorize]
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateComment(
+            int id,
+            [FromBody] UpdateCommentDto dto)
+        {
+            // =========================
+            // 取得目前登入會員
+            // =========================
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized("無法取得登入會員資料");
+            }
+
+            // =========================
+            // 找到要修改的留言
+            // =========================
+            var comment = await _context.Comments
+                .FirstOrDefaultAsync(c =>
+                    c.CommentId == id
+                );
+
+            if (comment == null)
+            {
+                return NotFound("找不到此留言");
+            }
+
+            // =========================
+            // 只能修改自己的留言
+            // =========================
+            if (comment.UserId != userId)
+            {
+                return Forbid();
+            }
+
+            // =========================
+            // 檢查留言內容
+            // =========================
+            if (string.IsNullOrWhiteSpace(dto.Content))
+            {
+                return BadRequest("留言內容不能為空");
+            }
+
+            if (dto.Content.Length > 1000)
+            {
+                return BadRequest("留言內容不能超過 1000 個字");
+            }
+
+            // =========================
+            // 不雅字詞檢查
+            // =========================
+            if (_sensitiveWordService.ContainsSensitiveWord(
+                dto.Content))
+            {
+                return BadRequest("留言內容包含不適當文字");
+            }
+
+            // =========================
+            // 更新留言
+            // =========================
+            comment.Content = dto.Content.Trim();
+            comment.UpdateDate = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                commentId = comment.CommentId,
+                content = comment.Content,
+                updateDate = comment.UpdateDate
+            });
+        }
+        #endregion
+
+        #region 刪除留言
+
+        // DELETE: api/Comments/{id}
+        [Authorize]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteComment(int id)
+        {
+            // =========================
+            // 取得目前登入會員
+            // =========================
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized(
+                    "無法取得登入會員資料"
+                );
+            }
+
+            // =========================
+            // 找到留言
+            // =========================
+            var comment = await _context.Comments
+                .FirstOrDefaultAsync(c =>
+                    c.CommentId == id
+                );
+
+            if (comment == null)
+            {
+                return NotFound(
+                    "找不到此留言"
+                );
+            }
+
+            // =========================
+            // 只能刪除自己的留言
+            // =========================
+            if (comment.UserId != userId)
+            {
+                return Forbid();
+            }
+
+            // =========================
+            // 已刪除的留言不能重複刪除
+            // =========================
+            if (comment.Status == 2)
+            {
+                return BadRequest(
+                    "此留言已經刪除"
+                );
+            }
+
+            // =========================
+            // 找出留言圖片
+            // =========================
+            var commentImages =
+                await _context.CommentImages
+                    .Where(ci =>
+                        ci.CommentId == comment.CommentId
+                    )
+                    .ToListAsync();
+
+            // =========================
+            // 刪除 Cloudinary 圖片
+            // =========================
+            foreach (var image in commentImages)
+            {
+                await _cloudinaryService
+                    .DeleteImageAsync(
+                        image.ImagePath
+                    );
+            }
+
+            // =========================
+            // 刪除資料庫圖片紀錄
+            // =========================
+            _context.CommentImages.RemoveRange(
+                commentImages
+            );
+
+            // =========================
+            // 將留言標記為已刪除
+            // =========================
+            comment.Status = 2;
+            comment.Content = "此留言已刪除";
+            comment.UpdateDate = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                commentId = comment.CommentId,
+                status = comment.Status
+            });
+        }
+
         #endregion
     }
 

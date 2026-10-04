@@ -1,15 +1,14 @@
-﻿using System.Net.Http.Headers;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 
 namespace prjGoHike.Services.forum
 {
-    public class GeminiModerationService
+    public class GeminiSummaryService
     {
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
 
-        public GeminiModerationService(
+        public GeminiSummaryService(
             HttpClient httpClient,
             IConfiguration configuration)
         {
@@ -17,7 +16,8 @@ namespace prjGoHike.Services.forum
             _configuration = configuration;
         }
 
-        public async Task<bool> IsContentSafeAsync(
+        public async Task<string> GenerateSummaryAsync(
+            string title,
             string content)
         {
             var apiKey =
@@ -31,15 +31,25 @@ namespace prjGoHike.Services.forum
             }
 
             var prompt = $"""
-請判斷下面這段討論區留言是否包含：
-- 辱罵
-- 人身攻擊
-- 仇恨言論
-- 性騷擾或明顯不雅內容
+你是登山討論平台 GoHike 的文章整理助手。
 
-只回答 SAFE 或 UNSAFE，不要回答其他內容。
+請根據以下文章的「標題」與「內容」整理文章重點。
 
-留言：
+規則：
+1. 使用繁體中文。
+2. 只能根據原文提供的資訊進行整理。
+3. 不得自行加入原文沒有提到的登山資訊。
+4. 不得自行推測路線、天氣、裝備或安全資訊。
+5. 摘要內容簡潔易讀。
+6. 請整理文章的主要重點。
+7. 如果文章有提到地點、路線、裝備或注意事項，可以整理出來。
+8. 如果原文沒有相關資訊，不需要強行產生該項目。
+9. 不要加入 Markdown 標題符號，例如 #、##、###。
+
+文章標題：
+{title}
+
+文章內容：
 {content}
 """;
 
@@ -66,7 +76,7 @@ namespace prjGoHike.Services.forum
             using var request =
                 new HttpRequestMessage(
                     HttpMethod.Post,
-"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent"
+                    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent"
                 );
 
             request.Headers.Add(
@@ -92,22 +102,26 @@ namespace prjGoHike.Services.forum
             using var document =
                 JsonDocument.Parse(responseJson);
 
-            var resultText =
+            var summary =
                 document.RootElement
                     .GetProperty("candidates")[0]
                     .GetProperty("content")
                     .GetProperty("parts")[0]
                     .GetProperty("text")
                     .GetString();
+
+            if (string.IsNullOrWhiteSpace(summary))
+            {
+                throw new Exception(
+                    "Gemini 未產生文章摘要"
+                );
+            }
+
             Console.WriteLine(
-    $"Gemini 判斷結果：{resultText}"
-);
-            return string.Equals(
-                resultText?.Trim(),
-                "SAFE",
-                StringComparison.OrdinalIgnoreCase
+                $"Gemini 文章摘要：{summary}"
             );
+
+            return summary.Trim();
         }
     }
 }
-//gemini罵人判斷  你到底有沒有腦袋啊？每次講話都完全不經思考，什麼都不懂還一直裝得自己很厲害，看你發言真的讓人覺得很可笑。

@@ -2,6 +2,8 @@
 using prjGoHike.Models;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.Dtos.Forum;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace prjGoHike.Controllers.Api
 {
@@ -17,12 +19,22 @@ namespace prjGoHike.Controllers.Api
         }
 
         // POST: api/Reports
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> CreateReport(
             [FromBody] CreateReportDto dto)
         {
-            //todo 暫時測試，之後改成 Claims
-            const long userId = 15;
+            // =========================
+            // 取得目前登入會員
+            // =========================
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized("無法取得登入會員資料");
+            }
 
             if (string.IsNullOrWhiteSpace(dto.Reason))
             {
@@ -58,6 +70,7 @@ namespace prjGoHike.Controllers.Api
             };
 
             _context.Reports.Add(report);
+
             await _context.SaveChangesAsync();
 
             return Ok(new
