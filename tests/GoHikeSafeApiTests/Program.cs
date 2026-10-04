@@ -29,6 +29,12 @@ var context = new TestDataContext();
 builder.Services.AddSingleton<GoHikeDataContext>(context);
 builder.Services.AddControllers().AddApplicationPart(typeof(TrailsApiController).Assembly)
     .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new NetTopologySuite.IO.Converters.GeoJsonConverterFactory()));
+builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new NetTopologySuite.IO.Converters.GeoJsonConverterFactory()));
+builder.Services.AddOpenApi("v1", options =>
+{
+    options.ShouldInclude = description => description.RelativePath?.StartsWith("api/", StringComparison.OrdinalIgnoreCase) == true;
+    options.AddSchemaTransformer<prjGoHike.Services.GeoJsonSchemaTransformer>();
+});
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
@@ -42,6 +48,7 @@ await using var app = builder.Build();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapOpenApi();
 await app.StartAsync();
 var address = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.Single();
 using var client = new HttpClient { BaseAddress = new Uri(address) };
@@ -70,6 +77,35 @@ var definitions = new[]
 };
 try
 {
+    var openApi = (await Send(HttpMethod.Get, "/openapi/v1.json", null, HttpStatusCode.OK))!;
+    foreach (var (route, methods) in new[]
+    {
+        ("/api/trailfeatures", new[] { "get", "post" }),
+        ("/api/trailfeatures/{id}", new[] { "get", "put", "delete" }),
+        ("/api/trailfeatures/admin", new[] { "get" }),
+        ("/api/trailfeatures/admin/{id}", new[] { "get" })
+    })
+        foreach (var method in methods)
+            Check(openApi["paths"]![route]![method]!["summary"] is not null, "OpenAPI documents every feature operation.");
+    foreach (var type in new[] { "TrailFeatureReportRequestDto", "TrailFeatureUpdateRequestDto" })
+    {
+        var schema = openApi["components"]!["schemas"]![type]!;
+        var location = schema["properties"]!["location"]!;
+        if (location["$ref"] is JsonNode reference)
+            location = openApi["components"]!["schemas"]![reference.GetValue<string>().Split('/').Last()]!;
+        Check(location["properties"]!["type"]!["enum"]!.AsArray().Single()!.GetValue<string>() == "Point",
+            "OpenAPI request location is restricted to Point.");
+        Check(location["example"]!["type"]!.GetValue<string>() == "Point"
+            && location["properties"]!["coordinates"]!["minItems"]!.GetValue<int>() == 2
+            && location["properties"]!["coordinates"]!["maxItems"]!.GetValue<int>() == 3,
+            "OpenAPI supplies a valid Point example and coordinate dimensions.");
+    }
+    Check(openApi["components"]!["schemas"]!["Geometry"]!["properties"]!["type"]!["enum"]!.AsArray().Count == 7,
+        "Point schema does not restrict the existing generic Geometry schema.");
+    var reportProperties = openApi["components"]!["schemas"]!["TrailFeatureReportRequestDto"]!["properties"]!.AsObject();
+    Check(!reportProperties.ContainsKey("isAvailable") && !reportProperties.ContainsKey("reliabilityLevel")
+        && !reportProperties.ContainsKey("dataSource") && !reportProperties.ContainsKey("featureId"),
+        "OpenAPI report input excludes server controlled fields.");
     foreach (var resource in definitions)
     {
         var path = "/api/" + resource.Route;
@@ -254,26 +290,33 @@ try
         Check(!failure!.ToJsonString().Contains("private database details"), "Database errors do not leak internals.");
         context.FailSave = false;
     }
+    await TrailFeatureApiChecks.RunAsync(context, Send, (role, userId) => Authenticate(role, userId), Check);
     // Use the production EF model/provider to ensure relational query translation
     // works, including nested public segment DTO projections.
     await using var sql = new TranslationContext();
     Check(sql.Trails.Include(x => x.TrailSegments).Where(x => x.IsPublished).ToQueryString().Contains("TrailSegments"), "SQL trail query includes segments.");
     Check(sql.Indicators.Include(x => x.IndicatorSegments).Where(x => x.IsActive).ToQueryString().Contains("IndicatorSegments"), "SQL indicator query includes segments.");
     Check(sql.DisasterAlerts.Include(x => x.AlertSegments).Where(x => x.IsActive).ToQueryString().Contains("AlertSegments"), "SQL alert query includes segments.");
+    Check(sql.TrailFeatures.AsNoTracking().Where(x => x.IsAvailable && x.Trail.IsPublished)
+        .Where(x => x.TrailId == 1 && x.FeatureType == "WaterSource").OrderBy(x => x.FeatureId)
+        .ToQueryString().Contains("INNER JOIN"), "Public feature filters translate with the published trail join.");
+    var featureModel = sql.Model.FindEntityType(typeof(TrailFeature))!;
+    Check(featureModel.FindProperty(nameof(TrailFeature.Location))!.GetColumnType() == "geography",
+        "Feature location uses SQL Server geography.");
     Check(sql.Indicators.Where(x => x.IsActive).Select(x => new prjGoHike.DTO.GoHikeSafe.IndicatorPublicDto
     {
         id = x.IndicatorId, IndicatorName = x.IndicatorName, IndicatorType = x.IndicatorType,
         IndiSegments = x.IndicatorSegments.Select(s => new prjGoHike.DTO.GoHikeSafe.IndicatorSegmentPublicDto { id = s.IndicatorSegmentId, Shape = s.Shape, SegmentName = s.SegmentName }).ToList()
     }).ToQueryString().Contains("IndicatorSegments"), "Public indicator DTO projection translates to SQL.");
-    Console.WriteLine($"PASS: {checks} checks across all three CRUD APIs, HTTP validation/auth, segments, conflicts and SQL query translation.");
+    Console.WriteLine($"PASS: {checks} checks across four API modules, HTTP validation/auth, feature reports, segments, conflicts and SQL query translation.");
 }
 finally { await app.StopAsync(); }
 
-void Authenticate(string? role)
+void Authenticate(string? role, string userId = "1")
 {
     client.DefaultRequestHeaders.Authorization = role is null ? null : new AuthenticationHeaderValue("Bearer",
         new JwtSecurityTokenHandler().WriteToken(new JwtSecurityToken("tests", "tests",
-            [new Claim(ClaimTypes.NameIdentifier, "1"), new Claim(ClaimTypes.Role, role)],
+            [new Claim(ClaimTypes.NameIdentifier, userId), new Claim(ClaimTypes.Role, role)],
             expires: DateTime.UtcNow.AddMinutes(5), signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256))));
 }
 async Task<JsonNode?> Send(HttpMethod method, string path, JsonNode? body, HttpStatusCode expected)
