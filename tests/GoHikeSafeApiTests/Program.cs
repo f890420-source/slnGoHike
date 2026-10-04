@@ -291,9 +291,11 @@ try
         context.FailSave = false;
     }
     await TrailFeatureApiChecks.RunAsync(context, Send, (role, userId) => Authenticate(role, userId), Check);
+    await TrailIndicatorApiChecks.RunAsync(context, Send, (role, userId) => Authenticate(role, userId), Check, openApi);
     // Use the production EF model/provider to ensure relational query translation
     // works, including nested public segment DTO projections.
     await using var sql = new TranslationContext();
+    TrailIndicatorApiChecks.CheckSqlTranslation(sql, Check);
     Check(sql.Trails.Include(x => x.TrailSegments).Where(x => x.IsPublished).ToQueryString().Contains("TrailSegments"), "SQL trail query includes segments.");
     Check(sql.Indicators.Include(x => x.IndicatorSegments).Where(x => x.IsActive).ToQueryString().Contains("IndicatorSegments"), "SQL indicator query includes segments.");
     Check(sql.DisasterAlerts.Include(x => x.AlertSegments).Where(x => x.IsActive).ToQueryString().Contains("AlertSegments"), "SQL alert query includes segments.");
