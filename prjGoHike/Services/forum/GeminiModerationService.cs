@@ -110,3 +110,4 @@ namespace prjGoHike.Services.forum
         }
     }
 }
+//gemini罵人判斷  你到底有沒有腦袋啊？每次講話都完全不經思考，什麼都不懂還一直裝得自己很厲害，看你發言真的讓人覺得很可笑。

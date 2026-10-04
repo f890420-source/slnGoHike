@@ -15,29 +15,31 @@ public partial class User
 
     public string PasswordHash { get; set; } = null!;
 
-    public string AccountStatus { get; set; } = null!;
+    public string? AccountStatus { get; set; }
 
-    public string? AvatarUrl { get; set; } 
+    public string? AvatarUrl { get; set; }
 
-    public string? AvatarBlurState { get; set; } 
+    public string? AvatarBlurState { get; set; }
 
-    public string? Bio { get; set; } 
+    public string? Bio { get; set; }
 
     public long CurrentLevelId { get; set; }
 
     public int TotalXp { get; set; }
 
-    public long? DisplayedAchievementId { get; set; }
+    public string? RegionPreference { get; set; }
 
-    public string RegionPreference { get; set; } = null!;
-
-    public string DifficultyPreference { get; set; } = null!;
+    public string? DifficultyPreference { get; set; }
 
     public DateTime CreatedAt { get; set; }
 
     public DateTime LastActiveAt { get; set; }
 
+    public long? DisplayedAchievementId { get; set; }
+
     public virtual ICollection<ArticleLike> ArticleLikes { get; set; } = new List<ArticleLike>();
+
+    public virtual ICollection<ArticleView> ArticleViews { get; set; } = new List<ArticleView>();
 
     public virtual ICollection<Article> Articles { get; set; } = new List<Article>();
 
@@ -48,8 +50,6 @@ public partial class User
     public virtual Level CurrentLevel { get; set; } = null!;
 
     public virtual Achievement? DisplayedAchievement { get; set; }
-
-    public virtual ICollection<EventData> EventData { get; set; } = new List<EventData>();
 
     public virtual ICollection<EventLeaderRating> EventLeaderRatings { get; set; } = new List<EventLeaderRating>();
 
@@ -63,9 +63,15 @@ public partial class User
 
     public virtual ICollection<HikeRecord> HikeRecords { get; set; } = new List<HikeRecord>();
 
+    public virtual ICollection<Notification> NotificationSenderUsers { get; set; } = new List<Notification>();
+
+    public virtual ICollection<Notification> NotificationUsers { get; set; } = new List<Notification>();
+
     public virtual ICollection<Notify> Notifies { get; set; } = new List<Notify>();
 
     public virtual ICollection<PersonalEquipmentList> PersonalEquipmentLists { get; set; } = new List<PersonalEquipmentList>();
+
+    public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 
     public virtual ICollection<Report> ReportAdmins { get; set; } = new List<Report>();
 
@@ -86,9 +92,4 @@ public partial class User
     public virtual ICollection<UserAchievement> UserAchievements { get; set; } = new List<UserAchievement>();
 
     public virtual ICollection<UserSkillTag> UserSkillTags { get; set; } = new List<UserSkillTag>();
-    public virtual ICollection<ArticleView> ArticleViews { get; set; } = new List<ArticleView>();
-
-    public virtual ICollection<Notification> NotificationSenderUsers { get; set; } = new List<Notification>();
-
-    public virtual ICollection<Notification> NotificationUsers { get; set; } = new List<Notification>();
 }

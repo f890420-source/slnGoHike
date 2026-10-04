@@ -18,4 +18,6 @@ public partial class Achievement
     public string ConditionValue { get; set; } = null!;
 
     public virtual ICollection<UserAchievement> UserAchievements { get; set; } = new List<UserAchievement>();
+
+    public virtual ICollection<User> Users { get; set; } = new List<User>();
 }

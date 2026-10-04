@@ -8,6 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Hangfire.AspNetCore" Version="1.8.25" />
+    <PackageReference Include="Hangfire.SqlServer" Version="1.8.25" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.11" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.2.3" />
     <PackageReference Include="CloudinaryDotNet" Version="1.29.3" />
@@ -28,9 +30,12 @@
   <ItemGroup>
     <Folder Include="ViewModels_user\Admin\" />
     <Folder Include="ViewModels_user\Dto\" />
-    <Folder Include="wwwroot\assets\JoinGroup_Images\" />
     <Folder Include="wwwroot\uploads\articles\" />
     <Folder Include="wwwroot\uploads\comments\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Services/SpatialJoins/Synchronize.sql" />
   </ItemGroup>
 
 </Project>

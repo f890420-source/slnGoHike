@@ -1,3 +1,7 @@
 <Solution>
+  <Folder Name="/tests/">
+    <Project Path="tests/GoHikeSafeApiTests/GoHikeSafeApiTests.csproj" />
+    <Project Path="tests/SpatialJoinTests/SpatialJoinTests.csproj" />
+  </Folder>
   <Project Path="prjGoHike/prjGoHike.csproj" />
 </Solution>

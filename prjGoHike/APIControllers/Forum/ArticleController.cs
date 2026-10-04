@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using prjGoHike.Dtos;
 using prjGoHike.Dtos.Forum;
 using prjGoHike.Models;
 using prjGoHike.Services.forum;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+
 namespace prjGoHike.Controllers
 {
     [Route("api/[controller]")]
@@ -13,15 +15,18 @@ namespace prjGoHike.Controllers
         private readonly GoHikeDataContext _context;
         private readonly CloudinaryService _cloudinaryService;
         private readonly CommentValidationService _commentValidationService;
+        private readonly GeminiSummaryService _geminiSummaryService;
 
         public ArticlesController(
             GoHikeDataContext context,
             CloudinaryService cloudinaryService,
-            CommentValidationService commentValidationService)
+            CommentValidationService commentValidationService,
+            GeminiSummaryService geminiSummaryService)
         {
             _context = context;
             _cloudinaryService = cloudinaryService;
             _commentValidationService = commentValidationService;
+            _geminiSummaryService = geminiSummaryService;
         }
         #region 取得所有文章
         // GET: api/Articles
@@ -63,7 +68,10 @@ namespace prjGoHike.Controllers
                     ViewCount = a.ArticleViews.Count(),
 
                     CommentCount = _context.Comments
-                       .Count(c => c.ArticleId == a.ArticleId),
+    .Count(c =>
+        c.ArticleId == a.ArticleId &&
+        c.Status == 1
+    ),
 
                     FavoriteCount = _context.Favorites
                        .Count(f => f.ArticleId == a.ArticleId)
@@ -116,10 +124,30 @@ namespace prjGoHike.Controllers
 
         #region 發文
         // POST: api/Articles
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<ArticleDto>> CreateArticle(
             [FromForm] CreateArticleDto dto)
         {
+
+            var userIdClaim =
+    User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized("無法取得登入會員資料");
+            }
+
+            Console.WriteLine(
+                $"目前登入會員 UserId = {userId}"
+            );
+
+            Console.WriteLine(
+                $"收到的 CategoryId = {dto.CategoryId}"
+            );
+
+
             Console.WriteLine($"收到的 CategoryId = {dto.CategoryId}");
             // =========================
             // 文章資料驗證
@@ -174,8 +202,7 @@ namespace prjGoHike.Controllers
             // 1. 建立文章
             var article = new Article
             {
-                // TODO: 之後改成從登入會員 Claims 取得
-                UserId = 15,
+                UserId = userId,
 
                 CategoryId = dto.CategoryId,
                 Title = dto.Title.Trim(),
@@ -329,7 +356,10 @@ namespace prjGoHike.Controllers
                         .Count(f => f.ArticleId == a.ArticleId),
 
                     CommentCount = _context.Comments
-                        .Count(c => c.ArticleId == a.ArticleId),
+    .Count(c =>
+        c.ArticleId == a.ArticleId &&
+        c.Status == 1
+    ),
 
                     ViewCount = a.ArticleViews.Count()
                 })
@@ -369,10 +399,19 @@ namespace prjGoHike.Controllers
 
         #region 取得登入者的發文
         // GET: api/Articles/my
+        [Authorize]
         [HttpGet("my")]
         public async Task<ActionResult<IEnumerable<ArticleDto>>> GetMyArticles()
         {
-            const long userId = 15;
+            // 從 JWT Claims 取得目前登入會員 UserId
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized("無法取得登入會員資料");
+            }
 
             var articles = await _context.Articles
                 .Where(a => a.UserId == userId)
@@ -406,8 +445,11 @@ namespace prjGoHike.Controllers
                     FavoriteCount = _context.Favorites.Count(f =>
                         f.ArticleId == a.ArticleId),
 
-                    CommentCount = _context.Comments.Count(c =>
-                        c.ArticleId == a.ArticleId)
+                    CommentCount = _context.Comments
+    .Count(c =>
+        c.ArticleId == a.ArticleId &&
+        c.Status == 1
+    ),
                 })
                 .ToListAsync();
 
@@ -417,18 +459,28 @@ namespace prjGoHike.Controllers
 
         #region 修改文章
         // PUT: api/Articles/{id}
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateArticle(
             int id,
             [FromForm] UpdateArticleDto dto)
         {
-            const long userId = 15;
+            // 從 JWT Claims 取得目前登入會員 UserId
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized("無法取得登入會員資料");
+            }
 
             var article = await _context.Articles
-                .Include(a => a.ArticleImages)
-                .FirstOrDefaultAsync(a =>
-                    a.ArticleId == id &&
-                    a.UserId == userId);
+    .Include(a => a.ArticleImages)
+    .Include(a => a.Tags)
+    .FirstOrDefaultAsync(a =>
+        a.ArticleId == id &&
+        a.UserId == userId);
 
             if (article == null)
             {
@@ -440,6 +492,44 @@ namespace prjGoHike.Controllers
             article.Title = dto.Title;
             article.Content = dto.Content;
             article.UpdateDate = DateTime.Now;
+
+            // =========================
+            // 更新文章標籤
+            // =========================
+
+            // 清除原本文章與 Tag 的關聯
+            article.Tags.Clear();
+
+            // 清除空白、空字串以及重複標籤
+            var cleanTagNames = dto.Tags
+                .Select(tagName => tagName.Trim())
+                .Where(tagName =>
+                    !string.IsNullOrWhiteSpace(tagName))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            foreach (var cleanTagName in cleanTagNames)
+            {
+                // 尋找資料庫中是否已有相同標籤
+                var tag = await _context.Tags
+                    .FirstOrDefaultAsync(t =>
+                        t.TagName == cleanTagName);
+
+                // 沒有才建立新的 Tag
+                if (tag == null)
+                {
+                    tag = new Tag
+                    {
+                        TagName = cleanTagName,
+                        CreatedDate = DateTime.Now
+                    };
+
+                    _context.Tags.Add(tag);
+                }
+
+                // 重新建立文章與 Tag 的關聯
+                article.Tags.Add(tag);
+            }
 
             // 找出被刪除的舊圖片
             var imagesToDelete = article.ArticleImages
@@ -460,16 +550,29 @@ namespace prjGoHike.Controllers
                 imagesToDelete
             );
 
-            // 計算下一張圖片排序
-            var nextSortOrder =
-                article.ArticleImages
-                    .Where(image =>
-                        !imagesToDelete.Contains(image))
-                    .Select(image => image.SortOrder)
-                    .DefaultIfEmpty(0)
-                    .Max() + 1;
+            // =========================
+            // 重新設定保留圖片的排序
+            // =========================
+            var sortOrder = 1;
 
+            foreach (var imagePath in dto.KeepImagePaths)
+            {
+                var existingImage = article.ArticleImages
+                    .FirstOrDefault(image =>
+                        image.ImagePath == imagePath &&
+                        !imagesToDelete.Contains(image)
+                    );
+
+                if (existingImage != null)
+                {
+                    existingImage.SortOrder = sortOrder;
+                    sortOrder++;
+                }
+            }
+
+            // =========================
             // 上傳新圖片
+            // =========================
             foreach (var imageFile in dto.ImageFiles)
             {
                 var imageUrl =
@@ -482,7 +585,7 @@ namespace prjGoHike.Controllers
                 {
                     ArticleId = article.ArticleId,
                     ImagePath = imageUrl,
-                    SortOrder = nextSortOrder,
+                    SortOrder = sortOrder,
                     CreatedDate = DateTime.Now
                 };
 
@@ -490,7 +593,7 @@ namespace prjGoHike.Controllers
                     articleImage
                 );
 
-                nextSortOrder++;
+                sortOrder++;
             }
 
             await _context.SaveChangesAsync();
@@ -501,16 +604,25 @@ namespace prjGoHike.Controllers
 
         #region 刪除文章
         // DELETE: api/Articles/{id}
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteArticle(int id)
         {
-            const long userId = 15;
+            // 從 JWT Claims 取得目前登入會員 UserId
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized("無法取得登入會員資料");
+            }
 
             var article = await _context.Articles
-      .Include(a => a.Tags)
-      .FirstOrDefaultAsync(a =>
-          a.ArticleId == id &&
-          a.UserId == userId);
+                .Include(a => a.Tags)
+                .FirstOrDefaultAsync(a =>
+                    a.ArticleId == id &&
+                    a.UserId == userId);
 
             if (article == null)
             {
@@ -640,8 +752,6 @@ namespace prjGoHike.Controllers
         [HttpPost("{id}/view")]
         public async Task<IActionResult> RecordArticleView(int id)
         {
-            const long userId = 15;
-
             // 確認文章存在
             var articleExists = await _context.Articles
                 .AnyAsync(a =>
@@ -651,6 +761,17 @@ namespace prjGoHike.Controllers
             if (!articleExists)
             {
                 return NotFound("找不到文章");
+            }
+
+            // 從 JWT Claims 取得目前登入會員 UserId
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            // 未登入使用者不記錄瀏覽紀錄
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Ok();
             }
 
             // 30 分鐘內的時間
@@ -682,6 +803,117 @@ namespace prjGoHike.Controllers
 
             return Ok();
         }
+        #endregion
+
+        #region 取得要編輯的文章
+
+        // GET: api/Articles/2/edit
+        [Authorize]
+        [HttpGet("{id}/edit")]
+        public async Task<ActionResult<ArticleDto>> GetArticleForEdit(int id)
+        {
+            // 從 JWT Claims 取得目前登入會員 UserId
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null ||
+                !long.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized("無法取得登入會員資料");
+            }
+
+            var article = await _context.Articles
+                .Where(a =>
+                    a.ArticleId == id &&
+                    a.UserId == userId)
+                .Select(a => new ArticleDto
+                {
+                    ArticleId = a.ArticleId,
+                    UserId = a.UserId,
+                    CategoryId = a.CategoryId,
+                    Title = a.Title,
+                    Content = a.Content,
+                    CreatedDate = a.CreatedDate,
+                    UpdateDate = a.UpdateDate,
+                    Status = a.Status,
+                    CategoryName = a.Category.CategoryName,
+
+                    ImagePaths = a.ArticleImages
+                        .OrderBy(image => image.SortOrder)
+                        .Select(image => image.ImagePath)
+                        .ToList(),
+
+                    Tags = a.Tags
+                        .Select(tag => tag.TagName)
+                        .ToList()
+                })
+                .FirstOrDefaultAsync();
+
+            if (article == null)
+            {
+                return NotFound("找不到文章或你沒有編輯權限");
+            }
+
+            return Ok(article);
+        }
+
+        #endregion
+
+        #region AI文章摘要
+
+        // GET: api/Articles/{id}/summary
+        [HttpGet("{id}/summary")]
+        public async Task<IActionResult> GetArticleSummary(int id)
+        {
+            // =========================
+            // 取得文章
+            // =========================
+            var article = await _context.Articles
+                .Where(a =>
+                    a.ArticleId == id &&
+                    (a.Status == 1 || a.Status == 3))
+                .Select(a => new
+                {
+                    a.Title,
+                    a.Content
+                })
+                .FirstOrDefaultAsync();
+
+            if (article == null)
+            {
+                return NotFound("找不到此文章");
+            }
+
+            // =========================
+            // Gemini AI 產生摘要
+            // =========================
+            try
+            {
+                var summary =
+                    await _geminiSummaryService
+                        .GenerateSummaryAsync(
+                            article.Title,
+                            article.Content
+                        );
+
+                return Ok(new
+                {
+                    summary
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(
+                    $"Gemini 文章摘要產生失敗：{ex.Message}"
+                );
+
+                return StatusCode(
+                    500,
+                    "AI 摘要產生失敗，請稍後再試"
+                );
+            }
+        }
+
         #endregion
     }
 }

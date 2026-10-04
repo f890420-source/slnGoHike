@@ -16,6 +16,7 @@ public partial class EventRegistrationAndMemberList
     public string EmergencyContact { get; set; } = null!;
 
     public DateTime CreatedAt { get; set; }
+    public DateTime? CancelledAt { get; set; }
 
     public virtual EventData Event { get; set; } = null!;
 

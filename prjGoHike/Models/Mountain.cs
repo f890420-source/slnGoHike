@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace prjGoHike.Models;
 
 public partial class Mountain
 {
-    
     public long MountainId { get; set; }
 
     public string MountainName { get; set; } = null!;
@@ -17,11 +15,12 @@ public partial class Mountain
 
     public int DifficultyLevel { get; set; }
 
-    public bool MountainsPermitRequired { get; set; }
+    public bool? MountainsPermitRequired { get; set; }
 
-    public bool NationalParkPermitRequired { get; set; }
+    public bool? NationalParkPermitRequired { get; set; }
 
     public decimal? Longitude { get; set; }
+
     public decimal? Latitude { get; set; }
 
     public virtual ICollection<EventData> EventData { get; set; } = new List<EventData>();
@@ -31,5 +30,4 @@ public partial class Mountain
     public virtual ICollection<MountainEquipmentSuggestion> MountainEquipmentSuggestions { get; set; } = new List<MountainEquipmentSuggestion>();
 
     public virtual ICollection<PersonalEquipmentList> PersonalEquipmentLists { get; set; } = new List<PersonalEquipmentList>();
-
 }

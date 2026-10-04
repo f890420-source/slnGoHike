@@ -11,15 +11,15 @@ public partial class EventReportComplaint
 
     public long EventId { get; set; }
 
-    public string ReportTitle { get; set; } = null!;
     public string ReportReason { get; set; } = null!;
 
-    public string? EvidenceUrl { get; set; }
+    public string EvidenceUrl { get; set; } = null!;
 
     public string ReportStatus { get; set; } = null!;
 
-
     public DateTime CreatedAt { get; set; }
+
+    public string? ReportTitle { get; set; }
 
     public virtual EventData Event { get; set; } = null!;
 

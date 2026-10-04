@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.DTO.User;
 using prjGoHike.Models;
+using prjGoHike.Services;
 
 namespace prjGoHike.APIControllers.User;
 
@@ -14,11 +15,16 @@ public sealed class UsersController : UserApiControllerBase
     private const long MaxAvatarBytes = 5 * 1024 * 1024;
     private readonly GoHikeDataContext _context;
     private readonly IWebHostEnvironment _environment;
+    private readonly MemberAchievementService _memberAchievementService;
 
-    public UsersController(GoHikeDataContext context, IWebHostEnvironment environment)
+    public UsersController(
+        GoHikeDataContext context,
+        IWebHostEnvironment environment,
+        MemberAchievementService memberAchievementService)
     {
         _context = context;
         _environment = environment;
+        _memberAchievementService = memberAchievementService;
     }
 
     [HttpGet("me")]
@@ -57,6 +63,7 @@ public sealed class UsersController : UserApiControllerBase
         user.DifficultyPreference = request.DifficultyPreference?.Trim() ?? string.Empty;
         user.DisplayedAchievementId = request.DisplayedAchievementId;
         await _context.SaveChangesAsync(cancellationToken);
+        await _memberAchievementService.UnlockFirstProfileUpdateAsync(userId, cancellationToken);
         return NoContent();
     }
 

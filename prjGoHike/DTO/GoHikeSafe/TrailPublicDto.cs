@@ -21,6 +21,6 @@ namespace prjGoHike.DTO.GoHikeSafe
 
         public string? Source { get; set; }
 
-        public required Geometry Geometry { get; set; }
+        public required Geometry Shape { get; set; }
     }
 }

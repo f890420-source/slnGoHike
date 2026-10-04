@@ -22,9 +22,7 @@ public class MountainOptionDto
     /// <summary>資料庫設定的山岳難度等級。</summary>
     public int DifficultyLevel { get; set; }
 
-    /// <summary>資料庫記錄是否需要入山許可。</summary>
-    public bool MountainsPermitRequired { get; set; }
+    public bool? MountainsPermitRequired { get; set; }
 
-    /// <summary>資料庫記錄是否需要國家公園許可。</summary>
-    public bool NationalParkPermitRequired { get; set; }
+    public bool? NationalParkPermitRequired { get; set; }
 }
