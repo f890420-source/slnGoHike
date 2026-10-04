@@ -10,6 +10,7 @@ using prjGoHike.Services.forum;
 using Microsoft.OpenApi;
 using Microsoft.AspNetCore.Authorization;
 using prjGoHike.Services.SpatialJoins;
+using prjGoHike.Services.PersonalEquipment;
 
 string GroupJoinRoute = "http://localhost:4200";
 
@@ -18,6 +19,9 @@ var connectionString = builder.Configuration.GetConnectionString("GoHikeDataCont
 
 builder.Services.AddDbContext<GoHikeDataContext>(options => options.UseSqlServer(connectionString));
 builder.Services.AddSpatialJoins(builder.Configuration);
+// 個人裝備：提供配重計算服務，由 Controller 注入使用。
+builder.Services.AddScoped<EquipmentWeightService>();
+
 #region 討論區用的 Service
 builder.Services.AddScoped<CloudinaryService>();
 builder.Services.AddScoped<SensitiveWordService>();
