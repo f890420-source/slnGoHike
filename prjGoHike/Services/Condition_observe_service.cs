@@ -8,7 +8,7 @@ namespace prjGoHike.Services
         public const string Running = "進行中";
         public const int MaxActiveEvents = 5;
         public static readonly TimeSpan RejoinCooldown = TimeSpan.FromMinutes(30);
-
+        //製作30分鐘的固定時間
        
         public static bool HasStarted(EventData ev) =>
             ev.ActivityStatus == Running || ev.EventStartTime <= DateTime.Now;

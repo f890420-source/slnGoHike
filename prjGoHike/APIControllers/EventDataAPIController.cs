@@ -300,6 +300,7 @@ public class EventDataAPIController : BaseController
     public async Task<IActionResult> StartEvent(long eventid)
     {
         var currentUserID = GetCurrentUserId();
+        //找jwt生成的驗證id
         if (currentUserID == null)
         {
             return Unauthorized();
@@ -329,7 +330,7 @@ public class EventDataAPIController : BaseController
         int currentPeople = await _db.EventRegistrationAndMemberLists
             .CountAsync(r => r.EventId == eventid && r.RegistrationStatus == 1);
         await _hubContext.Clients.All.SendAsync("EventDataChanged", Event.MountainId, currentPeople);
-
+        //signal廣播給前端知道
         return SuccessResponse("活動已開始");
     }
 

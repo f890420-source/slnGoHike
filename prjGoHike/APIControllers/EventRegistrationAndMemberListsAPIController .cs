@@ -106,6 +106,7 @@ namespace prjGoHike.APIControllers
                     if (waited < Condition_observe_service.RejoinCooldown)
                     {
                         int left = (int)Math.Ceiling((Condition_observe_service.RejoinCooldown - waited).TotalMinutes);
+                        //取出時間做加減
                         return ErrorResponse($"退出後需等待 30 分鐘才能重新報名，還剩 {left} 分鐘", null, 400);
                     }
                 }
@@ -185,7 +186,7 @@ namespace prjGoHike.APIControllers
                 return ErrorResponse("你沒有報名這個活動", null, 400);
             }
 
-            //不刪資料 只改狀態並記錄退出時間 用來算30分鐘冷卻
+            
             registration.RegistrationStatus = 0;
             registration.CancelledAt = DateTime.Now;
             await _db.SaveChangesAsync();
