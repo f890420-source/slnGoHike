@@ -8,6 +8,7 @@ COPY prjGoHike/ prjGoHike/
 RUN dotnet publish prjGoHike/prjGoHike.csproj \
     --configuration Release \
     --no-restore \
+    --verbosity normal \
     --output /app/publish \
     /p:UseAppHost=false
 
