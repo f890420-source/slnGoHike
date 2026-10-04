@@ -10,7 +10,13 @@ using prjGoHike.Models;
 // still needs a disposable SQL Server database for an integration test.
 sealed class TestDataContext : GoHikeDataContext
 {
-    public override DbSet<Trail> Trails { get; set; } = new MemorySet<Trail>();
+    private DbSet<Trail> _trails = new MemorySet<Trail>();
+    public bool FailTrailRead { get; set; }
+    public override DbSet<Trail> Trails
+    {
+        get => FailTrailRead ? throw new InvalidOperationException("private database details must not reach clients") : _trails;
+        set => _trails = value;
+    }
     public override DbSet<TrailSegment> TrailSegments { get; set; } = new MemorySet<TrailSegment>();
     public override DbSet<Indicator> Indicators { get; set; } = new MemorySet<Indicator>();
     public override DbSet<IndicatorSegment> IndicatorSegments { get; set; } = new MemorySet<IndicatorSegment>();

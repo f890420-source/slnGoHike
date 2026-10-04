@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.DTO.GoHikeSafe;
 using prjGoHike.Models;
+using prjGoHike.Services;
 using NetTopologySuite.Geometries;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
@@ -186,6 +187,33 @@ namespace prjGoHike.APIControllers.GoHikeSafe
                 return ErrorResponse("發生錯誤，請洽系統管理員。", statusCode: StatusCodes.Status500InternalServerError);
             }
             return NotFoundResponse("找不到步道!");
+        }
+
+        [HttpGet("{id:long}/indicators")]
+        [EndpointSummary("取得指定已發布步道的關聯指標")]
+        [EndpointDescription("從 TrailIndicators 回傳啟用指標的精簡清單，包含未評分與已評分關聯。沒有關聯時回傳 200、hasIndicators=false 與空清單；步道不存在或未發布時回傳 404。此查詢不觸發 Spatial Join。")]
+        [ProducesResponseType(typeof(ApiResponse<TrailIndicatorsDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> Indicators(long id, CancellationToken cancellationToken)
+        {
+            if (id <= 0) return ErrorResponse("步道 ID 必須大於 0。");
+            try
+            {
+                var result = await TrailIndicatorQuery.ForPublishedTrail(_context, id)
+                    .FirstOrDefaultAsync(cancellationToken);
+                return result is null ? NotFoundResponse("找不到步道!") : SuccessResponse(result);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "查詢步道關聯指標失敗 (Id: {Id})", id);
+                return ErrorResponse("發生錯誤，請洽系統管理員。", statusCode: StatusCodes.Status500InternalServerError);
+            }
         }
 
         [HttpPost]
