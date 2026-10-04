@@ -77,6 +77,11 @@ sealed class TestDataContext : GoHikeDataContext
                 segment.AlertId = alert.AlertId;
             }
         }
+        foreach (var feature in TrailFeatures)
+        {
+            if (feature.FeatureId == 0) feature.FeatureId = _nextId++;
+            feature.Trail = Trails.FirstOrDefault(x => x.TrailId == feature.TrailId)!;
+        }
         return Task.FromResult(1);
     }
 }

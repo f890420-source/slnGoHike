@@ -14,6 +14,30 @@ public sealed class GeoJsonSchemaTransformer : IOpenApiSchemaTransformer
         if (!typeof(Geometry).IsAssignableFrom(context.JsonTypeInfo.Type))
             return Task.CompletedTask;
 
+        if (context.JsonTypeInfo.Type == typeof(Point))
+        {
+            schema.Type = JsonSchemaType.Object;
+            schema.Description = "步道特徵位置限非空 GeoJSON Point；WGS 84 經度 -180～180、緯度 -90～90，可選高度；SRID 4326。";
+            schema.Required = new HashSet<string> { "type", "coordinates" };
+            schema.Properties = new Dictionary<string, IOpenApiSchema>
+            {
+                ["type"] = new OpenApiSchema
+                {
+                    Type = JsonSchemaType.String,
+                    Enum = new List<JsonNode> { JsonValue.Create("Point")! }
+                },
+                ["coordinates"] = new OpenApiSchema
+                {
+                    Type = JsonSchemaType.Array,
+                    MinItems = 2,
+                    MaxItems = 3,
+                    Items = new OpenApiSchema { Type = JsonSchemaType.Number }
+                }
+            };
+            schema.Example = JsonNode.Parse("""{"type":"Point","coordinates":[121.5,24.5]}""");
+            return Task.CompletedTask;
+        }
+
         schema.Type = JsonSchemaType.Object;
         schema.Description = "RFC 7946 Geometry；座標為 WGS 84 經度、緯度及可選高度（2D/3D），SRID 4326。" +
             "本 API 拒絕空圖形、無效拓樸及 crs 宣告；Polygon 外環自動調整為逆時針，內環為順時針。";

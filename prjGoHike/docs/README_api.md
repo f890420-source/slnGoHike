@@ -44,6 +44,10 @@ dotnet user-secrets set "ConnectionStrings:GoHikeDataContext" "<本機 SQL Serve
 
 ## GoHikeSafe CRUD
 
+步道周圍特徵回報另見 [TrailFeatures API 前端串接文件](TrailFeatures_api.md)，
+包含登入回報、公開篩選、管理員維護、完整欄位及錯誤處理範例。
+該模組基底路徑為 `/api/trailfeatures`，POST 允許登入者回報，其餘寫入限 Admin；新回報預設不可用。
+
 三個資源的基底路徑：
 
 | 模組 | 路徑 | 寫入／管理回應 DTO | PUT 本文 ID |
@@ -122,7 +126,7 @@ dotnet build prjGoHike/prjGoHike.csproj --no-restore
 dotnet run --project tests/GoHikeSafeApiTests
 ```
 
-測試以真正的 ASP.NET Core HTTP pipeline 驗證三個模組的 CRUD、JWT 授權、JSON 欄位驗證、
-公開／管理查詢、路段保留／替換／清除、刪除衝突與受控錯誤回應。
+測試以真正的 ASP.NET Core HTTP pipeline 驗證四個模組的 CRUD、JWT 授權、JSON 欄位驗證、
+公開／管理查詢、特徵回報與管理流程、路段保留／替換／清除、刪除衝突與受控錯誤回應。
 資料存取使用測試替身；另使用正式 EF Core SQL Server 模型檢查查詢轉譯。
 不連線到應用程式資料庫，未涵蓋真實 SQL Server 寫入及外鍵約束的整合測試。
