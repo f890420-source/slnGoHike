@@ -24,6 +24,7 @@ public class EquipmentSuggestionsController : BaseController
         _db = db;
     }
 
+    #region 取得山岳選項
     /// <summary>
     /// 取得建立裝備清單時可選擇的山岳。
     /// 依難度、海拔排序，回傳山岳基本資料及許可需求。
@@ -51,7 +52,9 @@ public class EquipmentSuggestionsController : BaseController
             mountains,
             "取得山岳資料成功");
     }
+    #endregion
 
+    #region 取得裝備建議
     /// <summary>
     /// 根據山岳、登山天數、季節、行程強度及負重經驗，
     /// 查詢符合條件且裝備與分類皆啟用的裝備建議。
@@ -137,4 +140,6 @@ public class EquipmentSuggestionsController : BaseController
             suggestions,
             "取得裝備建議成功");
     }
+    #endregion
+
 }

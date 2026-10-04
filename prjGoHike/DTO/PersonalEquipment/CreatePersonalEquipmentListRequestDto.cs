@@ -4,11 +4,12 @@ namespace prjGoHike.DTO.PersonalEquipment;
 
 /// <summary>
 /// 建立個人裝備清單的請求資料。
-/// 接收前端填寫的登山條件，以及選用的裝備建議與數量。
+/// 接收登山條件、選用的建議裝備，以及額外加入的自訂裝備。
 /// </summary>
 /// <remarks>
-/// 不接收會員 ID、單件重量或配重計算結果。
-/// 會員身分由登入資訊取得，重量由後端查詢及計算。
+/// 會員身分由登入資訊取得。
+/// 建議裝備的單件重量由後端查詢；自訂裝備的單件重量由使用者輸入。
+/// 所有項目的合計重量與配重結果，都由後端驗證及計算。
 /// </remarks>
 public class CreatePersonalEquipmentListRequestDto
 {
@@ -68,6 +69,14 @@ public class CreatePersonalEquipmentListRequestDto
     /// </summary>
     [MinLength(1)]
     public List<CreatePersonalEquipmentItemDto> Items { get; set; } = [];
+
+    /// <summary>
+    /// 建立清單時一併加入的自訂裝備。
+    /// 可以是空集合；每筆沿用自訂裝備的名稱、重量、數量及備註驗證。
+    /// 不會建立全站共用裝備資料。
+    /// </summary>
+    [Required]
+    public List<CreateCustomEquipmentRequestDto> CustomItems { get; set; } = [];
 }
 
 /// <summary>

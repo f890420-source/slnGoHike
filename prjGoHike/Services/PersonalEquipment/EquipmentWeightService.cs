@@ -8,6 +8,8 @@
 /// </summary>
 public class EquipmentWeightService
 {
+
+    #region 計算裝備配重
     /// <summary>
     /// 沿用目前系統的計算規則，產生配重結果。
     /// 體重 20% 僅為系統參考規則，不代表個人安全保證。
@@ -82,4 +84,6 @@ public class EquipmentWeightService
             WeightStatus = weightStatus
         };
     }
+    #endregion
+
 }
