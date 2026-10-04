@@ -17,7 +17,7 @@ public partial class TrailIndicator
 
     public decimal? RawScore { get; set; }
 
-    public decimal EvaluatedScore { get; set; }
+    public decimal? EvaluatedScore { get; set; }
 
     public DateTime EvaluatedAt { get; set; }
 

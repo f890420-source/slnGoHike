@@ -31,6 +31,8 @@ public partial class GoHikeDataContext : DbContext
 
     public virtual DbSet<ArticleLike> ArticleLikes { get; set; }
 
+    public virtual DbSet<BackgroundJobRun> BackgroundJobRuns { get; set; }
+
     public virtual DbSet<Category> Categories { get; set; }
 
     public virtual DbSet<Comment> Comments { get; set; }
@@ -1273,6 +1275,28 @@ public partial class GoHikeDataContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_user_skill_tags_user_id");
+        });
+
+        modelBuilder.Entity<BackgroundJobRun>(entity =>
+        {
+            entity.HasIndex(e => new { e.JobType, e.Status, e.CreatedAt }, "IX_BackgroundJobRuns_JobType_Status_CreatedAt");
+
+            entity.Property(e => e.CreatedAt)
+                .HasPrecision(0)
+                .HasDefaultValueSql("(sysutcdatetime())", "DF_BackgroundJobRuns_CreatedAt");
+            entity.Property(e => e.DistanceMeters).HasColumnType("decimal(12, 2)");
+            entity.Property(e => e.ErrorMessage).HasMaxLength(500);
+            entity.Property(e => e.FinishedAt).HasPrecision(0);
+            entity.Property(e => e.HangfireJobId)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.JobType)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.StartedAt).HasPrecision(0);
+            entity.Property(e => e.Status)
+                .HasMaxLength(20)
+                .IsUnicode(false);
         });
 
         OnModelCreatingPartial(modelBuilder);
