@@ -154,7 +154,7 @@ namespace prjGoHike.APIControllers
                 return ErrorResponse("報名人數眾多，請稍後再試一次", null, 409);
             }
         }
-        // POST: api/EventRegistrationAndMemberListAPI/withdraw/5
+        
         [Authorize]
         [HttpPost("withdraw/{eventId}")]
         public async Task<IActionResult> Withdraw(long eventId)

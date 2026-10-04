@@ -294,7 +294,7 @@ public class EventDataAPIController : BaseController
         return SuccessResponse(new { Event.EventId, Event.EventName });
     }
 
-    // POST: api/EventDataAPI/5/start
+    
     [Authorize]
     [HttpPost("{eventid}/start")]
     public async Task<IActionResult> StartEvent(long eventid)
