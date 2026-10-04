@@ -44,6 +44,10 @@ dotnet user-secrets set "ConnectionStrings:GoHikeDataContext" "<本機 SQL Serve
 
 ## GoHikeSafe CRUD
 
+管理員空間關聯背景工作另見 [SpatialJoins API 串接與部署文件](SpatialJoins_api.md)，
+包含 Hangfire 啟用設定、觸發／狀態輪詢、工作紀錄與目前候選關聯查詢。
+需要實際 Hangfire 與資料庫讀寫的驗收另見 [測試步驟與已完成結果](SpatialJoins_資料庫與Hangfire測試步驟.md)。
+
 步道周圍特徵回報另見 [TrailFeatures API 前端串接文件](TrailFeatures_api.md)，
 包含登入回報、公開篩選、管理員維護、完整欄位及錯誤處理範例。
 該模組基底路徑為 `/api/trailfeatures`，POST 允許登入者回報，其餘寫入限 Admin；新回報預設不可用。

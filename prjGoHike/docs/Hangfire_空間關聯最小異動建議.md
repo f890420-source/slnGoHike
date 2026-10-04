@@ -2,6 +2,8 @@
 
 日期：2026-10-04。文件性質：實作前建議；本次僅新增文件，未修改程式、安裝套件、執行 SQL 或連線驗證實際資料庫。
 
+後續程式實作、啟用設定、API 契約與測試方式見 [空間關聯背景工作 API](SpatialJoins_api.md)。本文件保留設計依據；真實 SQL Server／Hangfire 整合驗證狀態以實際測試結果為準。
+
 ## 1. 建議結論與現況依據
 
 依目前架構，建議**只新增一張 `BackgroundJobRuns`，將既有 `TrailIndicators.EvaluatedScore` 改為可空，沿用現有空間資料與關聯**。不需要再建一份 `TrailIndicator`，也不需要為第一版建立 `POIs / TrailPoi`。
@@ -350,14 +352,14 @@ Run 與 Hangfire 儲存不假設能跨兩個寫入自動原子提交。建議啟
 以下查詢供未來在目標 SQL Server 執行；本次沒有執行。資料量與 SRID 都必須以實際環境為準。
 
 ```sql
-SELECT 'Trails' AS TableName, COUNT_BIG(*) AS RowCount FROM dbo.Trails
+SELECT 'Trails' AS TableName, COUNT_BIG(*) AS [RowCount] FROM dbo.Trails
 UNION ALL SELECT 'Indicators', COUNT_BIG(*) FROM dbo.Indicators
 UNION ALL SELECT 'TrailSegments', COUNT_BIG(*) FROM dbo.TrailSegments
 UNION ALL SELECT 'IndicatorSegments', COUNT_BIG(*) FROM dbo.IndicatorSegments
 UNION ALL SELECT 'TrailFeatures', COUNT_BIG(*) FROM dbo.TrailFeatures
 UNION ALL SELECT 'TrailIndicators', COUNT_BIG(*) FROM dbo.TrailIndicators;
 
-SELECT 'TrailSegments' AS SourceName, Shape.STSrid AS Srid, COUNT_BIG(*) AS RowCount
+SELECT 'TrailSegments' AS SourceName, Shape.STSrid AS Srid, COUNT_BIG(*) AS [RowCount]
 FROM dbo.TrailSegments GROUP BY Shape.STSrid
 UNION ALL
 SELECT 'IndicatorSegments', Shape.STSrid, COUNT_BIG(*)

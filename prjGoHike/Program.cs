@@ -9,6 +9,7 @@ using System.Text;
 using prjGoHike.Services.forum;
 using Microsoft.OpenApi;
 using Microsoft.AspNetCore.Authorization;
+using prjGoHike.Services.SpatialJoins;
 
 string GroupJoinRoute = "http://localhost:4200";
 
@@ -16,6 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("GoHikeDataContext") ?? throw new InvalidOperationException("Connection string 'GoHikeDataContext' not found.");
 
 builder.Services.AddDbContext<GoHikeDataContext>(options => options.UseSqlServer(connectionString));
+builder.Services.AddSpatialJoins(builder.Configuration);
 #region 討論區用的 Service
 builder.Services.AddScoped<CloudinaryService>();
 builder.Services.AddScoped<SensitiveWordService>();
