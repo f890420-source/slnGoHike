@@ -111,6 +111,7 @@ CREATE TABLE [dbo].[Event_Registration_and_Member_List] (
     [Registration_Status] INT            NOT NULL,
     [Emergency_Contact]   NVARCHAR (100) NOT NULL,
     [Created_At]          DATETIME       NOT NULL,
+    [Cancelled_At]        DATETIME       NULL,
     CONSTRAINT [PK_Event_Registration_and_Member_List] PRIMARY KEY CLUSTERED ([Sign_Up_Id] ASC),
     CONSTRAINT [FK_Event_Registration_and_Member_List_Event_Id] FOREIGN KEY ([Event_Id]) REFERENCES [dbo].[Event_Data] ([Event_Id]),
     CONSTRAINT [FK_Event_Registration_and_Member_List_User_Id] FOREIGN KEY ([User_Id]) REFERENCES [dbo].[users] ([user_id])
