@@ -44,6 +44,9 @@ dotnet user-secrets set "ConnectionStrings:GoHikeDataContext" "<本機 SQL Serve
 
 ## GoHikeSafe CRUD
 
+五個模組的功能總覽、呼叫範例、原始碼流程，以及相較於 AGENTS.md 基礎要求的技術延伸，
+見 [GoHikeSafe 使用方法、開發原理與技術亮點](GoHikeSafe_使用方法與開發原理.md)。
+
 指定步道的公開關聯指標另見 [TrailIndicators API 串接文件](TrailIndicators_api.md)，
 包含 `GET /api/trails/{id}/indicators`、精簡 DTO、Angular 範例及同步／空清單語意。
 
