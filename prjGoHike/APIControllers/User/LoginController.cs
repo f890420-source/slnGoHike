@@ -2,6 +2,7 @@ using Google.Apis.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.RateLimiting;
 using prjGoHike.DTO.Auth;
 using prjGoHike.Models;
 using prjGoHike.Services;
@@ -20,6 +21,7 @@ public class LoginController : ControllerBase
     private readonly IJwtTokenService _jwtTokenService;
     private readonly MemberAchievementService _memberAchievementService;
     private readonly GoogleAuthSettings _googleAuthSettings;
+    private readonly EmailVerificationService _emailVerification;
 
     public LoginController(
         GoHikeDataContext context,
@@ -27,7 +29,8 @@ public class LoginController : ControllerBase
         IPasswordHasher passwordHasher,
         IJwtTokenService jwtTokenService,
         MemberAchievementService memberAchievementService,
-        IOptions<GoogleAuthSettings> googleAuthSettings)
+        IOptions<GoogleAuthSettings> googleAuthSettings,
+        EmailVerificationService emailVerification)
     {
         _context = context;
         _logger = logger;
@@ -35,6 +38,7 @@ public class LoginController : ControllerBase
         _jwtTokenService = jwtTokenService;
         _memberAchievementService = memberAchievementService;
         _googleAuthSettings = googleAuthSettings.Value;
+        _emailVerification = emailVerification;
     }
 
     [HttpPost("login")]
@@ -68,6 +72,13 @@ public class LoginController : ControllerBase
             _logger.LogWarning("登入失敗：使用者 {UserId} 處於停權狀態", user.UserId);
             return Unauthorized(new { message = "帳戶目前處於停權狀態。" });
         }
+
+        if (user.EmailVerifiedAt is null)
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                code = "EMAIL_NOT_VERIFIED",
+                message = "請先驗證電子郵件，再使用密碼登入。你可以重新寄送驗證信。"
+            });
 
         user.LastActiveAt = now;
         await _context.SaveChangesAsync(cancellationToken);
@@ -137,6 +148,7 @@ public class LoginController : ControllerBase
             {
                 Nickname = await CreateAvailableNicknameAsync(payload.Name, email, cancellationToken),
                 Email = email,
+                EmailVerifiedAt = now,
                 // Google 登入會員沒有本機密碼；非 BCrypt 值也會被現有密碼登入流程拒絕。
                 PasswordHash = $"GOOGLE_ONLY_{Convert.ToHexString(RandomNumberGenerator.GetBytes(16))}",
                 Role = "一般會員",
@@ -166,6 +178,8 @@ public class LoginController : ControllerBase
                 return Unauthorized(new { message = accountProblem });
             }
 
+            await _emailVerification.MarkGoogleVerifiedAsync(user, cancellationToken);
+
             if (!string.IsNullOrWhiteSpace(googleAvatarUrl) &&
                 (string.IsNullOrWhiteSpace(user.AvatarUrl) || IsGoogleAvatarUrl(user.AvatarUrl)))
             {
@@ -183,6 +197,7 @@ public class LoginController : ControllerBase
     }
 
     [HttpPost("register")]
+    [EnableRateLimiting("email-verification")]
     public async Task<ActionResult> Register(
         RegisterRequestDto request,
         CancellationToken cancellationToken)
@@ -195,6 +210,9 @@ public class LoginController : ControllerBase
 
         if (exists)
             return Conflict(new { message = "電子郵件或暱稱已被使用。" });
+
+        if (!_emailVerification.IsConfigured)
+            return Problem("信箱驗證寄信服務尚未設定完成，請聯絡管理員。", statusCode: 503);
 
         var defaultLevelId = await _context.Levels
             .OrderBy(level => level.MinXp)
@@ -226,7 +244,15 @@ public class LoginController : ControllerBase
         await _context.SaveChangesAsync(cancellationToken);
         await _memberAchievementService.UnlockRegistrationAsync(user.UserId, cancellationToken);
 
-        return StatusCode(StatusCodes.Status201Created, new { message = "註冊成功。" });
+        var verificationEmailSent = await _emailVerification.SendAsync(user, cancellationToken);
+        return StatusCode(StatusCodes.Status201Created, new
+        {
+            verificationRequired = true,
+            verificationEmailSent,
+            message = verificationEmailSent
+                ? "註冊成功，請到信箱開啟驗證信，完成驗證後再登入。"
+                : "帳號已建立，但驗證信暫時寄送失敗。請使用「重新寄送驗證信」再試。"
+        });
     }
 
     [HttpPost("refresh")]
