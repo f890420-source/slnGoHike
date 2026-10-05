@@ -77,7 +77,7 @@ public class LoginController : ControllerBase
             return StatusCode(StatusCodes.Status403Forbidden, new
             {
                 code = "EMAIL_NOT_VERIFIED",
-                message = "請先驗證電子郵件，再使用密碼登入。你可以重新寄送驗證信。"
+                message = "請先開啟註冊時收到的驗證信，完成信箱驗證後再登入。請檢查收件匣與垃圾郵件。"
             });
 
         user.LastActiveAt = now;
@@ -251,7 +251,7 @@ public class LoginController : ControllerBase
             verificationEmailSent,
             message = verificationEmailSent
                 ? "註冊成功，請到信箱開啟驗證信，完成驗證後再登入。"
-                : "帳號已建立，但驗證信暫時寄送失敗。請使用「重新寄送驗證信」再試。"
+                : "帳號已建立，但驗證信暫時寄送失敗，請聯絡管理員協助。"
         });
     }
 

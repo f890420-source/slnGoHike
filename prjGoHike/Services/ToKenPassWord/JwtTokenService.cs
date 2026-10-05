@@ -63,6 +63,7 @@ public class JwtTokenService : IJwtTokenService
         if (oldRefreshToken is null ||
             !oldRefreshToken.IsActive ||
             oldRefreshToken.User.AccountStatus != "正常" ||
+            oldRefreshToken.User.EmailVerifiedAt is null ||
             isSuspended)
         {
             await transaction.RollbackAsync(cancellationToken);
