@@ -65,7 +65,11 @@ namespace prjGoHike.Services.forum
                 return;
             }
 
-            var uri = new Uri(imageUrl);
+            if (!Uri.TryCreate(imageUrl, UriKind.Absolute, out var uri) ||
+                !uri.Host.Equals("res.cloudinary.com", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
 
             var path = uri.AbsolutePath;
 

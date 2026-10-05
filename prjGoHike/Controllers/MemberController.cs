@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.Models;
 using prjGoHike.ViewModels_user.Member;
+using prjGoHike.Services.forum;
 using System.Security.Claims;
 namespace prjGoHike.Controllers
 {
@@ -12,11 +13,14 @@ namespace prjGoHike.Controllers
 
         private readonly GoHikeDataContext _context;
         private readonly ILogger<MemberController> _logger;
+        private readonly CloudinaryService _cloudinaryService;
         //內建的日誌介面
-        public MemberController(GoHikeDataContext context, ILogger<MemberController> logger)
+        public MemberController(GoHikeDataContext context, ILogger<MemberController> logger,
+            CloudinaryService cloudinaryService)
         {
             _context = context;
             _logger = logger;
+            _cloudinaryService = cloudinaryService;
         }
         /// <summary>
         /// 取得目前登入的使用者 ID
@@ -73,55 +77,68 @@ namespace prjGoHike.Controllers
         [HttpPost]
         public async Task<IActionResult> Profile(MemberProfileViewModel model)
         {
+            string? newAvatarUrl = null;
             try
             {
                 long userid = GetUserId();
-                if (userid == null)
+                if (userid == 0)
                     return Unauthorized("請先登入");
 
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userid);
                 if (user == null)
                     return NotFound("使用者不存在");
+                var oldAvatarUrl = user.AvatarUrl;
                 if (model.AvatarFile != null && model.AvatarFile.Length > 0)
                 {
-                    // 1. 設定圖片儲存路徑 (wwwroot/uploads/avatars)
-                    string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "avatars");
-                    if (!Directory.Exists(uploadsFolder))
+                    var contentType = model.AvatarFile.ContentType.ToLowerInvariant();
+                    if (model.AvatarFile.Length > 5 * 1024 * 1024 ||
+                        contentType is not ("image/jpeg" or "image/png" or "image/webp"))
                     {
-                        Directory.CreateDirectory(uploadsFolder);
+                        TempData["ErrorMessage"] = "頭像僅支援 5 MB 以內的 JPG、PNG 或 WebP 圖片。";
+                        return RedirectToAction(nameof(Profile));
                     }
-
-                    // 2. 產生獨一無二的檔名（避免不同人上傳同檔名被覆蓋）
-                    string uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileName(model.AvatarFile.FileName)}";
-                    string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                    // 3. 將檔案寫入伺服器硬碟
-                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    newAvatarUrl = await _cloudinaryService.UploadImageAsync(model.AvatarFile, "gohike/avatars");
+                    if (newAvatarUrl.Length > 255)
                     {
-                        await model.AvatarFile.CopyToAsync(fileStream);
+                        await TryDeleteAvatarAsync(newAvatarUrl);
+                        TempData["ErrorMessage"] = "圖片網址過長，請聯絡管理員。";
+                        return RedirectToAction(nameof(Profile));
                     }
-
-                    // 4. 把產生好的新網址寫入 user.AvatarUrl
-                    user.AvatarUrl = "/uploads/avatars/" + uniqueFileName;
+                    user.AvatarUrl = newAvatarUrl;
                 }
                 // 只允許修改特定欄位
                 user.Nickname = model.Nickname;
                 user.Bio = model.Bio ?? "";
                 user.RegionPreference = model.RegionPreference ?? "";
                 user.DifficultyPreference = model.DifficultyPreference ?? "";
-                user.AvatarUrl = model.AvatarUrl ?? "";
-
                 _context.Users.Update(user);
                 await _context.SaveChangesAsync();
+                if (newAvatarUrl is not null)
+                    await TryDeleteAvatarAsync(oldAvatarUrl);
 
                 TempData["SuccessMessage"] = "個人資料已更新";
                 return RedirectToAction(nameof(Profile));
             }
             catch (Exception ex)
             {
+                if (newAvatarUrl is not null)
+                    await TryDeleteAvatarAsync(newAvatarUrl);
                 _logger.LogError(ex, "編輯個人資料出錯");
                 TempData["ErrorMessage"] = "更新失敗,請稍後重試";
                 return RedirectToAction(nameof(Profile));
+            }
+        }
+
+        private async Task TryDeleteAvatarAsync(string? avatarUrl)
+        {
+            if (string.IsNullOrWhiteSpace(avatarUrl)) return;
+            try
+            {
+                await _cloudinaryService.DeleteImageAsync(avatarUrl);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "會員頭像清理失敗：{AvatarUrl}", avatarUrl);
             }
         }
 
