@@ -20,6 +20,7 @@ var connectionString = builder.Configuration.GetConnectionString("GoHikeDataCont
 
 builder.Services.AddDbContext<GoHikeDataContext>(options => options.UseSqlServer(connectionString));
 builder.Services.AddSpatialJoins(builder.Configuration);
+builder.Services.AddScoped<DisasterAlertRealtimeService>();
 // 個人裝備：提供配重計算服務，由 Controller 注入使用。
 builder.Services.AddScoped<EquipmentWeightService>();
 

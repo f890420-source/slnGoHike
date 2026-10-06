@@ -11,12 +11,15 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using prjGoHike.APIControllers.GoHikeSafe;
 using prjGoHike.Models;
+using prjGoHike.Hubs;
+using prjGoHike.Services;
 
 // Run: dotnet run --project tests/GoHikeSafeApiTests
 // Exercises real routing, JSON/model validation, JWT authorization, controllers,
@@ -27,6 +30,11 @@ builder.WebHost.UseUrls("http://127.0.0.1:0");
 builder.Logging.ClearProviders();
 var context = new TestDataContext();
 builder.Services.AddSingleton<GoHikeDataContext>(context);
+var alertHub = new RecordingAlertHub(() => context.Saves);
+var alertLogger = new RecordingAlertLogger();
+builder.Services.AddSingleton<IHubContext<EventHub>>(alertHub);
+builder.Services.AddSingleton<ILogger<DisasterAlertRealtimeService>>(alertLogger);
+builder.Services.AddScoped<DisasterAlertRealtimeService>();
 builder.Services.AddControllers().AddApplicationPart(typeof(TrailsApiController).Assembly)
     .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new NetTopologySuite.IO.Converters.GeoJsonConverterFactory()));
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new NetTopologySuite.IO.Converters.GeoJsonConverterFactory()));
@@ -292,6 +300,8 @@ try
     }
     await TrailFeatureApiChecks.RunAsync(context, Send, (role, userId) => Authenticate(role, userId), Check);
     await TrailIndicatorApiChecks.RunAsync(context, Send, (role, userId) => Authenticate(role, userId), Check, openApi);
+    await AlertRealtimeChecks.RunAsync(context, alertHub, alertLogger, Send,
+        role => Authenticate(role), Check);
     // Use the production EF model/provider to ensure relational query translation
     // works, including nested public segment DTO projections.
     await using var sql = new TranslationContext();
@@ -310,7 +320,7 @@ try
         id = x.IndicatorId, IndicatorName = x.IndicatorName, IndicatorType = x.IndicatorType,
         IndiSegments = x.IndicatorSegments.Select(s => new prjGoHike.DTO.GoHikeSafe.IndicatorSegmentPublicDto { id = s.IndicatorSegmentId, Shape = s.Shape, SegmentName = s.SegmentName }).ToList()
     }).ToQueryString().Contains("IndicatorSegments"), "Public indicator DTO projection translates to SQL.");
-    Console.WriteLine($"PASS: {checks} checks across four API modules, HTTP validation/auth, feature reports, segments, conflicts and SQL query translation.");
+    Console.WriteLine($"PASS: {checks} checks across four API modules, HTTP validation/auth, feature reports, segments, conflicts, alert realtime API/MVC behavior and SQL query translation.");
 }
 finally { await app.StopAsync(); }
 
@@ -323,12 +333,28 @@ void Authenticate(string? role, string userId = "1")
 }
 async Task<JsonNode?> Send(HttpMethod method, string path, JsonNode? body, HttpStatusCode expected)
 {
+    var notificationCount = alertHub.Messages.Count;
+    var savesBefore = context.Saves;
     using var request = new HttpRequestMessage(method, path);
     if (body is not null) request.Content = JsonContent.Create(body);
     using var response = await client.SendAsync(request);
     var text = await response.Content.ReadAsStringAsync();
     Check(response.StatusCode == expected, $"{method} {path}: expected {expected}, got {response.StatusCode}: {text}");
-    return string.IsNullOrEmpty(text) ? null : JsonNode.Parse(text);
+    var result = string.IsNullOrEmpty(text) ? null : JsonNode.Parse(text);
+    var alertWrite = path.StartsWith("/api/disasteralerts", StringComparison.Ordinal)
+        && (method == HttpMethod.Post || method == HttpMethod.Put || method == HttpMethod.Delete);
+    if (alertWrite && (expected == HttpStatusCode.Created || expected == HttpStatusCode.OK))
+    {
+        var id = method == HttpMethod.Delete ? long.Parse(path.Split('/').Last())
+            : result!["data"]!["alertId"]!.GetValue<long>();
+        AlertRealtimeChecks.CheckPublication(alertHub, notificationCount, savesBefore, id, Check);
+    }
+    else
+    {
+        Check(alertHub.Messages.Count == notificationCount,
+            "Rejected writes, reads and other API modules do not publish alert notifications.");
+    }
+    return result;
 }
 void Check(bool condition, string message)
 {

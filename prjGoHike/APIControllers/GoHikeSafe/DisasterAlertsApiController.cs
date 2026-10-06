@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.DTO.GoHikeSafe;
 using prjGoHike.Models;
+using prjGoHike.Services;
 
 namespace prjGoHike.APIControllers.GoHikeSafe;
 
@@ -13,11 +14,14 @@ public class DisasterAlertsApiController : BaseController
 {
     private readonly GoHikeDataContext _context;
     private readonly ILogger<DisasterAlertsApiController> _logger;
+    private readonly DisasterAlertRealtimeService _realtime;
 
-    public DisasterAlertsApiController(GoHikeDataContext context, ILogger<DisasterAlertsApiController> logger)
+    public DisasterAlertsApiController(GoHikeDataContext context,
+        ILogger<DisasterAlertsApiController> logger, DisasterAlertRealtimeService realtime)
     {
         _context = context;
         _logger = logger;
+        _realtime = realtime;
     }
 
     private static DisAlertDto ToDto(DisasterAlert item) => new()
@@ -189,6 +193,7 @@ public class DisasterAlertsApiController : BaseController
             }
             _context.DisasterAlerts.Add(item);
             await _context.SaveChangesAsync(cancellationToken);
+            await _realtime.PublishChangedAsync(item.AlertId);
             return CreatedResponse(ToDto(item));
         }
         catch (Exception ex)
@@ -251,6 +256,7 @@ public class DisasterAlertsApiController : BaseController
                 }
             }
             await _context.SaveChangesAsync(cancellationToken);
+            await _realtime.PublishChangedAsync(item.AlertId);
             return SuccessResponse(ToDto(item));
         }
         catch (Exception ex)
@@ -285,6 +291,7 @@ public class DisasterAlertsApiController : BaseController
             _context.AlertSegments.RemoveRange(item.AlertSegments);
             _context.DisasterAlerts.Remove(item);
             await _context.SaveChangesAsync(cancellationToken);
+            await _realtime.PublishChangedAsync(item.AlertId);
             return SuccessResponse<string>("", message: "刪除資料成功！");
         }
         catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 547 })

@@ -46,7 +46,26 @@ sealed class TestDataContext : GoHikeDataContext
 
     public int Saves { get; private set; }
     public bool FailSave { get; set; }
+    public Action? AfterSave { get; set; }
     private long _nextId = 1;
+
+    // MVC uses DbContext.Add/Update rather than the DbSet API.
+    public override EntityEntry<TEntity> Add<TEntity>(TEntity entity)
+    {
+        if (entity is not DisasterAlert alert) throw new NotSupportedException();
+        DisasterAlerts.Add(alert);
+        return null!;
+    }
+
+    public override EntityEntry<TEntity> Update<TEntity>(TEntity entity)
+    {
+        if (entity is not DisasterAlert alert) throw new NotSupportedException();
+        var existing = DisasterAlerts.FirstOrDefault(x => x.AlertId == alert.AlertId);
+        if (existing is null) throw new DbUpdateConcurrencyException();
+        DisasterAlerts.Remove(existing);
+        DisasterAlerts.Add(alert);
+        return null!;
+    }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
         optionsBuilder.UseSqlServer("Server=localhost;Database=Unused;Integrated Security=true", x => x.UseNetTopologySuite());
@@ -88,6 +107,7 @@ sealed class TestDataContext : GoHikeDataContext
             if (feature.FeatureId == 0) feature.FeatureId = _nextId++;
             feature.Trail = Trails.FirstOrDefault(x => x.TrailId == feature.TrailId)!;
         }
+        AfterSave?.Invoke();
         return Task.FromResult(1);
     }
 }
