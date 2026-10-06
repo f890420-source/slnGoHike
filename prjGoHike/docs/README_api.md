@@ -54,6 +54,10 @@ dotnet user-secrets set "ConnectionStrings:GoHikeDataContext" "<本機 SQL Serve
 包含 Hangfire 啟用設定、觸發／狀態輪詢、工作紀錄與目前候選關聯查詢。
 需要實際 Hangfire 與資料庫讀寫的驗收另見 [測試步驟與已完成結果](SpatialJoins_資料庫與Hangfire測試步驟.md)。
 
+災害警示即時更新另見 [DisasterAlerts API 與 SignalR 串接文件](DisasterAlerts_api.md)，
+包含 `/eventHub` 的 `AlertsChanged({ alertId })` 契約、API／MVC 儲存後通知、5 秒逾時與前端重載流程。
+收到通知後重新呼叫 `GET /api/disasteralerts`；警示清單目前只依 `IsActive` 篩選，沒有時間排程或自動警示空間關聯。
+
 步道周圍特徵回報另見 [TrailFeatures API 前端串接文件](TrailFeatures_api.md)，
 包含登入回報、公開篩選、管理員維護、完整欄位及錯誤處理範例。
 該模組基底路徑為 `/api/trailfeatures`，POST 允許登入者回報，其餘寫入限 Admin；新回報預設不可用。
@@ -138,5 +142,7 @@ dotnet run --project tests/GoHikeSafeApiTests
 
 測試以真正的 ASP.NET Core HTTP pipeline 驗證四個模組的 CRUD、JWT 授權、JSON 欄位驗證、
 公開／管理查詢、特徵回報與管理流程、路段保留／替換／清除、刪除衝突與受控錯誤回應。
+另涵蓋警示 API／MVC 儲存後的 SignalR 通知、推播失敗、5 秒逾時及 HTTP request 取消；
+MVC action 直接呼叫，SignalR 使用記錄替身，未涵蓋真實 client 與地圖畫面的端到端測試。
 資料存取使用測試替身；另使用正式 EF Core SQL Server 模型檢查查詢轉譯。
 不連線到應用程式資料庫，未涵蓋真實 SQL Server 寫入及外鍵約束的整合測試。

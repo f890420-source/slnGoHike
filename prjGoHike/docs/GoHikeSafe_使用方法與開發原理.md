@@ -1,6 +1,6 @@
 # GoHikeSafe 使用方法、開發原理與技術亮點
 
-本文依 `APIControllers/GoHikeSafe` 的五個 Controller，以及其 DTO、EF Model、GeoJSON converter 與 SpatialJoins 服務整理。課堂基礎的比較依據為 repository 根目錄的 [AGENTS.md](../../AGENTS.md)；該文件是開發準則，不能據此斷言某項技術實際上未在課堂教授。以下將「基礎要求」與「本專案針對地理資料、背景工作所做的延伸」對照。
+本文依 `APIControllers/GoHikeSafe` 的五個 Controller，以及其 DTO、EF Model、GeoJSON converter、SpatialJoins 服務與災害警示即時通知流程整理。課堂基礎的比較依據為 repository 根目錄的 [AGENTS.md](../../AGENTS.md)；該文件是開發準則，不能據此斷言某項技術實際上未在課堂教授。以下將「基礎要求」與「本專案針對地理資料、背景工作、即時通知所做的延伸」對照。
 
 ## 1. 功能範圍與閱讀入口
 
@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | 步道 | 公開已發布步道與路線；管理員維護步道與路段 | [TrailsApiController](../APIControllers/GoHikeSafe/TrailsApiController.cs) |
 | 指標 | 公開啟用指標；管理員維護權重、等級與空間範圍 | [IndicatorApiController](../APIControllers/GoHikeSafe/IndicatorApiController.cs) |
-| 災害警示 | 公開啟用警示；管理員維護有效期間與空間範圍 | [DisasterAlertsApiController](../APIControllers/GoHikeSafe/DisasterAlertsApiController.cs) |
+| 災害警示 | 公開啟用警示；管理員維護有效期間與空間範圍，API／MVC 儲存成功後廣播變更通知 | [DisasterAlertsApiController](../APIControllers/GoHikeSafe/DisasterAlertsApiController.cs) |
 | 步道特徵 | 登入者回報周圍特徵，管理員確認後公開 | [TrailFeaturesApiController](../APIControllers/GoHikeSafe/TrailFeaturesApiController.cs) |
 | 空間關聯 | 管理員排入背景同步，計算步道與指標的距離候選，查詢工作狀態 | [SpatialJoinsApiController](../APIControllers/GoHikeSafe/SpatialJoinsApiController.cs) |
 
@@ -17,6 +17,7 @@
 - [API 啟動與 CRUD 契約](README_api.md)
 - [步道關聯指標](TrailIndicators_api.md)
 - [步道特徵回報完整欄位與前端範例](TrailFeatures_api.md)
+- [災害警示 API 與 SignalR 即時通知](DisasterAlerts_api.md)
 - [SpatialJoins API 與部署](SpatialJoins_api.md)
 - [SQL 優化原理與既有量測](SpatialJoins_SQL優化實作know-how.md)
 - [實際資料庫／Hangfire 驗收步驟](SpatialJoins_資料庫與Hangfire測試步驟.md)
@@ -165,6 +166,14 @@ PUT 先取得管理明細，再送出需要保留的一般欄位。步道／指�
 
 步道刪除會檢查警示關聯、登山紀錄明細、特徵、指標關聯、訂閱及行程回報；指標檢查 TrailIndicators，警示檢查 AlertsTrails。Controller 先以 AnyAsync 提供 409 訊息，再捕捉 SQL Server 外鍵違反（547）處理檢查後發生的競爭。刪除成功回 200、`data: ""`。
 
+### 災害警示即時變更通知
+
+警示 API 與 `AdminDisAlertController` 的新增、更新及實際刪除，在儲存成功後透過既有 `/eventHub` 廣播 `AlertsChanged`，單一參數為 `{ "alertId": 123 }`。停用警示也會通知；驗證、權限、資源存在或關聯檢查未通過，以及儲存失敗時不通知。MVC 查無資料的刪除不通知。
+
+前端首次載入、收到通知及重新連線後，重新 GET `/api/disasteralerts`，以完整清單替換圖層資料，才能反映刪除與停用。通知本身不帶 GeoJSON，也沒有可靠補送紀錄；API／DB 是警示資料來源。Hub 的接收流程與地圖更新建議見 [串接文件](DisasterAlerts_api.md)。
+
+共用服務採獨立 5 秒逾時，不使用 HTTP request token；推播失敗記錄 Warning、警示 ID 與例外，保留已成功寫入的 HTTP 回應或 MVC 導向結果。本功能不需要新增套件或資料庫結構，也不需要啟用 Hangfire；沒有時間邊界自動通知或警示 Spatial Join。
+
 ## 4. 特徵回報與確認流程
 
 1. 公開 `GET /api/trailfeatures?trailId=12&featureType=Water` 查詢指定步道特徵，僅顯示 `IsAvailable=true` 且所屬步道已發布的資料。`GET /api/trailfeatures/{id}` 使用相同公開條件。
@@ -246,7 +255,7 @@ HTTP request
 
 公開步道與指標使用 Select 投影需要的 DTO 欄位，步道關聯摘要抽成 [TrailIndicatorQuery](../Services/TrailIndicatorQuery.cs)。其他管理／警示查詢用 Include 取得路段，再於 materialize 後映射 DTO，避免將 EF 導覽屬性直接交給 serializer。唯讀 Entity 查詢多使用 AsNoTracking；寫入則先載入追蹤 Entity，更新允許欄位後呼叫 SaveChangesAsync。
 
-CRUD 邏輯目前多在 Controller 內；較複雜的背景同步才有 Service／Store 邊界，沒有另加通用 Repository 或 CQRS。TrailGeometryService 等 MVC 檔案處理不屬於這組 API 的 JSON 寫入流程。
+CRUD 邏輯目前多在 Controller 內；較複雜的背景同步有 Service／Store 邊界，警示推播則由 [DisasterAlertRealtimeService](../Services/DisasterAlertRealtimeService.cs) 集中處理，由 API 與 MVC 共用。沒有另加通用 Repository 或 CQRS。TrailGeometryService 等 MVC 檔案處理不屬於這組 API 的 JSON 寫入流程。
 
 ### 6.2 GeoJSON 的三層驗證
 
@@ -325,9 +334,11 @@ dotnet run --project tests/GoHikeSafeApiTests
 dotnet run --project tests/SpatialJoinTests
 ```
 
-GoHikeSafeApiTests 啟動實際 ASP.NET Core HTTP pipeline，檢查路由、JWT、JSON 驗證、CRUD、GeoJSON、特徵確認、關聯摘要與錯誤回應，資料存取使用替身；另以正式 SQL Server EF provider 檢查 SQL 轉譯。SpatialJoinTests 包含背景流程與恢復替身測試，真實 SQL／Hangfire 測試需額外設定；未設定 `GOHIKE_SPATIAL_TEST_CONNECTION` 時會明確跳過相關整合測試。
+GoHikeSafeApiTests 啟動實際 ASP.NET Core HTTP pipeline，檢查路由、JWT、JSON 驗證、CRUD、GeoJSON、特徵確認、關聯摘要與錯誤回應，資料存取使用替身；另以正式 SQL Server EF provider 檢查 SQL 轉譯。警示即時通知檢查使用實際服務與 SignalR 記錄替身，涵蓋 API／MVC 儲存後通知、失敗隔離、逾時及 HTTP request 取消；MVC 是直接呼叫 action，不是 MVC HTTP／防偽驗收。SpatialJoinTests 包含背景流程與恢復替身測試，真實 SQL／Hangfire 測試需額外設定；未設定 `GOHIKE_SPATIAL_TEST_CONNECTION` 時會明確跳過相關整合測試。
 
 HTTP 替身測試與 ToQueryString 不足以證明真實 geography 運算、外鍵、交易回滾或 Hangfire 儲存正確。實際整合測試的資料庫要求與可能寫入內容，依 [資料庫／Hangfire 測試文件](SpatialJoins_資料庫與Hangfire測試步驟.md) 操作。本次整理文件僅核對原始碼與文件連結，未執行上述程式測試或業務資料庫異動。
+
+警示即時通知功能實作時，後端及測試專案建置成功，GoHikeSafeApiTests 全專案 795 項檢查通過，沒有連線或異動業務資料庫。SignalR 替身測試不代表真實 client 與 Angular／MapLibre 的端到端測試已完成，完整證據範圍見 [警示通知驗證](DisasterAlerts_api.md#驗證與證據範圍)。
 
 ## 7. 相較於 AGENTS.md 基礎的技術亮點
 
@@ -341,6 +352,7 @@ HTTP 替身測試與 ToQueryString 不足以證明真實 geography 運算、外�
 | 資源存在／狀態驗證 | Serializable + sp_getapplock + Run／Job ID 執行者檢查 | 防止同時建立同步、重複執行與部分提交；成功狀態與結果一致 |
 | Server authoritative／避免 overposting | 回報 DTO 排除可信度與公開旗標；同步只收距離，權重由伺服器產生快照 | 會員送觀察資料，管理狀態與工作結果由伺服器決定 |
 | API 契約與只公開必要欄位 | 公開／管理 DTO、獨立指標摘要、GeoJSON OpenAPI schema | 地圖圖形與文字摘要可分開讀取，維持既有明細契約 |
+| SaveChanges、受控錯誤與伺服器資料來源 | 儲存成功後發送 SignalR 變更通知，獨立逾時並隔離發送失敗 | 即時通知提醒 client 重讀 API；傳送失敗不把已成功寫入回報成失敗 |
 | 適當狀態碼、受控錯誤與測試 | FK 競爭回 409、工作儲存失敗回 503、HTTP pipeline 與 SQL 轉譯檢查 | 區分可處理的衝突與服務失敗，並說清楚替身測試的證據範圍 |
 
 報告或示範時可依「會員回報後不可公開 → Admin 確認 → 公開特徵可見」展示伺服器控制，再依「POST 收到 202 → 輪詢 Run → 成功後 GET 步道指標摘要」展示背景工作。開發原理則用「多 Segment 最短距離、先比較後捨入、只改未評分資料、結果與 Succeeded 同交易」說明正確性，而非僅列出套件名稱。
