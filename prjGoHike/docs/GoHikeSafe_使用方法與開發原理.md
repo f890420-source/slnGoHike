@@ -1,6 +1,6 @@
 # GoHikeSafe 使用方法、開發原理與技術亮點
 
-本文依 `APIControllers/GoHikeSafe` 的五個 Controller，以及其 DTO、EF Model、GeoJSON converter、SpatialJoins 服務與災害警示即時通知流程整理。課堂基礎的比較依據為 repository 根目錄的 [AGENTS.md](../../AGENTS.md)；該文件是開發準則，不能據此斷言某項技術實際上未在課堂教授。以下將「基礎要求」與「本專案針對地理資料、背景工作、即時通知所做的延伸」對照。
+本文依 `APIControllers/GoHikeSafe` 的五個 Controller，以及其 DTO、EF Model、GeoJSON converter、SpatialJoins 服務與災害警示即時通知流程整理。以下以 HTTP 契約、DTO、伺服器驗證、EF Core 資料存取與持久化狀態等 API 基礎概念，對照本專案針對地理資料、背景工作與即時通知所做的延伸。
 
 ## 1. 功能範圍與閱讀入口
 
@@ -340,9 +340,9 @@ HTTP 替身測試與 ToQueryString 不足以證明真實 geography 運算、外�
 
 警示即時通知功能實作時，後端及測試專案建置成功，GoHikeSafeApiTests 全專案 795 項檢查通過，沒有連線或異動業務資料庫。SignalR 替身測試不代表真實 client 與 Angular／MapLibre 的端到端測試已完成，完整證據範圍見 [警示通知驗證](DisasterAlerts_api.md#驗證與證據範圍)。
 
-## 7. 相較於 AGENTS.md 基礎的技術亮點
+## 7. API 基礎概念與本專案的技術延伸
 
-| AGENTS.md 的基礎要求 | 本功能的具體延伸 | 解決的問題與說明重點 |
+| API 基礎概念 | 本功能的具體延伸 | 解決的問題與說明重點 |
 | --- | --- | --- |
 | DTO、JSON 與伺服器驗證 | 自訂 GeoJSON converter，先驗原始結構再驗 NTS 拓樸與環方向 | 地理資料合法性不能只靠 Required；還需座標、型別、封閉環與拓樸驗證 |
 | EF Core 查詢與關聯表 | SQL Server geography 的距離關聯、多 Segment 最短距離彙總 | 用空間條件找出相近資源，超出單純主外鍵查詢 |

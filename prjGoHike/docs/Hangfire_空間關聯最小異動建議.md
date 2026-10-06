@@ -10,7 +10,7 @@
 
 第一版由管理員手動要求同步「已發布步道與啟用指標之間、指定距離內的未評分關聯」。已評分資料完整保留，POI 類資料維持 `TrailFeatures` 的單一步道歸屬。因此本功能不是整張 `TrailIndicators` 的全量重建，也不是重新評分。
 
-以下「現況」來自程式與 SQL 快照；「建議」尚未實作。SQL 快照及既有 PMTiles 文件在查閱時為工作目錄中的未追蹤檔案，本次不修改或代為加入版本控制。快照不能代表正式資料庫當前狀態。
+以下「現況」來自程式與 SQL 快照；「建議」描述實作前的設計。SQL 快照用於核對資料表與欄位定義，不能代表正式資料庫當前狀態。
 
 | 依據 | 已確認現況與影響 |
 | --- | --- |
@@ -22,17 +22,17 @@
 | [步道 API](../APIControllers/GoHikeSafe/TrailsApiController.cs)、[指標 API](../APIControllers/GoHikeSafe/IndicatorApiController.cs) | 公開查詢分別依 `IsPublished`、`IsActive`；已有 JWT 與 Admin 角色使用方式 |
 | [Program.cs](../Program.cs)、[專案檔](../prjGoHike.csproj) | 已有 DI、EF Core SQL Server、NetTopologySuite，未整合 Hangfire；DbContext 的 `OnConfiguring` 已啟用 `UseNetTopologySuite()` |
 
-與原稿的調整如下：
+主要設計選項與採用理由如下：
 
-| 原稿 | 本專案第一版建議 |
+| 設計選項 | 本專案第一版建議與採用理由 |
 | --- | --- |
-| `Trails.Route` 對 `Indicators.Location` | `TrailSegments.Shape` 對 `IndicatorSegments.Shape`，彙總每組步道／指標的最短距離 |
-| 新增 `TrailIndicator` | 沿用 `TrailIndicators` 及其複合主鍵、外鍵 |
-| 新增 `POIs / TrailPoi` | 沿用 `TrailFeatures`，不改歸屬、不新增多對多表 |
-| `DistanceMeters float` | SQL 距離計算仍使用原始結果；儲存沿用 `decimal(12,2)` |
-| `CreatedAt` 關聯欄位 | 不另新增；明確界定既有 `EvaluatedAt` 的使用方式 |
-| `DELETE` 全表後重建 | 只同步 `EvaluatedScore IS NULL` 的關聯，保護所有已評分資料 |
-| `BackgroundJob` | 建議命名 `BackgroundJobRun`／`BackgroundJobRuns`，避免與 Hangfire 的 `BackgroundJob` 類別混淆 |
+| 空間比對來源 | 使用 `TrailSegments.Shape` 對 `IndicatorSegments.Shape`，彙總每組步道／指標的最短距離，符合既有多 Segment 模型 |
+| 步道／指標關聯儲存 | 沿用 `TrailIndicators` 及其複合主鍵、外鍵，避免重複建立相同關聯模型 |
+| POI 類資料歸屬 | 沿用 `TrailFeatures` 的單一步道歸屬，符合第一版需求，無須新增多對多表 |
+| 距離精度與儲存 | SQL 距離計算及門檻比較使用原始結果；儲存沿用 `decimal(12,2)`，避免捨入影響門檻判定 |
+| 關聯時間欄位 | 明確界定既有 `EvaluatedAt` 的使用方式，第一版無須另增時間欄位 |
+| 同步更新範圍 | 只同步 `EvaluatedScore IS NULL` 的關聯，保護所有已評分資料 |
+| 執行紀錄命名 | 使用 `BackgroundJobRun`／`BackgroundJobRuns`，避免與 Hangfire 的 `BackgroundJob` 類別混淆 |
 
 相關的 [Hangfire 與 MSSQL → PMTiles 規劃](Hangfire_PMtiles_導入規劃.md) 是另一項產圖功能。本文件只處理空間關聯，不導入其版本發布、產檔或外部程序機制；未來共用 Hangfire 註冊時，再整合共同設定。
 
