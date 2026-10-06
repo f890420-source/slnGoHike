@@ -2,7 +2,6 @@ using Google.Apis.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.RateLimiting;
 using prjGoHike.DTO.Auth;
 using prjGoHike.Models;
 using prjGoHike.Services;
@@ -197,7 +196,6 @@ public class LoginController : ControllerBase
     }
 
     [HttpPost("register")]
-    [EnableRateLimiting("email-verification")]
     public async Task<ActionResult> Register(
         RegisterRequestDto request,
         CancellationToken cancellationToken)

@@ -1,13 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 using prjGoHike.DTO.Auth;
 using prjGoHike.Services;
 
 namespace prjGoHike.APIControllers.User;
 
 [ApiController, AllowAnonymous, Route("api")]
-[EnableRateLimiting("email-verification")]
 public sealed class EmailVerificationController(EmailVerificationService verification) : ControllerBase
 {
     [HttpPost("verify-email")]
