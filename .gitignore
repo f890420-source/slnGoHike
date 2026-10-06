@@ -362,5 +362,8 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
-# Runtime member uploads (keep generated/user files out of source control)
+# Runtime uploads (keep these files out of source control)
 prjGoHike/wwwroot/uploads/avatars/*
+prjGoHike/wwwroot/uploads/avatars/.gitkeep
+prjGoHike/wwwroot/assets/JoinGroup_Images/*
+prjGoHike/wwwroot/assets/JoinGroup_Images/.gitkeep
