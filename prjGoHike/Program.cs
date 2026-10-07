@@ -11,6 +11,7 @@ using Microsoft.OpenApi;
 using Microsoft.AspNetCore.Authorization;
 using prjGoHike.Services.SpatialJoins;
 using prjGoHike.Services.PersonalEquipment;
+using System.Threading.RateLimiting;
 
 string GroupJoinRoute = "http://localhost:4200";
 
@@ -19,6 +20,7 @@ var connectionString = builder.Configuration.GetConnectionString("GoHikeDataCont
 
 builder.Services.AddDbContext<GoHikeDataContext>(options => options.UseSqlServer(connectionString));
 builder.Services.AddSpatialJoins(builder.Configuration);
+builder.Services.AddScoped<DisasterAlertRealtimeService>();
 // 個人裝備：提供配重計算服務，由 Controller 注入使用。
 builder.Services.AddScoped<EquipmentWeightService>();
 
@@ -33,6 +35,36 @@ builder.Services.AddScoped<MemberAchievementService>();
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 builder.Services.Configure<GoogleAuthSettings>(
     builder.Configuration.GetSection(GoogleAuthSettings.SectionName));
+builder.Services.AddDataProtection();
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));
+builder.Services.Configure<PasswordResetSettings>(builder.Configuration.GetSection("PasswordReset"));
+builder.Services.AddSingleton<PasswordResetTokenService>();
+builder.Services.AddScoped<IPasswordResetEmailSender, PasswordResetEmailSender>();
+builder.Services.AddScoped<IEmailVerificationEmailSender, PasswordResetEmailSender>();
+builder.Services.AddSingleton<EmailVerificationTokenService>();
+builder.Services.AddScoped<EmailVerificationService>();
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("password-reset", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromMinutes(15),
+            QueueLimit = 0,
+            AutoReplenishment = true
+        }));
+    options.AddPolicy("email-verification", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromMinutes(15),
+            QueueLimit = 0,
+            AutoReplenishment = true
+        }));
+});
 
 builder.Services.AddHttpClient<GeminiModerationService>();
 builder.Services.AddHttpClient<GeminiSummaryService>();
@@ -185,6 +217,7 @@ if (app.Environment.IsDevelopment())
 }
 app.UseRouting();
 app.UseCors("AngularDevelopment");
+app.UseRateLimiter();
 app.UseStaticFiles();
 
 app.UseAuthentication();

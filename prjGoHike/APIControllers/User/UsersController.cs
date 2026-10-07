@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using prjGoHike.DTO.User;
 using prjGoHike.Models;
 using prjGoHike.Services;
+using prjGoHike.Services.forum;
 
 namespace prjGoHike.APIControllers.User;
 
@@ -14,17 +15,20 @@ public sealed class UsersController : UserApiControllerBase
 {
     private const long MaxAvatarBytes = 5 * 1024 * 1024;
     private readonly GoHikeDataContext _context;
-    private readonly IWebHostEnvironment _environment;
+    private readonly CloudinaryService _cloudinaryService;
+    private readonly ILogger<UsersController> _logger;
     private readonly MemberAchievementService _memberAchievementService;
 
     public UsersController(
         GoHikeDataContext context,
-        IWebHostEnvironment environment,
-        MemberAchievementService memberAchievementService)
+        CloudinaryService cloudinaryService,
+        MemberAchievementService memberAchievementService,
+        ILogger<UsersController> logger)
     {
         _context = context;
-        _environment = environment;
+        _cloudinaryService = cloudinaryService;
         _memberAchievementService = memberAchievementService;
+        _logger = logger;
     }
 
     [HttpGet("me")]
@@ -107,18 +111,33 @@ public sealed class UsersController : UserApiControllerBase
         var user = await _context.Users.FindAsync([userId], cancellationToken);
         if (user is null) return NotFound();
 
-        var webRoot = _environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot");
-        var avatarDirectory = Path.Combine(webRoot, "uploads", "avatars");
-        Directory.CreateDirectory(avatarDirectory);
-
-        var fileName = $"{userId}_{Guid.NewGuid():N}{extension}";
-        await System.IO.File.WriteAllBytesAsync(
-            Path.Combine(avatarDirectory, fileName), bytes, cancellationToken);
-
+        string avatarUrl;
+        try
+        {
+            avatarUrl = await _cloudinaryService.UploadImageAsync(file, "gohike/avatars");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "會員頭像上傳失敗：{UserId}", userId);
+            return StatusCode(503, new { message = "圖片上傳失敗，請稍後再試。" });
+        }
+        if (avatarUrl.Length > 255)
+        {
+            await TryDeleteAvatarAsync(avatarUrl);
+            return StatusCode(500, new { message = "圖片網址過長，請聯絡管理員。" });
+        }
         var previousAvatarUrl = user.AvatarUrl;
-        user.AvatarUrl = $"/uploads/avatars/{fileName}";
-        await _context.SaveChangesAsync(cancellationToken);
-        DeletePreviousLocalAvatar(previousAvatarUrl, avatarDirectory);
+        user.AvatarUrl = avatarUrl;
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch
+        {
+            await TryDeleteAvatarAsync(avatarUrl);
+            throw;
+        }
+        await TryDeleteAvatarAsync(previousAvatarUrl);
 
         return Ok(new { avatarUrl = user.AvatarUrl });
     }
@@ -217,20 +236,16 @@ public sealed class UsersController : UserApiControllerBase
         _ => false
     };
 
-    private static void DeletePreviousLocalAvatar(string? avatarUrl, string avatarDirectory)
+    private async Task TryDeleteAvatarAsync(string? avatarUrl)
     {
-        const string prefix = "/uploads/avatars/";
-        if (string.IsNullOrWhiteSpace(avatarUrl) || !avatarUrl.StartsWith(prefix, StringComparison.Ordinal)) return;
-
-        var previousFileName = Path.GetFileName(avatarUrl);
-        var previousPath = Path.Combine(avatarDirectory, previousFileName);
+        if (string.IsNullOrWhiteSpace(avatarUrl)) return;
         try
         {
-            if (System.IO.File.Exists(previousPath)) System.IO.File.Delete(previousPath);
+            await _cloudinaryService.DeleteImageAsync(avatarUrl);
         }
-        catch (IOException)
+        catch (Exception ex)
         {
-            // 新頭像與資料庫已更新成功；舊檔清理失敗不應讓 API 回傳 500。
+            _logger.LogWarning(ex, "會員舊頭像清理失敗：{AvatarUrl}", avatarUrl);
         }
     }
 

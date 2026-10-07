@@ -18,13 +18,13 @@ IF EXISTS (
 )
     THROW 51001, 'Active spatial source has no segments.', 1;
 
-SELECT s.Trail_Id, s.Shape
+SELECT s.TrailSegment_Id, s.Trail_Id, s.Shape
 INTO #TrailSource
 FROM dbo.TrailSegments AS s
 JOIN dbo.Trails AS t ON t.Trail_Id = s.Trail_Id
 WHERE t.IsPublished = 1;
 
-SELECT s.IndicatorId, s.Shape, i.Weight
+SELECT s.IndicatorSegmentId, s.IndicatorId, s.Shape, i.Weight
 INTO #IndicatorSource
 FROM dbo.IndicatorSegments AS s
 JOIN dbo.Indicators AS i ON i.IndicatorId = s.IndicatorId
@@ -44,16 +44,48 @@ IF EXISTS (
 )
     THROW 51002, 'Invalid spatial source.', 1;
 
+-- 驗證後才計算包覆圓；每個 Segment 只計算一次，保留原始 Shape。
+SELECT TrailSegment_Id, Shape.EnvelopeCenter() AS Center,
+       Shape.EnvelopeAngle() AS AngleDegrees
+INTO #TrailBounds
+FROM #TrailSource;
+
+SELECT IndicatorSegmentId, Shape.EnvelopeCenter() AS Center,
+       Shape.EnvelopeAngle() AS AngleDegrees
+INTO #IndicatorBounds
+FROM #IndicatorSource;
+
+-- 6500000 公尺放寬 WGS84 的角度／距離換算；另留 1% 與 1 公尺餘裕，
+-- 涵蓋 STDistance 的近似誤差。粗篩只排除確定太遠的配對。
+-- 跨半球或缺少包覆資訊時不排除，仍由原始 Shape 的精確距離判定。
+SELECT t.TrailSegment_Id, i.IndicatorSegmentId
+INTO #SegmentCandidates
+FROM #TrailBounds AS t
+CROSS JOIN #IndicatorBounds AS i
+CROSS APPLY (VALUES (i.Center.STDistance(t.Center))) AS d(CenterDistanceMeters)
+WHERE t.AngleDegrees IS NULL OR i.AngleDegrees IS NULL
+   OR t.AngleDegrees > 90 OR i.AngleDegrees > 90
+   OR t.Center IS NULL OR i.Center IS NULL OR d.CenterDistanceMeters IS NULL
+   OR d.CenterDistanceMeters <=
+       ((t.AngleDegrees + i.AngleDegrees) * PI() / 180.0 * 6500000.0
+        + @DistanceMeters) * 1.01 + 1.0;
+
+-- 先物化候選配對，再物化每組精確距離，避免彙總時重複計算 STDistance。
+SELECT t.Trail_Id, i.IndicatorId, i.Weight,
+       i.Shape.STDistance(t.Shape) AS Meters
+INTO #SegmentDistances
+FROM #SegmentCandidates AS candidate
+JOIN #TrailSource AS t ON t.TrailSegment_Id = candidate.TrailSegment_Id
+JOIN #IndicatorSource AS i ON i.IndicatorSegmentId = candidate.IndicatorSegmentId;
+
 -- 一個主表配對可能有很多 Segment 配對，必須先彙總。
-SELECT t.Trail_Id, i.IndicatorId,
-       MIN(d.Meters) AS MinDistanceMeters,
-       MAX(i.Weight) AS IndicatorWeightSnapshot,
-       COUNT_BIG(*) - COUNT_BIG(d.Meters) AS NullDistanceCount
+SELECT Trail_Id, IndicatorId,
+       MIN(Meters) AS MinDistanceMeters,
+       MAX(Weight) AS IndicatorWeightSnapshot,
+       COUNT_BIG(*) - COUNT_BIG(Meters) AS NullDistanceCount
 INTO #PairDistances
-FROM #TrailSource AS t
-CROSS JOIN #IndicatorSource AS i
-CROSS APPLY (VALUES (i.Shape.STDistance(t.Shape))) AS d(Meters)
-GROUP BY t.Trail_Id, i.IndicatorId;
+FROM #SegmentDistances
+GROUP BY Trail_Id, IndicatorId;
 
 IF EXISTS (SELECT 1 FROM #PairDistances WHERE NullDistanceCount > 0)
     THROW 51003, 'Unexpected null spatial distance.', 1;
@@ -114,6 +146,10 @@ IF @@ROWCOUNT <> 1
 
 DROP TABLE #Candidates;
 DROP TABLE #PairDistances;
+DROP TABLE #SegmentDistances;
+DROP TABLE #SegmentCandidates;
+DROP TABLE #IndicatorBounds;
+DROP TABLE #TrailBounds;
 DROP TABLE #IndicatorSource;
 DROP TABLE #TrailSource;
 -- 呼叫端 commit；上述任一步驟失敗時，呼叫端 rollback 全部資料與成功狀態。

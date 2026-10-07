@@ -3,14 +3,17 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.ViewModels;
 using prjGoHike.Models;
+using prjGoHike.Services;
 
 public class AdminDisAlertController : Controller
 {
     private readonly GoHikeDataContext _context;
+    private readonly DisasterAlertRealtimeService _realtime;
 
-    public AdminDisAlertController(GoHikeDataContext context)
+    public AdminDisAlertController(GoHikeDataContext context, DisasterAlertRealtimeService realtime)
     {
         _context = context;
+        _realtime = realtime;
     }
 
     // GET: CDISASTERALERTWRAPS
@@ -38,6 +41,7 @@ public class AdminDisAlertController : Controller
         {
             _context.Add(disasterAlert);
             await _context.SaveChangesAsync();
+            await _realtime.PublishChangedAsync(disasterAlert.AlertId);
             return RedirectToAction(nameof(Index));
         }
         return View();
@@ -79,6 +83,7 @@ public class AdminDisAlertController : Controller
         {
             _context.Update(disasterAlert);
             await _context.SaveChangesAsync();
+            await _realtime.PublishChangedAsync(disasterAlert.AlertId);
         }
         catch (DbUpdateConcurrencyException)
         {
@@ -127,6 +132,10 @@ public class AdminDisAlertController : Controller
         }
 
         await _context.SaveChangesAsync();
+        if (disalertdb != null)
+        {
+            await _realtime.PublishChangedAsync(disalertdb.AlertId);
+        }
         return RedirectToAction(nameof(Index));
     }
 

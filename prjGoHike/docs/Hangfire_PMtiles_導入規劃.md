@@ -2,7 +2,7 @@
 
 日期：2026-10-03。文件性質：實作前規劃；本次不安裝套件、不異動資料庫、不啟用排程。
 
-本文以已理解 Controller、DTO、DI、EF Core 與 `SaveChangesAsync`，但尚未實作可靠背景任務的讀者為對象。這是依 AGENTS.md 選定的說明層次，不是對使用者能力的判定。「現況」表示已查閱程式；「建議」表示待實作設計；「待確認」表示仍需實際環境或業務決策。文中的新 API、類別與資料表均為建議名稱。
+閱讀本文需先理解 Controller、DTO、DI、EF Core 與 `SaveChangesAsync`；本文接著說明背景任務的排程、執行紀錄、重試與發布流程。「現況」表示已查閱程式；「建議」表示待實作設計；「待確認」表示仍需實際環境或業務決策。文中的新 API、類別與資料表均為建議名稱。
 
 ## 1. 建議方向與名詞
 
@@ -40,7 +40,7 @@ Hangfire 負責排程與呼叫 .NET 方法；真正的 MSSQL 讀取、GeoJSON �
 | [Dockerfile](../../Dockerfile) | 目前只建置與啟動 Web 應用程式，未安裝 Tippecanoe 或其他轉檔工具 |
 | [GoHikeSafeApiTests](../../tests/GoHikeSafeApiTests/Program.cs) | 有路由、JWT、DTO、GeoJSON 測試，但使用資料庫替身，不能證明 SQL 鎖定或交易正確 |
 
-本次查閱範圍內未找到現成 MSSQL → PMTiles 腳本、Hangfire 整合或可沿用的 PMTiles 前端契約。上述快照在工作目錄中尚未納入 Git；本次只讀取，不替使用者加入或修改它。快照不等於已連線驗證的正式資料庫。
+本次查閱範圍內未找到現成 MSSQL → PMTiles 腳本、Hangfire 整合或可沿用的 PMTiles 前端契約。上述 SQL 快照用於核對資料表與欄位定義，不等於已連線驗證的正式資料庫。
 
 三個主表目前沒有可直接共用的資料版本欄位。不能假設已有 `UpdatedAt`，也不能用 `MAX(Id)` 判斷內容更新或刪除。
 

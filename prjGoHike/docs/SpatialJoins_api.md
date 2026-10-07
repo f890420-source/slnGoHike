@@ -87,7 +87,7 @@ Angular 儲存回傳 ID 或 `statusUrl`，每數秒 `GET /api/admin/spatial-join
 
 僅更新／刪除未評分關聯；新列使用伺服器目前權重，RawScore、OverlapRatio、EvaluatedScore 都是 NULL，EvaluatedAt 顯式寫 UTC。所有已評分列包含 0 分完整保留；不更動 TrailFeatures。
 
-建立 Run、綁定執行者、狀態校對與同步都使用 `GoHike:SpatialJoin` SQL 交易應用程式鎖。同步使用 Serializable，來源讀取、驗證、關聯更新與 Succeeded 一次提交。同步期間可能阻擋來源的管理寫入，正式啟用前應量測資料量與執行時間；目前全 Segment 配對查詢不保證利用原表空間索引。
+建立 Run、綁定執行者、狀態校對與同步都使用 `GoHike:SpatialJoin` SQL 交易應用程式鎖。同步使用 Serializable，來源讀取、驗證、關聯更新與 Succeeded 一次提交。同步期間可能阻擋來源的管理寫入，正式啟用前應量測資料量與執行時間。目前先以包覆圓中心距離與包覆角粗篩 Segment 配對，再物化候選的原始 Shape 精確距離供彙總；中心點仍做全配對比較，不保證利用原表空間索引。原理與量測範圍見 [SQL 優化實作 know-how](SpatialJoins_SQL優化實作know-how.md)。
 
 Hangfire 採三次自動重試。狀態通知只觸發讀取目前 Hangfire 公開狀態，沒有在 Hangfire 未提交交易內寫入業務狀態；遺失或過早通知由每分鐘校對補回。Pending 超過 60 秒可補排，同 Run 的不同 Job ID 只選定一個執行者。終止 Run 不重入，舊 Failed Job 的手動重試不會更改結果。
 
