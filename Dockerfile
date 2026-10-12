@@ -17,5 +17,7 @@ WORKDIR /app
 ENV ASPNETCORE_HTTP_PORTS=8080
 EXPOSE 8080
 COPY --from=build /app/publish .
+RUN mkdir -p /app/dpkeys /app/wwwroot/assets/JoinGroup_Images \
+    && chown -R $APP_UID:$APP_UID /app/dpkeys /app/wwwroot/assets/JoinGroup_Images
 USER $APP_UID
 ENTRYPOINT ["dotnet", "prjGoHike.dll"]

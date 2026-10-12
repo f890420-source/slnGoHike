@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using prjGoHike.Hubs;
 using Microsoft.IdentityModel.Tokens;
@@ -12,8 +13,6 @@ using Microsoft.AspNetCore.Authorization;
 using prjGoHike.Services.SpatialJoins;
 using prjGoHike.Services.PersonalEquipment;
 using System.Threading.RateLimiting;
-
-string GroupJoinRoute = "http://localhost:4200";
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("GoHikeDataContext") ?? throw new InvalidOperationException("Connection string 'GoHikeDataContext' not found.");
@@ -35,7 +34,15 @@ builder.Services.AddScoped<MemberAchievementService>();
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 builder.Services.Configure<GoogleAuthSettings>(
     builder.Configuration.GetSection(GoogleAuthSettings.SectionName));
-builder.Services.AddDataProtection();
+var dataProtection = builder.Services.AddDataProtection().SetApplicationName("GoHike");
+var dataProtectionKeysPath = builder.Configuration["DataProtection:KeysPath"];
+if (!string.IsNullOrWhiteSpace(dataProtectionKeysPath))
+{
+    if (!Directory.Exists(dataProtectionKeysPath))
+        throw new InvalidOperationException($"Data Protection keys directory does not exist: {dataProtectionKeysPath}");
+
+    dataProtection.PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysPath));
+}
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));
 builder.Services.Configure<PasswordResetSettings>(builder.Configuration.GetSection("PasswordReset"));
 builder.Services.AddSingleton<PasswordResetTokenService>();
@@ -138,17 +145,13 @@ builder.Services.AddOpenApi("v1", options =>
     options.AddSchemaTransformer<GeoJsonSchemaTransformer>();
 });
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AngularDevelopment", policy =>
-    {
-        policy
-            .WithOrigins("http://localhost:4200")
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
-    });
-});
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? (builder.Environment.IsDevelopment() ? ["http://localhost:4200"] : []);
+builder.Services.AddCors(options => options.AddPolicy("Frontend", policy =>
+    policy.WithOrigins(allowedOrigins)
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials()));
 
 
 builder.Services.AddAuthentication(options =>
@@ -186,16 +189,6 @@ builder.Services.AddControllersWithViews()
     });
 builder.Services.AddSignalR();
 builder.Services.AddSession();
-builder.Services.AddSignalR();
-builder.Services.AddCors(option =>
-{
-    option.AddPolicy("GroupJoin", policy => {
-        policy.WithOrigins(GroupJoinRoute)
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials();
-    });
-});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -216,14 +209,28 @@ if (app.Environment.IsDevelopment())
     });
 }
 app.UseRouting();
-app.UseCors("AngularDevelopment");
+app.UseCors("Frontend");
 app.UseRateLimiter();
 app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseSession();
-app.UseCors("GroupJoin");
 app.UseAuthorization();
+
+app.MapGet("/health/live", () => Results.Ok());
+app.MapGet("/health/ready", async (GoHikeDataContext db, CancellationToken cancellationToken) =>
+{
+    try
+    {
+        return await db.Database.CanConnectAsync(cancellationToken)
+            ? Results.Ok()
+            : Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+    }
+    catch (Exception)
+    {
+        return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+    }
+});
 
 app.MapStaticAssets();
 app.MapControllers();

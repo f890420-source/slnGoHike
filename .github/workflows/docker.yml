@@ -1,14 +1,14 @@
-name: Docker build and publish
+name: Build and deploy container
 
 on:
   push:
-    branches: [develop, master, main]
+    branches: [deploy-sean]
   pull_request:
     types: [opened, reopened, synchronize]
 
 permissions:
   contents: read
-  packages: write
+  id-token: write
 
 jobs:
   docker:
@@ -19,34 +19,50 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build and run focused API tests
+        run: |
+          dotnet build prjGoHike/prjGoHike.csproj --configuration Release
+          dotnet run --project tests/GoHikeSafeApiTests --configuration Release
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Generate image tags and labels
-        id: meta
-        uses: docker/metadata-action@v6
-        with:
-          # metadata-action normalizes the repository name to lowercase.
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha,format=long
-            type=raw,value=latest,enable=${{ github.event_name == 'push' && github.ref_name == github.event.repository.default_branch && (github.ref_name == 'main' || github.ref_name == 'master') }}
-
-      - name: Log in to GHCR
+      - name: Log in to Azure using GitHub OIDC
         if: github.event_name == 'push'
-        uses: docker/login-action@v4
+        uses: azure/login@v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Build image and publish on branch pushes
+      - name: Log in to Azure Container Registry
+        if: github.event_name == 'push'
+        env:
+          ACR_NAME: ${{ vars.AZURE_ACR_NAME }}
+        run: az acr login --name "$ACR_NAME"
+
+      - name: Build image and push on deploy-sean
         uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile
           push: ${{ github.event_name == 'push' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ github.event_name == 'push' && format('{0}.azurecr.io/gohike:{1}', vars.AZURE_ACR_NAME, github.sha) || 'gohike:pr' }}
+
+      - name: Deploy the immutable image to Container Apps
+        if: github.event_name == 'push'
+        env:
+          ACR_NAME: ${{ vars.AZURE_ACR_NAME }}
+          CONTAINER_APP_NAME: ${{ vars.AZURE_CONTAINER_APP_NAME }}
+          RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+        run: |
+          az extension add --name containerapp --upgrade
+          az containerapp update \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --image "$ACR_NAME.azurecr.io/gohike:$GITHUB_SHA"

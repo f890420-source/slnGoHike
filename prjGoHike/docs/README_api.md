@@ -2,6 +2,9 @@
 
 專案使用 .NET 10，需先安裝 .NET 10 SDK。
 
+Azure Container Apps、Azure SQL、ACR 與 `deploy-sean` 的部署步驟見
+[Azure Container Apps 部署文件](Azure_Container_Apps_部署.md)。
+
 ```bash
 dotnet restore slnGoHike.slnx
 dotnet build slnGoHike.slnx --no-restore
