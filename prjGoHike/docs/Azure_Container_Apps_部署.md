@@ -1,6 +1,6 @@
 # GoHike 部署到 Azure Container Apps
 
-此文件對應根目錄的 `Dockerfile`、`.github/workflows/docker.yml` 和目前的 `deploy-sean` 分支。GitHub Actions 只在該分支的 push 發布；PR 只建置與執行 API 測試。第一階段固定一個 replica，`Hangfire` 保持停用。
+此文件說明 Azure Container Apps 環境的建立方式。根目錄的 `Dockerfile` 仍用於建置映像；`.github/workflows/docker.yml` 目前只在 `deploy-sean` 分支的 push 將映像發布到 GHCR，不會自動更新 Container App。PR 只建置與執行 API 測試。第一階段固定一個 replica，`Hangfire` 保持停用。
 
 ## 1. 準備 Azure SQL
 
@@ -168,7 +168,7 @@ az containerapp registry set --name "$APP" --resource-group "$RG" \
   --server "$ACR.azurecr.io" --identity system
 ```
 
-上述公開範例映像同樣監聽 `8080`，供 Container App 尚未部署 GoHike 時啟動。此處新建的 ACR 使用 RBAC + ABAC 模式，因此給 Container App 身分 `Container Registry Repository Reader`；若改用現有的 RBAC-only ACR，對應角色是 `AcrPull`。授權傳播可能需數分鐘。Container App 首次由 workflow 更新為私有映像前，先確認此身分已能拉取映像。[範例映像與埠號](https://learn.microsoft.com/en-us/azure/container-apps/tutorial-scaling)、[受控身分拉取映像](https://learn.microsoft.com/en-us/azure/container-apps/managed-identity-image-pull)、[ACR 權限模式](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-rbac-abac-repository-permissions)
+上述公開範例映像同樣監聽 `8080`，供 Container App 尚未部署 GoHike 時啟動。此處新建的 ACR 使用 RBAC + ABAC 模式，因此給 Container App 身分 `Container Registry Repository Reader`；若改用現有的 RBAC-only ACR，對應角色是 `AcrPull`。授權傳播可能需數分鐘。若日後改用 ACR 私有映像，須先確認此身分已能拉取映像。[範例映像與埠號](https://learn.microsoft.com/en-us/azure/container-apps/tutorial-scaling)、[受控身分拉取映像](https://learn.microsoft.com/en-us/azure/container-apps/managed-identity-image-pull)、[ACR 權限模式](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-rbac-abac-repository-permissions)
 
 ## 3. 掛載 Azure Files
 
@@ -225,33 +225,11 @@ unset STORAGE_KEY
 
 在 Container App 的 Probes 設 HTTP liveness `GET /health/live`、HTTP readiness `GET /health/ready`，port 均為 `8080`。Readiness 會檢查 Azure SQL 連線；SQL 暫時不可用時回 `503`。Startup probe 可使用 `/health/live`，並給予足夠的啟動等待時間。[Container Apps health probes](https://learn.microsoft.com/en-us/azure/container-apps/health-probes)
 
-## 5. 授權 GitHub Actions
+## 5. GitHub Actions 發布映像到 GHCR
 
-建立專用的 Microsoft Entra 應用程式或 user-assigned managed identity，加入 GitHub federated credential：issuer `https://token.actions.githubusercontent.com`、audience `api://AzureADTokenExchange`、subject **`repo:f890420-source/slnGoHike:ref:refs/heads/deploy-sean`**。不要把 GitHub Environment 加到此 job，否則 OIDC subject 格式會不同。給此身分 Container App 範圍的 `Container Apps Contributor`、ACR 範圍的 `Reader` 與 `Container Registry Repository Writer`；若改用既有 RBAC-only ACR，推送角色是 `AcrPush`。ACR `Reader` 供 workflow 的 `az acr login` 讀取 registry 設定。[GitHub OIDC](https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-azure)、[Container Apps Contributor](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/containers)
+`deploy-sean` 分支的 push 通過 API 建置與測試後，workflow 使用 `GITHUB_TOKEN` 推送映像到 `ghcr.io/<owner>/<repository>:<GITHUB_SHA>`，其中 owner 與 repository 會轉為小寫。GitHub Actions 的 token 需要 `packages: write` 權限；workflow 已設定，不需要 Azure OIDC 或 ACR 的 Actions variables。PR 只建置容器，不登入 GHCR，也不推送映像。[GitHub 容器映像發布說明](https://docs.github.com/en/actions/tutorials/publish-packages/publish-docker-images)
 
-```bash
-DEPLOY_IDENTITY='id-gohike-github-deploy'
-az identity create --name "$DEPLOY_IDENTITY" --resource-group "$RG" --location "$LOCATION"
-az identity federated-credential create --identity-name "$DEPLOY_IDENTITY" \
-  --resource-group "$RG" --name deploy-sean \
-  --issuer 'https://token.actions.githubusercontent.com' \
-  --subject 'repo:f890420-source/slnGoHike:ref:refs/heads/deploy-sean' \
-  --audiences 'api://AzureADTokenExchange'
-DEPLOY_PRINCIPAL=$(az identity show --name "$DEPLOY_IDENTITY" \
-  --resource-group "$RG" --query principalId --output tsv)
-APP_ID=$(az containerapp show --name "$APP" --resource-group "$RG" --query id --output tsv)
-az role assignment create --assignee-object-id "$DEPLOY_PRINCIPAL" \
-  --assignee-principal-type ServicePrincipal --role 'Container Apps Contributor' --scope "$APP_ID"
-az role assignment create --assignee-object-id "$DEPLOY_PRINCIPAL" \
-  --assignee-principal-type ServicePrincipal --role Reader --scope "$ACR_ID"
-az role assignment create --assignee-object-id "$DEPLOY_PRINCIPAL" \
-  --assignee-principal-type ServicePrincipal \
-  --role 'Container Registry Repository Writer' --scope "$ACR_ID"
-az identity show --name "$DEPLOY_IDENTITY" --resource-group "$RG" \
-  --query '{clientId:clientId,tenantId:tenantId}' --output json
-```
-
-在 GitHub repository 的 Actions variables 設定 `AZURE_CLIENT_ID`、`AZURE_TENANT_ID`、`AZURE_SUBSCRIPTION_ID`、`AZURE_ACR_NAME`、`AZURE_CONTAINER_APP_NAME`、`AZURE_RESOURCE_GROUP`。工作流程會先執行 API 建置與測試，再以 `${GITHUB_SHA}` 標記並推送 `ACR.azurecr.io/gohike` 映像，最後更新既有 Container App。PR 不登入 Azure，也不推送映像。首次發布前，Azure 端的 VNet、SQL、secrets、mounts 與 ACR 拉取權限都必須設定完成。
+GHCR 是映像倉庫，不會執行容器。上文建立的 Container App 仍設定為從 ACR 拉取映像；如果要改成執行 GHCR 映像，須先讓 Container App 取得該 GHCR package 的讀取權限並變更其 registry 設定，再更新 image。私有 package 需要具備 `read:packages` 權限的憑證；公開 package 則可匿名拉取。workflow 目前不會執行這些 Azure 更新。[GHCR 存取權限](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
 
 ## 6. 驗收與綁定網域
 
@@ -264,7 +242,7 @@ az containerapp revision list --name "$APP" --resource-group "$RG" --output tabl
 az containerapp logs show --name "$APP" --resource-group "$RG" --follow
 ```
 
-先檢查 `/health/live` 與 `/health/ready` 均為 `200`，再驗證 SQL 讀寫、JWT 登入、照片上傳後重啟仍可下載、密碼重設／信箱驗證連結重啟後仍有效，以及 SignalR 連線。確認 revision 使用的是該次 push 的 SHA tag。若失敗，從 Container Apps revisions 回復先前可用的映像；資料庫 schema 變更須另外規劃回復方式。[Revisions](https://learn.microsoft.com/en-us/azure/container-apps/revisions-manage)
+手動更新 Container App 映像後，先檢查 `/health/live` 與 `/health/ready` 均為 `200`，再驗證 SQL 讀寫、JWT 登入、照片上傳後重啟仍可下載、密碼重設／信箱驗證連結重啟後仍有效，以及 SignalR 連線。確認 revision 使用的是預期的 SHA tag。若失敗，從 Container Apps revisions 回復先前可用的映像；資料庫 schema 變更須另外規劃回復方式。[Revisions](https://learn.microsoft.com/en-us/azure/container-apps/revisions-manage)
 
 最後在 DNS 設 `gohike-cloud.clam.tw` 的 CNAME 指向上述配發 FQDN，並以 Container App 的 `customDomainVerificationId` 建立 `asuid.gohike-cloud.clam.tw` TXT。使用 `az containerapp hostname add` 與 `az containerapp hostname bind --validation-method CNAME` 綁定免費 managed certificate。若 DNS 服務有代理功能，憑證簽發期間須讓 CNAME **直接**指向 Container App。待正式前端網址確定，再填 `Cors__AllowedOrigins__0` 並驗證瀏覽器請求。[自訂網域與受控憑證](https://learn.microsoft.com/en-us/azure/container-apps/custom-domains-managed-certificates)
 
