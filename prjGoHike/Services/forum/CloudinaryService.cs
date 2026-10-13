@@ -28,7 +28,7 @@ namespace prjGoHike.Services.forum
         }
 
 
-        public async Task<string> UploadImageAsync(
+        public virtual async Task<string> UploadImageAsync(
             IFormFile file,
             string folder)
         {
@@ -58,7 +58,7 @@ namespace prjGoHike.Services.forum
             return result.SecureUrl.ToString();
         }
 
-        public async Task DeleteImageAsync(string imageUrl)
+        public virtual async Task DeleteImageAsync(string imageUrl)
         {
             if (string.IsNullOrWhiteSpace(imageUrl))
             {
@@ -102,12 +102,15 @@ namespace prjGoHike.Services.forum
                     null
                 );
 
-            var deletionParams =
-                new DeletionParams(publicId);
+            var deletionParams = new DeletionParams(publicId) { Invalidate = true };
 
-            await _cloudinary.DestroyAsync(
+            var result = await _cloudinary.DestroyAsync(
                 deletionParams
             );
+            if (result.Error != null)
+            {
+                throw new Exception(result.Error.Message);
+            }
         }
     }
 }

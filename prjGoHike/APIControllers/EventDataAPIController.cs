@@ -7,6 +7,7 @@ using prjGoHike.DTO.GroupJoinDTO;
 using prjGoHike.Hubs;
 using prjGoHike.Models;
 using prjGoHike.Services;
+using prjGoHike.Services.forum;
 using System.Security.Claims;
 
 [Route("api/[controller]")]
@@ -16,12 +17,17 @@ public class EventDataAPIController : BaseController
     private readonly GoHikeDataContext _db;
     private readonly IWebHostEnvironment _environment;
     private readonly IHubContext<EventHub> _hubContext;
+    private readonly CloudinaryService _cloudinaryService;
+    private readonly ILogger<EventDataAPIController> _logger;
     public EventDataAPIController(GoHikeDataContext db, IWebHostEnvironment environment
-        ,IHubContext<EventHub> hubContext)
+        ,IHubContext<EventHub> hubContext, CloudinaryService cloudinaryService,
+        ILogger<EventDataAPIController> logger)
     {
         _db = db;
         _environment = environment;
         _hubContext = hubContext;
+        _cloudinaryService = cloudinaryService;
+        _logger = logger;
     }
     
 
@@ -155,14 +161,16 @@ public class EventDataAPIController : BaseController
 
         
         string? oldPhoto = null;
+        string? newPhoto = null;
         if (eventdata.ActivityPhoto != null && eventdata.ActivityPhoto.Length > 0)
         {
-            var (url, error) = await SaveActivityPhotoAsync(eventdata.ActivityPhoto);
+            var (url, error, statusCode) = await SaveActivityPhotoAsync(eventdata.ActivityPhoto);
             if (error != null)
             {
-                return ErrorResponse(error);
+                return ErrorResponse(error, statusCode: statusCode);
             }
             oldPhoto = Event.ActivityPhoto;
+            newPhoto = url;
             Event.ActivityPhoto = url!;
         }
 
@@ -172,9 +180,17 @@ public class EventDataAPIController : BaseController
         Event.EventEndTime = eventdata.EventEndTime;
         Event.Description = eventdata.Description ?? "";
 
-        await _db.SaveChangesAsync();
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch
+        {
+            await TryDeleteActivityPhotoAsync(newPhoto);
+            throw;
+        }
 
-        DeleteActivityPhotoFile(oldPhoto);
+        await TryDeleteActivityPhotoAsync(oldPhoto);
 
         await _hubContext.Clients.All.SendAsync("EventDataChanged", Event.MountainId, currentPeople);
 
@@ -190,7 +206,6 @@ public class EventDataAPIController : BaseController
         
         
         
-        string[] allowtExtension = { ".jpg", ".png", ".GIF", ".jpeg" };
         var userValidClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
 
@@ -241,10 +256,10 @@ public class EventDataAPIController : BaseController
 
         if (eventdata.ActivityPhoto != null && eventdata.ActivityPhoto.Length > 0)
         {
-            var (url, error) = await SaveActivityPhotoAsync(eventdata.ActivityPhoto);
+            var (url, error, statusCode) = await SaveActivityPhotoAsync(eventdata.ActivityPhoto);
             if (error != null)
             {
-                return ErrorResponse(error);
+                return ErrorResponse(error, statusCode: statusCode);
             }
             SavedFilePath = url!;
         }
@@ -285,13 +300,21 @@ public class EventDataAPIController : BaseController
 
         _db.EventData.Add(Event);
 
-        await _db.SaveChangesAsync();
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch
+        {
+            await TryDeleteActivityPhotoAsync(SavedFilePath);
+            throw;
+        }
         int CurrentPeople = 1;
         await _hubContext.Clients.All.SendAsync("EventDataChanged", Event.MountainId, CurrentPeople);
         //對著所有request的那方進行廣播 然後傳送一個自訂的事件名,加上剛剛才熱騰騰從前端傳來的
         //使用者所選擇的山的id 傳過去的其實就是當改變時會有通知的欄位
 
-        return SuccessResponse(new { Event.EventId, Event.EventName });
+        return SuccessResponse(new { Event.EventId, Event.EventName, Event.ActivityPhoto });
     }
 
     
@@ -380,7 +403,7 @@ public class EventDataAPIController : BaseController
         await _db.SaveChangesAsync();
 
         
-        DeleteActivityPhotoFile(photo);
+        await TryDeleteActivityPhotoAsync(photo);
 
         await _hubContext.Clients.All.SendAsync("EventDataChanged", mountainId, 0);
 
@@ -395,45 +418,62 @@ public class EventDataAPIController : BaseController
     }
 
    
-    private async Task<(string? url, string? error)> SaveActivityPhotoAsync(IFormFile photo)
+    private async Task<(string? url, string? error, int statusCode)> SaveActivityPhotoAsync(IFormFile photo)
     {
         if (photo.Length > 10 * 1024 * 1024)
         {
-            return (null, "請上傳檔案大小10MB以內的圖片");
+            return (null, "請上傳檔案大小10MB以內的圖片", 400);
         }
 
         string extension = Path.GetExtension(photo.FileName).ToLowerInvariant();
       
         if (!AllowedExtensions.Contains(extension))
         {
-            return (null, "請上傳副檔名為：jpg、png、gif、jpeg的圖片檔案");
+            return (null, "請上傳副檔名為：jpg、png、gif、jpeg的圖片檔案", 400);
         }
 
-        string uploadsFolder = Path.Combine(_environment.WebRootPath, "assets", "JoinGroup_Images");
-        Directory.CreateDirectory(uploadsFolder);
-       
-
-        string uniqueFileName = $"{Guid.NewGuid()}{extension}";
-        using (var stream = new FileStream(Path.Combine(uploadsFolder, uniqueFileName), FileMode.Create))
+        string url;
+        try
         {
-            await photo.CopyToAsync(stream);
+            url = await _cloudinaryService.UploadImageAsync(photo, "gohike/events");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "活動圖片上傳失敗");
+            return (null, "圖片上傳失敗，請稍後再試", 503);
         }
 
-        string baseUrl = $"{Request.Scheme}://{Request.Host}";
-        return ($"{baseUrl}/assets/JoinGroup_Images/{uniqueFileName}", null);
+        if (url.Length > 255)
+        {
+            await TryDeleteActivityPhotoAsync(url);
+            return (null, "圖片網址過長，請聯絡管理員", 500);
+        }
+
+        return (url, null, 200);
     }
 
     
-    private void DeleteActivityPhotoFile(string? photoUrl)
+    private async Task TryDeleteActivityPhotoAsync(string? photoUrl)
     {
         if (string.IsNullOrEmpty(photoUrl)) return;
 
         try
         {
-           
-            string fileName = Uri.TryCreate(photoUrl, UriKind.Absolute, out var uri)
-                ? Path.GetFileName(uri.LocalPath)
-                : Path.GetFileName(photoUrl);
+            bool absolute = Uri.TryCreate(photoUrl, UriKind.Absolute, out var uri);
+            if (absolute && uri!.Host.Equals("res.cloudinary.com", StringComparison.OrdinalIgnoreCase))
+            {
+                await _cloudinaryService.DeleteImageAsync(photoUrl);
+                return;
+            }
+
+            // Only legacy event URLs may delete files in this directory.
+            string path = absolute ? uri!.AbsolutePath : photoUrl;
+            const string prefix = "/assets/JoinGroup_Images/";
+            if (!path.StartsWith(prefix, StringComparison.Ordinal)) return;
+            string fileName = Uri.UnescapeDataString(path[prefix.Length..]);
+            if (string.IsNullOrWhiteSpace(fileName) || fileName is "." or ".." ||
+                fileName.IndexOfAny(['/', '\\']) >= 0) return;
+            if (string.IsNullOrWhiteSpace(_environment.WebRootPath)) return;
 
             string filePath = Path.Combine(_environment.WebRootPath, "assets", "JoinGroup_Images", fileName);
             if (System.IO.File.Exists(filePath))
@@ -441,9 +481,9 @@ public class EventDataAPIController : BaseController
                 System.IO.File.Delete(filePath);
             }
         }
-        catch
+        catch (Exception ex)
         {
-            
+            _logger.LogWarning(ex, "活動圖片清理失敗：{PhotoUrl}", photoUrl);
         }
     }
 }

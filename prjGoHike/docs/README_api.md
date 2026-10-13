@@ -16,6 +16,9 @@ HTTPS 開發環境需信任本機開發憑證（`dotnet dev-certs https --trust`
 
 ## API 文件
 
+揪團活動圖片上傳、Cloudinary 設定與驗證方式見
+[活動圖片串接文件](EventPhotos_api.md)。
+
 - Swagger UI：<https://localhost:7285/swagger>
 - OpenAPI JSON：<https://localhost:7285/openapi/v1.json>
 
