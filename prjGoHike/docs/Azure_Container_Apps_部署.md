@@ -2,6 +2,8 @@
 
 此文件說明 Azure Container Apps 環境的建立方式。根目錄的 `Dockerfile` 仍用於建置映像；`.github/workflows/docker.yml` 目前只在 `deploy-sean` 分支的 push 將映像發布到 GHCR，不會自動更新 Container App。PR 只建置與執行 API 測試。第一階段固定一個 replica，`Hangfire` 保持停用。
 
+實際部署未使用 Azure Files。活動照片與會員頭像使用 Cloudinary；以下不需要建立 Azure file share 或設定 volume mount。程式保留自訂 Data Protection 金鑰目錄的支援，但這不代表已配置外部持久化儲存。
+
 ## 1. 準備 Azure SQL
 
 先在 Bash 環境安裝 Azure CLI、登入，並確認有建立資源及 private DNS zone 的權限。以下為**首次建立新資源**的範例；執行前確認 `rg-gohike`、`vnet-gohike` 等名稱沒有指向其他現有部署，且 `10.42.0.0/16` 不與要互連的網路重疊。SQL server 名稱使用訂用帳戶 ID 前 12 碼產生候選值；名稱仍須全域唯一，如已被佔用，請改成另一個名稱，並在後面的區塊使用相同值。不要開啟 Bash `set -x`，以免把密碼印到終端紀錄。
@@ -170,41 +172,13 @@ az containerapp registry set --name "$APP" --resource-group "$RG" \
 
 上述公開範例映像同樣監聽 `8080`，供 Container App 尚未部署 GoHike 時啟動。此處新建的 ACR 使用 RBAC + ABAC 模式，因此給 Container App 身分 `Container Registry Repository Reader`；若改用現有的 RBAC-only ACR，對應角色是 `AcrPull`。授權傳播可能需數分鐘。若日後改用 ACR 私有映像，須先確認此身分已能拉取映像。[範例映像與埠號](https://learn.microsoft.com/en-us/azure/container-apps/tutorial-scaling)、[受控身分拉取映像](https://learn.microsoft.com/en-us/azure/container-apps/managed-identity-image-pull)、[ACR 權限模式](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-rbac-abac-repository-permissions)
 
-## 3. 掛載 Azure Files
+## 3. 圖片儲存與 Data Protection 金鑰
 
-在同一 Storage Account 建立兩個 **classic Azure file shares**：`gohike-photos` 和 `gohike-dpkeys`。將兩者以 `az containerapp env storage set` 註冊為 environment storage，storage name 分別設 `photos-storage`、`dpkeys-storage`，access mode 設 `ReadWrite`。Storage Account key 僅在安全管理環境中使用，不要寫進 repo。Azure Files mount 目前需要帳戶金鑰；限制誰能讀取 `gohike-dpkeys` share，因為其中的 Data Protection XML 金鑰沒有另外做應用層加密。[Azure Files 掛載教學](https://learn.microsoft.com/en-us/azure/container-apps/storage-mounts-azure-files)
+活動照片與會員頭像由後端透過 `CloudinaryService` 上傳至 Cloudinary，資料庫保存回傳的 HTTPS URL，前端直接使用該網址顯示圖片。圖片儲存不需要 Azure Files。請將 `Cloudinary__CloudName`、`Cloudinary__ApiKey`、`Cloudinary__ApiSecret` 設定於 Container App，並將憑證連結到 secrets。完整流程見[活動圖片串接文件](EventPhotos_api.md)。
 
-```bash
-STORAGE_ACCOUNT='gohikestorageunique'
-az storage account create --name "$STORAGE_ACCOUNT" --resource-group "$RG" \
-  --location "$LOCATION" --kind StorageV2 --sku Standard_LRS
-az storage share-rm create --resource-group "$RG" \
-  --storage-account "$STORAGE_ACCOUNT" --name gohike-photos --quota 100
-az storage share-rm create --resource-group "$RG" \
-  --storage-account "$STORAGE_ACCOUNT" --name gohike-dpkeys --quota 1
-STORAGE_KEY=$(az storage account keys list --name "$STORAGE_ACCOUNT" \
-  --resource-group "$RG" --query '[0].value' --output tsv)
-az containerapp env storage set --name "$ENV" --resource-group "$RG" \
-  --storage-name photos-storage --storage-type AzureFile --access-mode ReadWrite \
-  --azure-file-account-name "$STORAGE_ACCOUNT" --azure-file-account-key "$STORAGE_KEY" \
-  --azure-file-share-name gohike-photos
-az containerapp env storage set --name "$ENV" --resource-group "$RG" \
-  --storage-name dpkeys-storage --storage-type AzureFile --access-mode ReadWrite \
-  --azure-file-account-name "$STORAGE_ACCOUNT" --azure-file-account-key "$STORAGE_KEY" \
-  --azure-file-share-name gohike-dpkeys
-unset STORAGE_KEY
-```
+既有 `/assets/JoinGroup_Images/` 圖片仍保留相容處理，但程式保留舊路徑不代表舊檔案已搬到外部儲存。若資料庫仍有這類網址，須另外確認對應檔案在部署後能否讀取。
 
-讓 Container Apps environment 的 VNet 能連上 Storage Account 的 `file` private endpoint，並設定 `privatelink.file.core.windows.net` private DNS；驗證掛載成功後才關閉 Storage Account 的 public network access。[Azure Storage private endpoint](https://learn.microsoft.com/en-us/azure/storage/common/storage-private-endpoints)
-
-在 Azure Portal 的 Container App > Volumes 加入兩個 Azure Files volume，分別連到 `photos-storage`、`dpkeys-storage`，並在應用程式 container 設定下列 mount；儲存會產生新 revision。也可匯出 `az containerapp show -o yaml`，在原有 `template` 加入 `volumes` 與 `volumeMounts` 後使用 `az containerapp update --yaml`。不要用只有下列片段的 YAML 覆蓋完整設定。
-
-| Volume | 掛載路徑 | 用途 |
-| --- | --- | --- |
-| `photos` | `/app/wwwroot/assets/JoinGroup_Images` | `EventDataAPIController` 的活動照片與靜態網址 |
-| `dpkeys` | `/app/dpkeys` | 重設密碼、信箱驗證及其他 Data Protection 金鑰 |
-
-掛載目錄應可由 Dockerfile 中的非 root `APP_UID` 寫入。在真正的 GoHike 映像啟動後，用 `az containerapp exec` 以目前使用者建立及刪除測試檔，並確認 Container App revision 重啟後兩個 share 中的內容仍在。原本 `wwwroot/assets/JoinGroup_Images` 中已有照片時，掛載會遮住映像內該目錄；切換前先將既有照片複製到 Azure file share。
+Data Protection 用於保護重設密碼、信箱驗證等資料。`Program.cs` 支援以 `DataProtection__KeysPath` 指定金鑰目錄；Dockerfile 也建立了 `/app/dpkeys`，但建立容器內目錄不等於配置持久化儲存。本次部署未使用 Azure Files，也未確認是否另有金鑰持久化設定，因此不能宣稱金鑰已跨 revision 保存，或先前產生的驗證連結在重新部署後一定有效。`DataProtection__KeysPath` 為選用設定，不列為目前部署的必要環境變數。
 
 ## 4. 設定 Container App
 
@@ -217,7 +191,6 @@ unset STORAGE_KEY
 | `ConnectionStrings__GoHikeDataContext` | `secretref:sql-connection` |
 | `JwtSettings__SecretKey` | `secretref:jwt-secret-key`，UTF-8 至少 32 bytes |
 | `JwtSettings__Issuer`, `JwtSettings__Audience` | 實際正式值，並與 client 的 JWT 驗證設定一致 |
-| `DataProtection__KeysPath` | `/app/dpkeys` |
 | `Hangfire__Enabled` | `false` |
 | `Cors__AllowedOrigins__0` | 前端網址確定後才填入其完整 origin，例如 `https://frontend.example.com`；不填時正式環境不允許跨來源瀏覽器請求 |
 
@@ -242,7 +215,7 @@ az containerapp revision list --name "$APP" --resource-group "$RG" --output tabl
 az containerapp logs show --name "$APP" --resource-group "$RG" --follow
 ```
 
-手動更新 Container App 映像後，先檢查 `/health/live` 與 `/health/ready` 均為 `200`，再驗證 SQL 讀寫、JWT 登入、照片上傳後重啟仍可下載、密碼重設／信箱驗證連結重啟後仍有效，以及 SignalR 連線。確認 revision 使用的是預期的 SHA tag。若失敗，從 Container Apps revisions 回復先前可用的映像；資料庫 schema 變更須另外規劃回復方式。[Revisions](https://learn.microsoft.com/en-us/azure/container-apps/revisions-manage)
+手動更新 Container App 映像後，先檢查 `/health/live` 與 `/health/ready` 均為 `200`，再驗證 SQL 讀寫、JWT 登入、Cloudinary 照片上傳與讀取、密碼重設／信箱驗證，以及 SignalR 連線。確認資料庫保存的是 Cloudinary 圖片網址，且更新 revision 後仍可讀取圖片。另測試更新前產生的密碼重設／信箱驗證連結在更新後是否仍有效，記錄實際結果；目前未確認金鑰持久化，不應預先保證跨 revision 有效。確認 revision 使用的是預期的 SHA tag。若失敗，從 Container Apps revisions 回復先前可用的映像；資料庫 schema 變更須另外規劃回復方式。[Revisions](https://learn.microsoft.com/en-us/azure/container-apps/revisions-manage)
 
 最後在 DNS 設 `gohike-cloud.clam.tw` 的 CNAME 指向上述配發 FQDN，並以 Container App 的 `customDomainVerificationId` 建立 `asuid.gohike-cloud.clam.tw` TXT。使用 `az containerapp hostname add` 與 `az containerapp hostname bind --validation-method CNAME` 綁定免費 managed certificate。若 DNS 服務有代理功能，憑證簽發期間須讓 CNAME **直接**指向 Container App。待正式前端網址確定，再填 `Cors__AllowedOrigins__0` 並驗證瀏覽器請求。[自訂網域與受控憑證](https://learn.microsoft.com/en-us/azure/container-apps/custom-domains-managed-certificates)
 

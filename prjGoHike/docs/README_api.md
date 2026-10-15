@@ -5,6 +5,9 @@
 Azure Container Apps、Azure SQL、ACR 與 `deploy-sean` 的部署步驟見
 [Azure Container Apps 部署文件](Azure_Container_Apps_部署.md)。
 
+實際部署未使用 Azure Files，活動照片與會員頭像使用 Cloudinary。
+供專題報告使用的流程與常見問答見[雲端部署技術總結](雲端部署技術總結_組員問答版.md)。
+
 ```bash
 dotnet restore slnGoHike.slnx
 dotnet build slnGoHike.slnx --no-restore
