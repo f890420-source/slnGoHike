@@ -32,7 +32,7 @@ public class EventDataAPIController : BaseController
     public async Task<IActionResult> GetEventData()
     {
         var eventCount = _db.EventData.Select(e => e.EventId).Count();
-        
+        DateTime now = DateTime.Now;
         if (_db.EventData != null)
         {
             var eventdata = await _db.EventData.Select(e => new EventDataResponseDTO
@@ -41,13 +41,7 @@ public class EventDataAPIController : BaseController
                 MountainId = e.MountainId,
                 EventName = e.EventName,
                 MaximumNumber = e.MaximumNumber,
-                ActivityStatus = e.EventEndTime < DateTime.Now
-                ? "已結束"
-                : (e.ActivityStatus == "進行中" || e.EventStartTime <= DateTime.Now)
-                ? "進行中"
-                : (e.EventRegistrationAndMemberLists.Count(r => r.RegistrationStatus == 1) >= e.MaximumNumber
-                ? "已額滿"
-                : "招募中"),
+                ActivityStatus = e.ActivityStatus,
                 ActivityPhoto = e.ActivityPhoto,
                 Description = e.Description,
                 MountainsPermitRequired = e.Mountain.MountainsPermitRequired,
@@ -55,7 +49,7 @@ public class EventDataAPIController : BaseController
                 EventStartTime = e.EventStartTime,
                 EventEndTime = e.EventEndTime,
                 EventCount = eventCount,
-                EveryMountainCount = e.Mountain.EventData.Count(),
+                EveryMountainCount = e.Mountain.EventData.Count(x => x.ActivityStatus != Condition_observe_service.Ended),
                 MountainName = e.Mountain.MountainName,
                 Longitude = e.Mountain.Longitude,
                 Latitude = e.Mountain.Latitude,
@@ -78,7 +72,6 @@ public class EventDataAPIController : BaseController
                     .Select(t => t.SkillTag.TagName)
                     .ToList()
                 }).ToList()
-                
                 
             }).ToListAsync();
 
@@ -170,6 +163,7 @@ public class EventDataAPIController : BaseController
         Event.MaximumNumber = eventdata.MaximumNumber;
         Event.EventStartTime = eventdata.EventStartTime;
         Event.EventEndTime = eventdata.EventEndTime;
+        Event.ActivityStatus = Condition_observe_service.CaculateStatus(Event, currentPeople);
         Event.Description = eventdata.Description ?? "";
 
         await _db.SaveChangesAsync();
@@ -282,7 +276,7 @@ public class EventDataAPIController : BaseController
             EmergencyContact = "",
             CreatedAt = DateTime.Now
         });
-
+        Event.ActivityStatus = Condition_observe_service.CaculateStatus(Event, 1);
         _db.EventData.Add(Event);
 
         await _db.SaveChangesAsync();

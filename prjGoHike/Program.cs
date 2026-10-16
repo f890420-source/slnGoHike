@@ -69,6 +69,10 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.AddHttpClient<GeminiModerationService>();
 builder.Services.AddHttpClient<GeminiSummaryService>();
 #endregion
+
+//揪團用Service
+builder.Services.AddHostedService<EventStatusUpdater>();
+
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()
     ?? throw new InvalidOperationException("JwtSettings 設定遺失。");
 

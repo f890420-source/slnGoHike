@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -143,6 +143,11 @@ namespace prjGoHike.APIControllers
                 }
 
                 currentCount++;
+                if(currentCount >= ev.MaximumNumber)
+                {
+                    ev.ActivityStatus = Condition_observe_service.CaculateStatus(ev, currentCount);
+                }
+                
                 await _db.SaveChangesAsync();
                 await tx.CommitAsync();
 
@@ -186,13 +191,16 @@ namespace prjGoHike.APIControllers
                 return ErrorResponse("你沒有報名這個活動", null, 400);
             }
 
+            int currentCount = await _db.EventRegistrationAndMemberLists
+                .CountAsync(r => r.EventId == eventId && r.RegistrationStatus == 1) - 1;
             
             registration.RegistrationStatus = 0;
             registration.CancelledAt = DateTime.Now;
+            ev.ActivityStatus = Condition_observe_service.CaculateStatus(ev, currentCount);
             await _db.SaveChangesAsync();
 
-            int currentCount = await _db.EventRegistrationAndMemberLists
-                .CountAsync(r => r.EventId == eventId && r.RegistrationStatus == 1);
+            //int currentCount = await _db.EventRegistrationAndMemberLists
+            //    .CountAsync(r => r.EventId == eventId && r.RegistrationStatus == 1);
             await _hubContext.Clients.All.SendAsync("EventDataChanged", ev.MountainId, currentCount);
 
             return SuccessResponse("已退出活動");
