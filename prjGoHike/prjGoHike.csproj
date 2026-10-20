@@ -28,6 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="docs\groupjoin_img\" />
     <Folder Include="ViewModels_user\Admin\" />
     <Folder Include="ViewModels_user\Dto\" />
     <Folder Include="wwwroot\uploads\articles\" />
